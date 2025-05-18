@@ -7,11 +7,13 @@
   <img src="Documentation/assets/readmeAssets/banner.png" alt="banner"/>
 </p>
 
-<h1 align="center">Spark Industries – <PROJECT_NAME></h1>
+<p align="center">
+  Description of project goes here.
+</p>
+
+---
 
 <p align="center">
-  **Spark Industries – <PROJECT_NAME> – <Short project description goes here>**  
-  <br/>
   <a href="https://YOUR_PROJECT_DEMO_URL">🌐 Live Demo</a> •
   <a href="#-features">Features</a> •
   <a href="#-getting-started">Getting Started</a> •
