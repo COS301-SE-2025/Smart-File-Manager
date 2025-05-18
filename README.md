@@ -4,7 +4,7 @@
 -->
 
 <p align="center">
-  <img src="ASSETS/LOGO.png" alt="PROJECT LOGO" width="200"/>
+  <img src="Documentation/assets/readmeAssets/banner.png" alt="banner"/>
 </p>
 
 <h1 align="center">Spark Industries – <PROJECT_NAME></h1>
