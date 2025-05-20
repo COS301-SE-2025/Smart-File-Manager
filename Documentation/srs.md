@@ -90,6 +90,7 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 ## Service Contract
 
 ## Domain Model
+![Domain-Model](assets/DomainModel.jpg)
 
 ## Architectural Requirements
 
