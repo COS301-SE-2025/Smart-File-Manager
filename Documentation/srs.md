@@ -143,6 +143,23 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 ### Architectural Patterns
 
 ### Design Patterns
+The current design of our project makes use of 2 design patterns to achieve various functionality. Our decisions as to why these were used and how they are implemented follows:
+
+**Composite**  
+Used to represent the tree like structure associated with a directory structure. The classes that map to the participants are as follows:
+* Component : ManagedItem
+* Leaf: File
+* Folder : Composite
+
+The use of the composite pattern allows us to easily create, manage and traverse folder structures. A single instance of _ManagedItem_ may then be used by the _SmartFolder_ as an access point to an entire folder structure. By decoupling the folder structure from the _SmartFolder_ we may treat files and compositions of files (folders) uniformly. 
+
+**Memento**  
+Used to store the state of a _SmartFolder_ so it may be reinstated via a rollback at a later time. The classes that map to the participants are as follows:
+* Originator : ManagedItem
+* Memento : Memento
+* Caretaker : SmartFolderBackup
+
+Using the composite pattern an entire directory structure may be stored by creating a memento from the root of such a _ManagedItem_. This memento may then be stored in the _SmartFolderBackup_ for later rollback as initiated by the _SmartFolder_ upon request of the user.
 
 ### Constraints
 

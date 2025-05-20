@@ -30,14 +30,14 @@
 
 ## 📄 Table of Contents
 
-- [📑 Functional Requirements (SRS)](/Documentation/srs.md)
+- [📑 Functional Requirements (SRS)](#-functional-requirements-srs)
 - [📊 Project Board](#-project-board)
 
 ---
 
 ## 📑 Functional Requirements (SRS)
 
-🔗 [Functional Requirements Document (SRS)](`<SRS_LINK>`)
+🔗 [Functional Requirements Document (SRS)](Documentation/srs.md)
 
 ---
 
