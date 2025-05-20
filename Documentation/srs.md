@@ -6,12 +6,13 @@
 
 **Version:** 1.0.0.0  
 **Prepared By:** Spark Industries  
-**Prepared For:** Souther Cross Solutions  
+**Prepared For:** Southern Cross Solutions  
 
 
 ## Content
 * [Introduction](#introduction)
 * [User Stories / User Characteristics](#user-stories--user-characteristics)
+* [Use Cases / Use Case Diagram](#use-cases--use-case-diagram)
 * [Functional Requirements](#functional-requirements)
 * [Service Contract](#service-contract)
 * [Domain Model](#domain-model)
@@ -36,6 +37,27 @@ Navigate your directories with an intuitive mind map exposing the underlying web
 SFM is not just another tool, it's your new digital housekeeper, your AI file finder and your new best friend.  
 
 ## User Stories / User Characteristics
+
+## Use cases / Use Case Diagram
+| Use Case                              | Actor | Abstract                                                                                                             | Preconditions                             | Postconditions                           |
+| ------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------------------------------------- |
+| UC1: Install Application              | User  | The user installs the SFM application on their device.                                                               | System requirements met.                  | Application is ready for configuration.  |
+| UC2: Login                            | User  | The user logs in to save preferences across devices (optional).                                                      | User is registered.                       | Preferences are saved.                   |
+| UC3: Configure Sorting Preferences    | User  | The user sets preferences for how often files are sorted and what rules to use (metadata, keywords, tags).           | Application is installed.                 | Configuration is saved.                  |
+| UC4: Tag Files Manually               | User  | The user assigns custom tags to files.                                                                               | Application is installed.                 | Tags are stored and used for sorting.    |
+| UC5: Auto-sort Files                  | SFM   | At scheduled intervals, the system automatically sorts files into directories based on metadata, keywords, and tags. | Files exist in monitored directories.     | Files are moved/sorted appropriately.    |
+| UC6: View File Metadata               | User  | The user views detailed metadata of any file managed by SFM.                                                         | File exists and is indexed by the system. | Metadata displayed.                      |
+| UC7: Visualize File Structure         | User  | The user views the current file organization as a graph.                                                             | File exists and is indexed by the system. | A graph-based UI is presented.           |
+| UC8: Add/Remove Monitored Directories | User  | The user selects which directories the SFM should monitor.                                                           |                                           | The system updates its scan targets.     |
+| UC9: Trigger Manual Sort              | User  | The user initiates file sorting manually.                                                                            | Application is installed.                 | Sorting process begins.                  |
+| UC10: Lock Files/Folders              | User  | The user locks specific files or folders to prevent them from being sorted by SFM.                                   | Application is installed.                 | Locked items are skipped during sorting. |
+| UC11: Search Files/Tags/Metadata      | User  | The user searches for files based on name, tags, or metadata.                                                        | Application is installed.                 | Search results are displayed.            |
+| UC12: Keep Old Folder Structure       | User  | The user enables the option to preserve the original folder structure when sorting files.                            | Preferences configured.                   | Original folders are retained.           |
+| UC13: Rollback Sorting Changes        | User  | The user rolls back the last sorting operation to restore previous file locations.                                   | Sorting has occurred at least once.       | Files returned to original locations.    |
+| UC14: Auto-sort on File Download      | SFM   | When a new file or folder is downloaded, it is automatically sorted based on defined rules.                          | A new file or folder is downloaded.       | New content is sorted immediately.       |
+| UC15: Register                        | User  | The user registers in order to login and save preferences                                                            | Application is installed.                 | User account is created.                 |
+
+![Use Case Diagram](assets/Use%20Case%20Diagram1.jpg)
 
 ## Functional Requirements
 
