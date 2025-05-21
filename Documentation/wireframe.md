@@ -58,43 +58,28 @@ Interface for configuring and managing Smart Managers.
   - Max files per directory
   - Max directory depth
 
-## 3. Advanced Search (Image 3)
+## 3. Advanced Search
 
-![Advanced Search](images/advanced_search.png)
+![Advanced Search](assets/wireframeAssets/wireframe_advanced_search.png)
 
 ### Purpose
 
-Comprehensive search interface for finding files using multiple criteria.
+Comprehensive search interface for finding files using multiple criteria across all Smart Managers.
 
 ### Elements
 
-- **Header:**
-
-  - Title: "Advanced Search"
-  - Action: "Clear All" button (top right)
-
-- **Search Interface:**
-
-  - Global search bar: "Search for files, folders, content..."
-
 - **Filter Options:**
 
-  - **File Type:** All Types (dropdown)
-  - **Location:** All Locations (dropdown)
-  - **Date Modified:** Any Time (dropdown)
-  - **Size:** Any Size (dropdown)
-  - **Tags:** Any Tags (dropdown)
-  - **Author/Owner:** Anyone (dropdown)
+  - File Type
+  - Location
+  - Date Modified
+  - Size
+  - Tags
+  - Author/Owner
 
-- **Results Section:**
-  - Title: "Results"
-  - Files:
-    - Study_Guide.pdf (Modified: 15 May)
-    - index.html (Modified: 6 May)
+## 4. Settings
 
-## 4. Settings (Image 4)
-
-![Settings](images/settings.png)
+![Settings](assets/wireframeAssets/wireframe_settings.png)
 
 ### Purpose
 
@@ -102,127 +87,57 @@ Configuration interface for application preferences and user settings.
 
 ### Elements
 
-- **Header:**
-
-  - Title: "Settings"
-
-- **Settings Navigation:**
-
-  - **General** (selected, yellow highlight)
+- **Settings Categories**
+  - General
   - Appearance
   - Notifications
   - Account
 
-- **Content Area:**
-  - Empty content area (current view shows General tab selected)
+## 5. Documents Manager - Folder View
 
-## 5. Documents Manager - Folder View (Image 5)
-
-![Documents Manager - Folder View](images/folder_view.png)
+![Documents Manager - Folder View](assets/wireframeAssets/wireframe_manager_page.png)
 
 ### Purpose
 
-Traditional folder-based interface for viewing and managing files within a smart manager.
+Traditional folder-based interface for viewing and managing files within a Smart Sanager.
 
 ### Elements
 
-- **Header:**
+- **Attributes Shown**
 
-  - Title: "Documents Manager"
-  - Status: 75% Organized (green pill)
-  - View Toggle: Folder View (selected), Graph View
-  - Action: Sort
+  - Title
+  - Organization status
+  - Meta Data
+  - Tags
 
 - **Search and Filter:**
 
-  - Search: "Search within manager"
-  - Sort By: Name (dropdown)
-  - Filter: All Files (dropdown)
+  - Search(within manager)
+  - Sort By
+  - Filter
 
-- **Files and Folders:**
+- **File Actions**
+  - Open File
+  - Add Tags
+  - Lock File
+  - Delete File
 
-  - Files:
-    - Study_Guide.pdf (Modified: 15 May)
-    - index.html (Modified: 6 May)
-    - notes.docx (Modified: 25 April)
-  - Folders:
-    - Projects (56 files)
-    - Documents (22 files)
+## 6. Documents Manager - Graph View
 
-- **File Details Panel:**
-  - File: notes.docx
-  - Type: Word Document
-  - Location: Root/Doc
-  - Size: 2.8 MB
-  - Created: May 10, 2025
-  - Modified: May 12, 2025
-  - Tags: doc (red), Project (green)
-  - Actions: Open File, Add Tags, Lock File, Delete File
-
-## 6. Documents Manager - Graph View (Image 6)
-
-![Documents Manager - Graph View](images/graph_view.png)
+![Documents Manager - Graph View](assets/wireframeAssets/wireframe_manager_page2.png)
 
 ### Purpose
 
-Visualization interface showing file relationships in a network graph format.
+Visualization interface showing file relationships in a Graph format.
 
 ### Elements
 
-- **Header:**
+- **Functionality:**
 
   - Same as Folder View but with Graph View selected
 
 - **Visualization:**
   - Node graph showing file relationships
-  - Central node (yellow) representing focal point or primary file
-  - Connected nodes (blue, red, green) representing related files
+  - Central node representing primary folder
+  - Connected nodes representing related files/folders
   - File details panel (same as in Folder View)
-
-## Interaction Notes
-
-1. **Navigation:** Users navigate between screens using the sidebar menu.
-2. **Smart Managers:** Each smart manager can be configured with specific rules for organization.
-3. **View Modes:** Files can be viewed in both traditional folder view and relationship graph view.
-4. **Search Functionality:** Advanced search allows filtering across multiple parameters simultaneously.
-5. **Quick Access:** Dashboard provides shortcuts to frequently used files.
-6. **File Details:** Sidebar panel displays metadata and provides file actions.
-7. **Statistics:** Dashboard provides visual metrics on file management status and trends.
-
-## Image Inclusion Instructions
-
-To include the wireframe images in your document:
-
-1. **Create an images directory**: Create a folder named "images" in the same directory as your markdown file.
-
-2. **Save wireframe images**: Save each wireframe image with a descriptive filename:
-
-   - Image 1: `dashboard.png`
-   - Image 2: `smart_managers.png`
-   - Image 3: `advanced_search.png`
-   - Image 4: `settings.png`
-   - Image 5: `folder_view.png`
-   - Image 6: `graph_view.png`
-   - Sidebar (common to all): `sidebar_navigation.png`
-
-3. **Alternative approach**: If you want to use the actual numbered images as-is:
-
-   ```markdown
-   ![Dashboard View](images/image1.png)
-   ![Smart Managers Configuration](images/image2.png)
-   ![Advanced Search](images/image3.png)
-   ![Settings](images/image4.png)
-   ![Documents Manager - Folder View](images/image5.png)
-   ![Documents Manager - Graph View](images/image6.png)
-   ```
-
-4. **For absolute paths**: If your images are stored elsewhere or will be hosted online, use absolute paths:
-
-   ```markdown
-   ![Dashboard View](https://yourdomain.com/images/dashboard.png)
-   ```
-
-5. **Image sizing**: To control image size, add HTML attributes:
-   ```markdown
-   <img src="images/dashboard.png" alt="Dashboard View" width="800" />
-   ```
