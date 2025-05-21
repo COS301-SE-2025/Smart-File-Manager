@@ -1,40 +1,48 @@
-# Spark Industries
+<p align="center">
+  <img src="assets/spark_logo_dark_background.png" alt="Company Logo" width="300" height=100%/>
+</p>
 
-## Architectural Specification
+# Architectural Specifications
 
-## Table of Contents
-1. Overview
-2. Architecture Style
-3. System Components
-    1. Website
-    2. Application
-4. Sub-architectural patterns
-5. Data storage
-6. Security
-7. Scalability and Performance
-8. Deployment
+**Version:** 1.0.0.0  
+**Prepared By:** Spark Industries  
+**Prepared For:** Southern Cross Solutions  
 
 
-# 1. Overview
+## Content
+* [Overview](#overview)
+* [Architecture Style](#architecture-style)
+* [System Components](#system-components)
+    * [Website](#website)
+    * [Application](#application)
+* [Sub-architectural patterns](#sub-architectural-patterns)
+* [Data storage](#data-storage)
+* [Security](#security)
+* [Scalability and Performance](#scalability-and-performance)
+* [Deployment](#deployment)
+
+
+## Overview
 <p>The smart file manager is designed with modular and scalable components for optimal performance and maintainability. This document outlines the architectural design, how components interact, and the system flow.</p>
 
-[![Architecture diagram]](link)
+![Website architecture](assets/websiteArchitecure.png)
+![Application architecture](assets/applicationArchitecture.png)
 
-# 2. Architecture Style
+## Architecture Style
 <p>Smart file manager makes use of Client-Server architecture for the website. The application uses a Modular Monolithic structure and a Master-Slave between the API and AI.</p>
 
 1. 
 2. 
 
-# 3. System Components
-## 3.1. Website
+## System Components
+### Website
 1. An easy to use interface for downloading the application.
 2. Can be used to register an account.
-## 3.2. Application
+### Application
 1. 
 2. 
 
-# 4. Sub-Architectural Patterns
+## Sub-Architectural Patterns
 ### Layered Architecure (N-tier)
 1. Structures SFM into well-defined layers to separate concerns.
     1. Presentation
@@ -43,10 +51,10 @@
 
 ### Event-Driven Architecture
 
-# 5. Data Storage
+## Data Storage
 
-# 6. Security
+## Security
 
-# 7. Scalability and Performance
+## Scalability and Performance
 
-# 8. Deployment
+## Deployment
