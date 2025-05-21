@@ -6,7 +6,7 @@ This document provides a wireframe description of the Smart File Manager (SFM) a
 
 ## Global Navigation
 
-![Sidebar Navigation](assets/wireframe_main_navigation.png)
+![Sidebar Navigation](assets/wireframeAssets/wireframe_main_navigation.png)
 
 - **Main Navigation Menu:**
   - Dashboard - Home screen with metrics and quick access
@@ -17,74 +17,46 @@ This document provides a wireframe description of the Smart File Manager (SFM) a
   - Lists all current Smart Managers
   - Option to add new Smart Manager
 
-## 1. Dashboard (Image 1)
+## 1. Dashboard
 
-![Dashboard View](images/dashboard.png)
+![Dashboard View](assets/wireframeAssets/wireframe_dashboard.png)
 
 ### Purpose
 
-Main overview screen displaying system statistics and quick access to frequently used files.
+Main screen displaying system statistics and quick access to frequently used files.
 
 ### Elements
 
 - **Statistics Cards:**
 
-  - **Total Files Card:**
-
-    - Icon: Document
-    - Count: 12,486
-    - Change: +7.2% from last week (green)
-
-  - **Storage Used Card:**
-
-    - Icon: Cube
-    - Amount: 2.34 GB
-    - Change: +3.1% from last week (green)
-
-  - **Organization Level Card:**
-
-    - Icon: Checkbox/List
-    - Percentage: 72%
-    - Change: -15.8% from last week (red)
-
-  - **Smart Managers Card:**
-    - Icon: Lock/Manager
-    - Count: 3
-    - Action: Create new Manager (yellow button)
+  - Total Files
+  - Storage Used
+  - Organization Level
+  - Total Smart Managers
 
 - **Quick Access Section:**
-  - Title: "Quick Access"
-  - Files: Study_Guide.pdf (multiple instances)
-  - All files modified: 15 May
-  - Empty card with "+" icon for adding new quick access item
+  - User can add files/folders that are often used.
 
-## 2. Smart Managers Configuration (Image 2)
+## 2. Smart Managers
 
-![Smart Managers Configuration](images/smart_managers.png)
+![Smart Managers Configuration](assets/wireframeAssets/wireframe_smart_managers.png)
 
 ### Purpose
 
-Interface for configuring and managing intelligent file organization rules.
+Interface for configuring and managing Smart Managers.
 
 ### Elements
 
-- **Header:**
+- **Main Features:**
 
-  - Title: "Smart Managers"
-  - Action: "Create" button (top right)
+  - Create Smart Manager
+  - Sort a Smart Manager
+  - Delete a Smart Manager
+  - Rename a Smart Manager
 
-- **Manager Configuration Panel:**
-  - **Documents Manager:**
-    - Status: 75% Organized (green pill)
-    - Stats: Managing 324 files across 24 directories
-    - Settings:
-      - Max number of files per directory: 200 (input field)
-      - Max directory depth: 20 (input field)
-    - Action Buttons:
-      - Sort (button)
-      - Rename (button)
-      - Delete (button)
-      - Save (yellow button)
+- **Configure Smart Manager**
+  - Max files per directory
+  - Max directory depth
 
 ## 3. Advanced Search (Image 3)
 
