@@ -21,4 +21,4 @@ python:
 	python3 python/src/main.py
 
 python_test:
-	pytest -v --color=yes --tb=short python/testing/
+	pytest -v -s --color=yes --tb=short python/testing/
