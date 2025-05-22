@@ -7,3 +7,5 @@ __pycache__/
 
 # Ignore pytest cache (wherever it may be)
 .pytest_cache/
+
+venv/
