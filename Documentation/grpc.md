@@ -92,14 +92,23 @@ The following .proto files can be created to represent the information that need
 ```
 syntax = "proto3";
 
+// Simple tags defined by users
 message Tag {
   string name = 1;
 }
 
+// Key-val metadata as extracted (don't use maps as this is more portable for go)
+message MetadataEntry {
+  string key = 1;
+  string value = 2;
+}
+
 message File {
   string name = 1;
-  string path = 2;
-  repeated Tag tags = 3;
+  string original_path = 2;
+  string new_path = 3;
+  repeated Tag tags = 4;
+  repeated MetadataEntry metadata = 5;
 }
 
 message Directory {
@@ -110,10 +119,12 @@ message Directory {
 }
 
 // For request/response messages
+// Go to python 
 message DirectoryRequest {
   Directory root = 1;
 }
 
+// Python to go
 message DirectoryResponse {
   Directory root = 1;
 }
@@ -196,3 +207,6 @@ if __name__ == '__main__':
     serve()
 
 ```
+
+**Important Note**  
+In .proto3 all field are optional by default. If a field is not set then the value is simply set to the field's default type. Hence if a field is not needed, for example the new_path or MetadataEntry in a DirectoryRequest message it should simply be left empty.
