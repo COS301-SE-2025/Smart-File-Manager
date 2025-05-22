@@ -116,6 +116,7 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 
 ## Architectural Requirements
 
+
 ### Quality Requirements
 1. Performance.      
 1.1 Time for reorganizing a new smart manager should scale linearly with amount of folders and files.  
@@ -141,6 +142,12 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 
 
 ### Architectural Patterns
+![Website architecture](assets/websiteArchitecure.png).
+1. Client server to allow users to communicate with the server and perform operations (downloading, profile edits etc.)
+
+![Application architecture](assets/applicationArchitecture.png)
+1. Monolithic structure such that the entire application is deployed as a single unit. Within the single unit, concerns are separated into independent layers.
+2. The API (master) layer will communicate with, and manage the python threads (slaves).
 
 ### Design Patterns
 The current design of our project makes use of 2 design patterns to achieve various functionality. Our decisions as to why these were used and how they are implemented follows:
