@@ -11,5 +11,14 @@
 # build:
 # 	go build -o bin/sfm ./go/cmd/sfm
 
+# Otherwise make thinks these are files and not commands
+.PHONY: python python_test
+
 go:
 	go run ./golang/main.go
+
+python:
+	python3 python/src/main.py
+
+python_test:
+	pytest -v --color=yes --tb=short python/testing/
