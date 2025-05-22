@@ -8,7 +8,7 @@ import magic # Used for MIME-Type
 from PIL import Image # Used for images
 from PIL.ExifTags import TAGS
 import mutagen # Used for audio
-import pypdf # used for pdf (shocker)
+from pypdf import PdfReader # used for pdf (shocker)
 import docx
 
 # Used to extract metadata from various files
@@ -61,8 +61,7 @@ class MetaDataScraper:
     # Extract pdf metadata
     def get_pdf_metadata(filepath):
         try:
-            with open(filepath, 'rb') as f:
-                pdf = PyPDF2.PdfReader(f)
+                pdf = PdfReader(filepath)
                 return dict(pdf.metadata or {})
         except Exception:
             return {}
