@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:app/shell.dart';
+import 'package:app/navigation/shell.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {

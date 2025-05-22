@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:app/custom_widgets/create_manager.dart';
 
 class NavigationItem {
   final IconData icon;
   final String label;
 
   NavigationItem({required this.icon, required this.label});
+}
+
+class ManagerNavigationItem extends NavigationItem {
+  final String directory;
+
+  ManagerNavigationItem({
+    required super.icon,
+    required super.label,
+    required this.directory,
+  });
 }
 
 class MainNavigation extends StatefulWidget {
@@ -28,7 +39,7 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  List<NavigationItem> _managers = [];
+  final List<ManagerNavigationItem> _managers = [];
 
   @override
   Widget build(BuildContext context) {
@@ -69,11 +80,12 @@ class _MainNavigationState extends State<MainNavigation> {
             child: ListView(
               children: [
                 ..._managers.asMap().entries.map((entry) {
-                  NavigationItem item = entry.value;
+                  ManagerNavigationItem item = entry.value;
 
                   return HoverableNavigationTile(
                     icon: item.icon,
                     label: item.label,
+                    tooltip: "Directory: ${item.directory}",
                     selected: widget.selectedManager == item.label,
                     onTap: () => widget.onManagerTap?.call(item.label),
                   );
@@ -82,15 +94,29 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                _managers.add(
-                  NavigationItem(
-                    icon: Icons.circle,
-                    label: 'Manager ${_managers.length + 1}',
+            onPressed: () async {
+              final result = await createManager(context);
+
+              if (result != null) {
+                setState(() {
+                  _managers.add(
+                    ManagerNavigationItem(
+                      icon: Icons.folder,
+                      label: result.name,
+                      directory: result.directory,
+                    ),
+                  );
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Smart Manager "${result.name}" created successfully',
+                    ),
+                    backgroundColor: Color(0xffFFB400),
+                    duration: Duration(seconds: 2),
                   ),
                 );
-              });
+              }
             },
             child: Text(
               "+ Create Smart Manager",
@@ -106,6 +132,7 @@ class _MainNavigationState extends State<MainNavigation> {
 class HoverableNavigationTile extends StatefulWidget {
   final IconData icon;
   final String label;
+  final String? tooltip;
   final bool selected;
   final VoidCallback onTap;
 
@@ -113,6 +140,7 @@ class HoverableNavigationTile extends StatefulWidget {
     super.key,
     required this.icon,
     required this.label,
+    this.tooltip,
     required this.selected,
     required this.onTap,
   });
@@ -138,22 +166,24 @@ class _HoverableNavigationTileState extends State<HoverableNavigationTile> {
 
     Color iconTextColor = isSelected ? Colors.black : const Color(0xffF5F5F5);
 
+    Widget tile = Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: ListTile(
+        leading: Icon(widget.icon, color: iconTextColor),
+        title: Text(widget.label, style: TextStyle(color: iconTextColor)),
+        onTap: widget.onTap,
+      ),
+    );
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 5),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: ListTile(
-          leading: Icon(widget.icon, color: iconTextColor),
-          title: Text(widget.label, style: TextStyle(color: iconTextColor)),
-          onTap: widget.onTap,
-        ),
-      ),
+      child: tile,
     );
   }
 }

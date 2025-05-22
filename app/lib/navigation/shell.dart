@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'pages/dashboard_page.dart';
-import 'pages/smart_managers_page.dart';
-import 'pages/settings_page.dart';
-import 'pages/advanced_search_page.dart';
+import '../pages/dashboard_page.dart';
+import '../pages/smart_managers_page.dart';
+import '../pages/settings_page.dart';
+import '../pages/advanced_search_page.dart';
 import 'main_navigation.dart';
-import 'pages/manager_page.dart';
+import '../pages/manager_page.dart';
 
 class Shell extends StatefulWidget {
   const Shell({super.key});
