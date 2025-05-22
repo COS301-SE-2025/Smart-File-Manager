@@ -116,6 +116,7 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 
 ## Architectural Requirements
 
+
 ### Quality Requirements
 1. Performance.      
 1.1 Time for reorganizing a new smart manager should scale linearly with amount of folders and files.  
@@ -141,6 +142,17 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 
 
 ### Architectural Patterns
+#### Website Architecture
+![Website architecture](assets/websiteArchitecure.png).
+Client server to allow users to communicate with the server and perform operations (downloading, profile edits, login/register etc.). This is the standard architecture associated with most traditional websites.
+#### Application Architecture
+![Application architecture](assets/applicationArchitecture.png)
+Hybrid between Monolithic and Master-Slave
+Monolithic structure such that the entire application is deployed as a single unit, which is ideal as our application will be deployed entirely on the user's local machine. Within the single unit, concerns are separated into layers, as required,
+The API layer uses gRPC to communicate from Go to Python. A master slave pattern is applied in our python codebase. A master monitors incoming requests from gRPC and scales the service via python threads (slaves) that perform the AI requirements such as clustering and other tasks such as metadata extraction.
+
+#### Hybrid Approach Benefits
+Combining both Go and Python allows us to leverage the strenghts of each for the best product possible. Go is coveted for its safety and strong concurrency while Python is the de facto standard for any AI related tasks. Combining these allows us to provide an implementation that is both accurate while remaining highly efficient.
 
 ### Design Patterns
 The current design of our project makes use of 2 design patterns to achieve various functionality. Our decisions as to why these were used and how they are implemented follows:
