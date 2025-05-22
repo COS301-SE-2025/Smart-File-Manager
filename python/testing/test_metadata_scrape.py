@@ -25,22 +25,34 @@ def test_image_metadata(mock_image_open):
     mock_image_open.return_value = mock_image
 
     from src.metadata_scraper import MetaDataScraper
-    metadata = MetaDataScraper.get_image_metadata("fake.jpg")
+    scraper = MetaDataScraper("fake.jpg")
+    metadata = scraper.get_image_metadata()
 
     assert metadata["DateTime"] == "2020:01:01 00:00:00"
     assert metadata["ImageDescription"] == "Test Image"
 
-# Audio Files
+# Audio and video
 @patch("src.metadata_scraper.mutagen.File")
-def test_audio_metadata(mock_mutagen_file):
-    mock_audio = {"TPE1": ["Artist Name"], "TIT2": ["Track Title"]}
-    mock_mutagen_file.return_value = mock_audio
-
+def test_audio_video_metadata(mock_mutagen_file):
     from src.metadata_scraper import MetaDataScraper
-    metadata = MetaDataScraper.get_audio_metadata("myAudio.mp3")
 
-    assert metadata["TPE1"] == "['Artist Name']"
-    assert metadata["TIT2"] == "['Track Title']"
+    mock_audio = {"TPE1": ["Artist Name"], "TIT2": ["Track Title"]}
+    mock_video = {"©nam": ["Test Video"], "©ART": ["Video Creator"]}
+
+    mock_mutagen_file.side_effect = [mock_audio, mock_video] # audio then video for mock
+
+    # Test audio 
+    audio_scraper = MetaDataScraper("myAudio.mp3")
+    audio_metadata = audio_scraper.get_audio_video_metadata()
+    assert audio_metadata["TPE1"] == "['Artist Name']"
+    assert audio_metadata["TIT2"] == "['Track Title']"
+
+    # Test video 
+    video_scraper = MetaDataScraper("myVideo.mp4")
+    video_metadata = video_scraper.get_audio_video_metadata()
+    assert video_metadata["©nam"] == "['Test Video']"
+    assert video_metadata["©ART"] == "['Video Creator']"
+
 
 # Pdf files
 @patch("src.metadata_scraper.PdfReader")
@@ -53,7 +65,8 @@ def test_pdf_metadata(mock_pdf_reader):
     mock_pdf_reader.return_value = mock_reader
 
     from src.metadata_scraper import MetaDataScraper
-    metadata = MetaDataScraper.get_pdf_metadata("myPdf.pdf")
+    scraper = MetaDataScraper("myPdf.pdf")
+    metadata = scraper.get_pdf_metadata()
 
     assert metadata["/Author"] == "John Doe"
     assert metadata["/Title"] == "Sample PDF"
@@ -71,7 +84,8 @@ def test_docx_metadata(mock_docx_doc):
     mock_docx_doc.return_value = mock_doc
 
     from src.metadata_scraper import MetaDataScraper
-    metadata = MetaDataScraper.get_docx_metadata("myWordDoc.docx")
+    scraper = MetaDataScraper("myWordDoc.docx")
+    metadata = scraper.get_docx_metadata()
 
     assert metadata["author"] == "Jane Doe"
     assert metadata["title"] == "Test Doc"
@@ -79,24 +93,87 @@ def test_docx_metadata(mock_docx_doc):
 
 # < ------ INTEGRATION TESTING ------ >
 # Real pdf
-# def test_real_pdf():
-#     test_file = get_test_file("myPdf.pdf")
+def test_real_pdf():
+    test_file = get_test_file("myPdf.pdf")
 
-#     scraper = MetaDataScraper(test_file)
-
-#     metadata = scraper.metadata
-#     print(metadata)
+    scraper = MetaDataScraper(test_file)
+    scraper.get_metadata()
+    metadata = scraper.metadata
     
-#     # assert metadata["filename"] == "myPdf.pdf"
-#     # assert metadata["file_extension"] == ".pdf"
-#     # assert metadata["mime_type"] == "application/pdf"
-#     # assert "created" in metadata and isinstance(metadata["created"], str)
-#     # assert "modified" in metadata and isinstance(metadata["modified"], str)
-#     # assert metadata["size_bytes"] > 0
+    assert metadata["filename"] == "myPdf.pdf"
+    assert metadata["file_extension"] == ".pdf"
+    assert metadata["mime_type"] == "application/pdf"
+    assert "created" in metadata and isinstance(metadata["created"], str)
+    assert "modified" in metadata and isinstance(metadata["modified"], str)
+    assert metadata["size_bytes"] > 0
+    assert len(metadata) >= 7
 
-# # Real img
-# def test_real_img():
-#     test_file = get_test_file("myImg.jpg")
+# Real img
+def test_real_img():
+    test_file = get_test_file("myImg.jpg")
 
-#     scraper = MetaDataScraper(test_file)
-#     print(scraper.metadata)
+    scraper = MetaDataScraper(test_file)
+    scraper.get_metadata()
+
+    metadata = scraper.metadata
+
+    assert metadata["filename"] == "myImg.jpg"
+    assert metadata["file_extension"] == ".jpg"
+    assert metadata["mime_type"] == "image/jpeg"
+    assert "created" in metadata and isinstance(metadata["created"], str)
+    assert "modified" in metadata and isinstance(metadata["modified"], str)
+    assert metadata["size_bytes"] > 0
+    assert len(metadata) >= 7
+
+# Real word doc
+def test_real_word():
+    test_file = get_test_file("myWordDoc.docx")
+
+    scraper = MetaDataScraper(test_file)
+    scraper.get_metadata()
+
+    metadata = scraper.metadata
+
+    assert metadata["filename"] == "myWordDoc.docx"
+    assert metadata["file_extension"] == ".docx"
+    assert metadata["mime_type"] == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    assert "created" in metadata and isinstance(metadata["created"], str)
+    assert "modified" in metadata and isinstance(metadata["modified"], str)
+    assert metadata["size_bytes"] > 0
+    assert metadata["author"] == "Philipp du Plessis"
+    assert metadata["title"] == ""
+    assert metadata["subject"] == ""
+    assert len(metadata) >= 7
+
+# Real audio file
+def test_real_audio():
+    test_file = get_test_file("myAudio.m4a")
+
+    scraper = MetaDataScraper(test_file)
+    scraper.get_metadata()
+
+    metadata = scraper.metadata
+    
+    assert metadata["filename"] == "myAudio.m4a"
+    assert metadata["file_extension"] == ".m4a"
+    assert "audio" in metadata["mime_type"]  
+    assert "created" in metadata and isinstance(metadata["created"], str)
+    assert "modified" in metadata and isinstance(metadata["modified"], str)
+    assert metadata["size_bytes"] > 0
+    assert len(metadata) >= 7
+
+# Real video file
+def test_real_video():
+    test_file = get_test_file("myVideo.webm")
+
+    scraper = MetaDataScraper(test_file)
+    scraper.get_metadata()
+
+    metadata = scraper.metadata
+     
+    assert metadata["filename"] == "myVideo.webm"
+    assert metadata["file_extension"] == ".webm"
+    assert metadata["mime_type"] == "video/webm"
+    assert "created" in metadata and isinstance(metadata["created"], str)
+    assert "modified" in metadata and isinstance(metadata["modified"], str)
+    assert metadata["size_bytes"] > 0

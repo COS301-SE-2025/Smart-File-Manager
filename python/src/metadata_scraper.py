@@ -7,7 +7,7 @@ from pathlib import Path
 import magic # Used for MIME-Type
 from PIL import Image # Used for images
 from PIL.ExifTags import TAGS
-import mutagen # Used for audio
+import mutagen # Used for audio and video
 from pypdf import PdfReader # used for pdf (shocker)
 import docx
 
@@ -36,9 +36,9 @@ class MetaDataScraper:
         })
 
     # Extracts image file metadata
-    def get_image_metadata(filepath):
+    def get_image_metadata(self):
         try:
-            with Image.open(filepath) as img:
+            with Image.open(self.filedir) as img:
                 exif_data = img._getexif()
                 if not exif_data:
                     return {}
@@ -49,9 +49,9 @@ class MetaDataScraper:
             return {}
         
     # Extract audio metadata
-    def get_audio_metadata(filepath):
+    def get_audio_video_metadata(self):
         try:
-            audio = mutagen.File(filepath)
+            audio = mutagen.File(self.filedir)
             if not audio:
                 return {}
             return {k: str(v) for k, v in audio.items()}
@@ -59,17 +59,17 @@ class MetaDataScraper:
             return {}
     
     # Extract pdf metadata
-    def get_pdf_metadata(filepath):
+    def get_pdf_metadata(self):
         try:
-                pdf = PdfReader(filepath)
+                pdf = PdfReader(self.filedir)
                 return dict(pdf.metadata or {})
         except Exception:
             return {}
         
     # Extract .docx metadata
-    def get_docx_metadata(filepath):
+    def get_docx_metadata(self):
         try:
-            doc = docx.Document(filepath)
+            doc = docx.Document(self.filedir)
             core_props = doc.core_properties
             return {
                 "author": core_props.author,
@@ -81,3 +81,19 @@ class MetaDataScraper:
         except Exception:
             return {}
         
+    # Extract video metadata
+
+    # Extract all metadata possible
+    def get_metadata(self):
+        self.get_standard_metadata()
+
+        # Check file MIME type to decide what other metadata to scan
+        mime_type = str(self.metadata["mime_type"])
+        if "image" in mime_type:
+            self.metadata.update(self.get_image_metadata())
+        elif "audio" in mime_type or "video" in mime_type:
+            self.metadata.update(self.get_audio_video_metadata())
+        elif mime_type == "application/pdf":
+            self.metadata.update(self.get_pdf_metadata())
+        elif mime_type in ["application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
+            self.metadata.update(self.get_docx_metadata())
