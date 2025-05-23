@@ -1,6 +1,7 @@
 package filesystem
 
 import (
+	"errors"
 	"time"
 )
 
@@ -14,6 +15,9 @@ type tag struct {
 type FileSystemItem interface {
 	GetPath() string
 	RemoveItem(itemPath string) bool
+	AddItem(item FileSystemItem) error
+	GetItem(itemPath string) FileSystemItem
+	AddTag(tagID string, tagName string)
 }
 
 // base struct
@@ -47,8 +51,13 @@ type Folder struct {
 	containedItems []FileSystemItem
 }
 
-func (f *Folder) AddItem(newItem FileSystemItem) {
+func (f *Folder) AddItem(newItem FileSystemItem) error {
 	f.containedItems = append(f.containedItems, newItem)
+	return nil
+}
+
+func (f *File) AddItem(item FileSystemItem) error {
+	return errors.New("cannot add item to a File: operation not supported")
 }
 
 func (f *Folder) RemoveItem(itemPath string) bool {
@@ -69,4 +78,42 @@ func (f *Folder) RemoveItem(itemPath string) bool {
 
 func (f *Folder) GetPath() string {
 	return f.itemPath
+}
+
+func (f *Folder) GetItem(itemPath string) FileSystemItem {
+	for _, item := range f.containedItems {
+		if item.GetPath() == itemPath {
+			return item
+		}
+		if folder, ok := item.(*Folder); ok {
+			if found := folder.GetItem(itemPath); found != nil {
+				return found
+			}
+		}
+	}
+	return nil
+}
+func (f *File) GetItem(itemPath string) FileSystemItem {
+	//get item needs to be called on folder
+	return nil
+}
+
+func (f *Folder) AddTagToItem(itemPath string, tagID string, tagName string) bool {
+	item := f.GetItem(itemPath)
+	if item != nil {
+		item.AddTag(tagID, tagName)
+		return true
+	}
+	return false
+}
+
+func (f *Folder) AddTagToSelf(tagID string, tagName string) {
+	f.itemTags = append(f.itemTags, tag{tagID, tagName})
+}
+
+func (f *File) AddTag(tagID string, tagName string) {
+	f.itemTags = append(f.itemTags, tag{tagID, tagName})
+}
+func (f *Folder) AddTag(tagID string, tagName string) {
+	f.itemTags = append(f.itemTags, tag{tagID, tagName})
 }

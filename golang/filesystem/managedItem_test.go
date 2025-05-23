@@ -2,6 +2,7 @@ package filesystem
 
 //run test: go test ./filesystem
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -21,8 +22,14 @@ func createTestStructure() *Folder {
 		creationDate: time.Now(),
 	}}
 
-	sub.AddItem(file)
-	root.AddItem(sub)
+	err := sub.AddItem(file)
+	if err != nil {
+		fmt.Println(err)
+	}
+	err1 := root.AddItem(sub)
+	if err1 != nil {
+		fmt.Println(err1)
+	}
 
 	return root
 }
