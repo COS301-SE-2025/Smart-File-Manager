@@ -35,6 +35,28 @@ Once again ensure pytest is added to PATH
 ## Adding testing files
 Ensure all tests are placed in python/src/testing and start with the prefix test_ to allow pytest to automatically collect all tests.
 
+## gRPC (all python)
+* Ensure `grpcio` and `grpcio-tools` are installed.
+
+### Usage
+* Add function to proto. `python/src/protos/your-name.proto`
+* Add function definition to server. `python/src/greeter_server.py` 
+* Add function call in client. `python/src/greeter_client.py`
+
+### Build and run
+**Generate pb2 files from the proto file (when there are any changes to proto)** 
+```
+make proto_gen
+```
+**Run the python server**
+```
+make python_server
+```
+**Run the python client** 
+```
+make python_client
+```
+
 ## Build and run instructions
 
 **Run all source files**
