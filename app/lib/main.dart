@@ -8,6 +8,7 @@ void main() async {
 
   WindowOptions windowOptions = WindowOptions(
     minimumSize: Size(900, 600),
+    size: Size(900, 600),
     center: true,
     backgroundColor: Colors.transparent,
   );

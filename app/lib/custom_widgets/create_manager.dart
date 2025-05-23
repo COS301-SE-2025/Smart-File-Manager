@@ -19,6 +19,8 @@ Future<SmartManagerInfo?> createManager(BuildContext context) {
 }
 
 class SmartManagerDialog extends StatefulWidget {
+  const SmartManagerDialog({super.key});
+
   @override
   _SmartManagerDialogState createState() => _SmartManagerDialogState();
 }
@@ -67,7 +69,7 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
         return false;
       }
 
-      final testFile = File('${path}/.temp_write_test');
+      final testFile = File('$path/.temp_write_test');
       try {
         await testFile.writeAsString('test');
         await testFile.delete();
@@ -177,11 +179,11 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
     if (_isSystemDirectory(path)) {
       errorMessage =
           "The selected directory is a system directory and cannot be used:\n\n$path\n\n"
-          "Please choose a user directory like Documents, Desktop, or create a custom folder.";
+          "Please choose a user directory.";
     } else {
       errorMessage =
           "The selected directory cannot be used:\n\n$path\n\n"
-          "Please choose a directory where you have write permissions.";
+          "Please choose a directory where you have permissions.";
     }
 
     showDialog(
@@ -208,7 +210,14 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Color(0xff1E1E1E),
       title: const Text("Create Smart Manager"),
+      titleTextStyle: TextStyle(
+        color: Color(0xffFFB400),
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+      ),
+      contentTextStyle: TextStyle(color: Colors.white),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,11 +225,21 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
           const Text("Enter manager name and select directory:"),
           const SizedBox(height: 16),
           TextField(
+            style: TextStyle(color: Colors.white),
+            cursorColor: Color(0xffFFB400),
             controller: _nameController,
             decoration: const InputDecoration(
               labelText: "Manager Name",
+              labelStyle: TextStyle(color: Colors.white),
+
               hintText: "Enter a name for your manager",
               border: OutlineInputBorder(),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xffFFB400)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xffFFB400)),
+              ),
             ),
             onChanged: (value) {
               setState(() {});
@@ -241,6 +260,10 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
               ),
               ElevatedButton(
                 onPressed: _pickDirectory,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xffFFB400),
+                  foregroundColor: Colors.black,
+                ),
                 child: const Text("Browse"),
               ),
             ],
@@ -260,9 +283,11 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
           onPressed: () {
             Navigator.of(context).pop(null);
           },
+          style: TextButton.styleFrom(foregroundColor: Colors.grey),
           child: const Text("Cancel"),
         ),
         TextButton(
+          style: TextButton.styleFrom(foregroundColor: Colors.grey),
           onPressed:
               _canCreate()
                   ? () {

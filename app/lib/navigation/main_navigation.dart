@@ -41,11 +41,20 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   final List<ManagerNavigationItem> _managers = [];
 
+  bool _managerNameExists(String name) {
+    for (ManagerNavigationItem item in _managers) {
+      if (name.toLowerCase() == item.label.toLowerCase()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 250,
-      padding: EdgeInsets.fromLTRB(0, 0, 0, 50),
+      padding: EdgeInsets.only(bottom: 50),
       decoration: BoxDecoration(
         border: Border(right: BorderSide(color: Color(0xff3D3D3D))),
         color: const Color(0xff1E1E1E),
@@ -98,24 +107,38 @@ class _MainNavigationState extends State<MainNavigation> {
               final result = await createManager(context);
 
               if (result != null) {
-                setState(() {
-                  _managers.add(
-                    ManagerNavigationItem(
-                      icon: Icons.folder,
-                      label: result.name,
-                      directory: result.directory,
+                bool isUnique = _managerNameExists(result.name);
+
+                if (isUnique) {
+                  setState(() {
+                    _managers.add(
+                      ManagerNavigationItem(
+                        icon: Icons.folder,
+                        label: result.name,
+                        directory: result.directory,
+                      ),
+                    );
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Smart Manager "${result.name}" created successfully',
+                      ),
+                      backgroundColor: Color(0xffFFB400),
+                      duration: Duration(seconds: 2),
                     ),
                   );
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Smart Manager "${result.name}" created successfully',
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Smart Manager with that name already exists.',
+                      ),
+                      backgroundColor: Colors.redAccent,
+                      duration: Duration(seconds: 2),
                     ),
-                    backgroundColor: Color(0xffFFB400),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
+                  );
+                }
               }
             },
             child: Text(
