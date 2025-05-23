@@ -11,7 +11,7 @@ class SmartManagersPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Files',
+            'Smart Managers Page',
             style: TextStyle(
               color: Colors.white,
               fontSize: 24,
