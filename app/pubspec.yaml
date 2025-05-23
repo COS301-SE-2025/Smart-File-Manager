@@ -37,6 +37,7 @@ dependencies:
   window_manager: ^0.4.3
   file_picker: ^10.1.9
   toggle_switch: ^2.3.0
+  flutter_force_directed_graph: ^1.0.7
 
 dev_dependencies:
   flutter_test:
