@@ -17,7 +17,7 @@ type FileSystemItem interface {
 	RemoveItem(itemPath string) bool
 	AddItem(item FileSystemItem) error
 	GetItem(itemPath string) FileSystemItem
-	AddTag(tagID string, tagName string)
+	AddTag(tagID string, tagName string) bool
 }
 
 // base struct
@@ -111,9 +111,12 @@ func (f *Folder) AddTagToSelf(tagID string, tagName string) {
 	f.itemTags = append(f.itemTags, tag{tagID, tagName})
 }
 
-func (f *File) AddTag(tagID string, tagName string) {
+func (f *File) AddTag(tagID string, tagName string) bool {
 	f.itemTags = append(f.itemTags, tag{tagID, tagName})
+	return true
 }
-func (f *Folder) AddTag(tagID string, tagName string) {
+
+func (f *Folder) AddTag(tagID string, tagName string) bool {
 	f.itemTags = append(f.itemTags, tag{tagID, tagName})
+	return true
 }
