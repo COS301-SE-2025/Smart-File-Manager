@@ -25,11 +25,18 @@ python_test:
 
 proto_gen:
 	python -m grpc_tools.protoc \
-  -Ipython/src/protos \
-  --python_out=python/src \
-  --pyi_out=python/src \
-  --grpc_python_out=python/src \
-  python/src/protos/helloworld.proto
+		-Iprotos \
+		--python_out=python/src \
+		--pyi_out=python/src \
+		--grpc_python_out=python/src \
+		protos/message_structure.proto
+
+#	protoc \
+		--go_out=golang \
+		--go-grpc_out=golang \
+		--proto_path=protos \
+		protos/helloworld.proto
+
 
 python_server:
 	python3 python/src/greeter_server.py

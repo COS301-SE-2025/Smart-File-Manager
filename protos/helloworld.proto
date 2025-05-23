@@ -21,6 +21,8 @@ option objc_class_prefix = "HLW";
 
 package helloworld;
 
+option go_package = "https://github.com/COS301-SE-2025/Smart-File-Manager/protos/helloworld.proto";
+
 // The greeting service definition.
 service Greeter {
   // Sends a greeting
