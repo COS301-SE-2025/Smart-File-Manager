@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:toggle_switch/toggle_switch.dart';
-import 'dart:convert'; //JSON
+import 'dart:convert';
 
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/pages/folder_view_page.dart';
@@ -16,10 +15,10 @@ class ManagerPage extends StatefulWidget {
 }
 
 class _ManagerPageState extends State<ManagerPage> {
-  int _currentView = 0; //folder or graph
-  List<String> _currentPath = []; //breadcrums
-  FileTreeNode? _treeData; //full tree structure
-  FileTreeNode? _selectedFile; //for details of file
+  int _currentView = 0; // 0 = folder, 1 = graph
+  List<String> _currentPath = [];
+  FileTreeNode? _treeData;
+  FileTreeNode? _selectedFile;
   bool _isDetailsVisible = false;
   bool _isLoading = true;
 
@@ -29,32 +28,56 @@ class _ManagerPageState extends State<ManagerPage> {
     _loadTreeData();
   }
 
-  //API - Replace with api call (use mocking data now)
   Future<void> _loadTreeData() async {
-    //netword delay test
-    await Future.delayed(const Duration(seconds: 3));
+    // Simulate delay
+    await Future.delayed(const Duration(seconds: 2));
 
-    //Mock JSON
+    //mock data
     final mockJsonData = {
       "name": "root",
       "isFolder": true,
       "id": "root",
       "children": [
-        {"name": "file1.txt", "isFolder": false, "id": "file1"},
-        {"name": "file2.docx", "isFolder": false, "id": "file2"},
+        {
+          "name": "file1.txt",
+          "isFolder": false,
+          "id": "file1",
+          "tags": ["work", "important"],
+        },
+        {
+          "name": "file2.docx",
+          "isFolder": false,
+          "id": "file2",
+          "tags": ["document"],
+        },
         {
           "name": "Documents",
           "isFolder": true,
           "id": "documents",
           "children": [
-            {"name": "resume.pdf", "isFolder": false, "id": "resume"},
+            {
+              "name": "resume.pdf",
+              "isFolder": false,
+              "id": "resume",
+              "tags": ["personal", "career"],
+            },
             {
               "name": "Projects",
               "isFolder": true,
               "id": "projects",
               "children": [
-                {"name": "project1.docx", "isFolder": false, "id": "project1"},
-                {"name": "project2.xlsx", "isFolder": false, "id": "project2"},
+                {
+                  "name": "project1.docx",
+                  "isFolder": false,
+                  "id": "project1",
+                  "tags": ["work", "project"],
+                },
+                {
+                  "name": "project2.xlsx",
+                  "isFolder": false,
+                  "id": "project2",
+                  "tags": ["spreadsheet", "data"],
+                },
               ],
             },
           ],
@@ -64,38 +87,37 @@ class _ManagerPageState extends State<ManagerPage> {
           "isFolder": true,
           "id": "pictures",
           "children": [
-            {"name": "vacation.jpg", "isFolder": false, "id": "vacation"},
+            {
+              "name": "vacation.jpg",
+              "isFolder": false,
+              "id": "vacation",
+              "tags": ["photo", "vacation"],
+            },
             {
               "name": "Family",
               "isFolder": true,
               "id": "family",
-              "children": [
-                {"name": "photo1.png", "isFolder": false, "id": "photo1"},
-                {"name": "photo2.png", "isFolder": false, "id": "photo2"},
-              ],
+              "children": [],
             },
           ],
         },
       ],
     };
 
-    //parse jjson to class
     setState(() {
       _treeData = FileTreeNode.fromJson(mockJsonData);
       _isLoading = false;
     });
   }
 
-  //changing view
-  void _handleViewChange(int? index) {
+  void _handleViewChange(int index) {
     setState(() {
-      _currentView = index ?? 0;
+      _currentView = index;
       _isDetailsVisible = false;
       _selectedFile = null;
     });
   }
 
-  //file selection
   void _handleFileSelect(FileTreeNode file) {
     setState(() {
       _selectedFile = file;
@@ -103,14 +125,12 @@ class _ManagerPageState extends State<ManagerPage> {
     });
   }
 
-  //directory navigation
   void _handleNavigation(List<String> newPath) {
     setState(() {
       _currentPath = newPath;
     });
   }
 
-  //detailsPanelClose
   void _handleDetailPanelClose() {
     setState(() {
       _isDetailsVisible = false;
@@ -121,17 +141,28 @@ class _ManagerPageState extends State<ManagerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _topBar(),
-      body: Stack(
+      appBar: _buildTopBar(),
+      body: Column(
         children: [
-          Column(children: [_searchBar(), Expanded(child: _mainContent())]),
-          _detailsPanel(),
+          _buildSearchBar(),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  flex: _isDetailsVisible ? 3 : 1,
+                  child: _buildMainContent(),
+                ),
+                if (_isDetailsVisible)
+                  SizedBox(width: 200, child: _buildDetailsPanel()),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  PreferredSize _topBar() {
+  PreferredSize _buildTopBar() {
     return PreferredSize(
       preferredSize: const Size.fromHeight(50),
       child: AppBar(
@@ -140,13 +171,13 @@ class _ManagerPageState extends State<ManagerPage> {
         shape: const Border(
           bottom: BorderSide(color: Color(0xff3D3D3D), width: 1),
         ),
-        flexibleSpace: Center(
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Expanded(
+        flexibleSpace: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Center(
                     child: Row(
                       children: [
                         Text(
@@ -159,73 +190,28 @@ class _ManagerPageState extends State<ManagerPage> {
                         ),
                         const SizedBox(width: 12),
                         Container(
-                          width: 100,
-                          height: 20,
                           padding: const EdgeInsets.symmetric(
-                            vertical: 2,
+                            vertical: 4,
                             horizontal: 8,
                           ),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                             color: const Color(0xff094E3A),
                           ),
-                          child: const Center(
-                            child: Text(
-                              '75% organized',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Color(0xff6EE79B),
-                              ),
+                          child: const Text(
+                            '75% organized',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Color(0xff6EE79B),
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: ToggleSwitch(
-                      initialLabelIndex: _currentView,
-                      minWidth: 90,
-                      minHeight: 30,
-                      fontSize: 12,
-                      inactiveBgColor: const Color(0xff242424),
-                      inactiveFgColor: const Color(0xff9CA3AF),
-                      borderColor: const [Color(0xff3D3D3D)],
-                      cornerRadius: 4,
-                      borderWidth: 1,
-                      totalSwitches: 2,
-                      labels: const ['Folder View', 'Graph View'],
-                      onToggle: _handleViewChange,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    height: 33,
-                    child: TextButton(
-                      onPressed: () {},
-                      style: TextButton.styleFrom(
-                        backgroundColor: const Color(0xff242424),
-                        side: const BorderSide(
-                          color: Color(0xff3D3D3D),
-                          width: 1,
-                        ),
-                        foregroundColor: const Color(0xff9CA3AF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                      child: const Text(
-                        "Sort",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                _buildViewToggle(),
+              ],
             ),
           ),
         ),
@@ -233,7 +219,57 @@ class _ManagerPageState extends State<ManagerPage> {
     );
   }
 
-  Widget _searchBar() {
+  Widget _buildViewToggle() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xff242424),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xff3D3D3D)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildToggleButton('Folder', 0, Icons.folder),
+          _buildToggleButton('Graph', 1, Icons.account_tree),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleButton(String label, int index, IconData icon) {
+    final isSelected = _currentView == index;
+    return GestureDetector(
+      onTap: () => _handleViewChange(index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xffFFB400) : Colors.transparent,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.black : const Color(0xff9CA3AF),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: isSelected ? Colors.black : const Color(0xff9CA3AF),
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
     return Container(
       height: 50,
       decoration: const BoxDecoration(
@@ -245,46 +281,56 @@ class _ManagerPageState extends State<ManagerPage> {
         child: Row(
           children: [
             Container(
-              width: 200,
-              height: 33,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              width: 250,
+              height: 32,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: const Color(0xff242424),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: const Color(0xff3D3D3D), width: 1),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xff3D3D3D)),
               ),
               child: Center(
                 child: TextField(
+                  onChanged: null,
                   cursorColor: const Color(0xffFFB400),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xff9CA3AF),
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.white),
                   decoration: const InputDecoration(
-                    hintText: 'Search...',
+                    hintText: 'Search files and folders...',
                     hintStyle: TextStyle(
                       color: Color(0xff9CA3AF),
                       fontSize: 12,
                     ),
                     border: InputBorder.none,
                     isCollapsed: true,
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: Color(0xff9CA3AF),
+                      size: 16,
+                    ),
+                    prefixIconConstraints: BoxConstraints(
+                      minWidth: 20,
+                      minHeight: 16,
+                    ),
                   ),
-                  //onChanged:  Need code
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Container(
-              height: 33,
+              height: 32,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               decoration: BoxDecoration(
                 color: const Color(0xff242424),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: const Color(0xff3D3D3D), width: 1),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xff3D3D3D)),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
-                  //value: need code
+                  value: null,
+                  hint: const Text(
+                    'Sort by',
+                    style: TextStyle(fontSize: 12, color: Color(0xff9CA3AF)),
+                  ),
                   dropdownColor: const Color(0xff2E2E2E),
                   iconEnabledColor: const Color(0xff9CA3AF),
                   style: const TextStyle(
@@ -292,24 +338,10 @@ class _ManagerPageState extends State<ManagerPage> {
                     color: Color(0xff9CA3AF),
                   ),
                   items: const [
-                    DropdownMenuItem(
-                      value: 'Name',
-                      child: Text('Sort by Name'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Size',
-                      child: Text('Sort by Size'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Date Modified',
-                      child: Text('Sort by Date Modified'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Date Created',
-                      child: Text('Sort by Date Created'),
-                    ),
+                    DropdownMenuItem(value: 'name', child: Text('Name')),
+                    DropdownMenuItem(value: 'size', child: Text('Size')),
                   ],
-                  onChanged: null, //Code needed
+                  onChanged: null,
                 ),
               ),
             ),
@@ -319,23 +351,43 @@ class _ManagerPageState extends State<ManagerPage> {
     );
   }
 
-  Widget _mainContent() {
+  Widget _buildMainContent() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: Color(0xffFFB400)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: Color(0xffFFB400)),
+            SizedBox(height: 16),
+            Text(
+              'Loading files...',
+              style: TextStyle(color: Color(0xff9CA3AF)),
+            ),
+          ],
+        ),
       );
     }
 
     if (_treeData == null) {
       return const Center(
-        child: Text(
-          'Failed to load data',
-          style: TextStyle(color: Colors.white),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Color(0xffDC2626)),
+            SizedBox(height: 16),
+            Text(
+              'Failed to load data',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+            Text(
+              'Please try again later',
+              style: TextStyle(color: Color(0xff9CA3AF), fontSize: 14),
+            ),
+          ],
         ),
       );
     }
 
-    // Step 6: View Switching Logic
     switch (_currentView) {
       case 0:
         return FolderViewPage(
@@ -345,16 +397,13 @@ class _ManagerPageState extends State<ManagerPage> {
           onNavigate: _handleNavigation,
         );
       case 1:
-        return GraphViewPage(
-          treeData: _treeData!,
-          onFileSelected: _handleFileSelect,
-        );
+        return GraphViewPage();
       default:
-        return Container();
+        return Placeholder();
     }
   }
 
-  Widget _detailsPanel() {
+  Widget _buildDetailsPanel() {
     return FileDetailsPanel(
       selectedFile: _selectedFile,
       isVisible: _isDetailsVisible,

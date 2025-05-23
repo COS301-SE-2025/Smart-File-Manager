@@ -3,19 +3,20 @@ class FileTreeNode {
   final bool isFolder;
   final List<FileTreeNode>? children;
   final String? id;
+  final List<String>? tags;
 
   FileTreeNode({
     required this.name,
     required this.isFolder,
     this.children,
     this.id,
+    this.tags,
   });
 
-  //convert json structure to dart object
   factory FileTreeNode.fromJson(Map<String, dynamic> json) {
     return FileTreeNode(
-      name: json['name'],
-      isFolder: json['isFolder'],
+      name: json['name'] ?? '',
+      isFolder: json['isFolder'] ?? false,
       children:
           json['children'] != null
               ? (json['children'] as List)
@@ -23,16 +24,17 @@ class FileTreeNode {
                   .toList()
               : null,
       id: json['id'],
+      tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
     );
   }
 
-  //used to send data back to Go server(converting back to jsin)
   Map<String, dynamic> toJson() {
     return {
       'name': name,
       'isFolder': isFolder,
       'children': children?.map((child) => child.toJson()).toList(),
       'id': id,
+      'tags': tags,
     };
   }
 
