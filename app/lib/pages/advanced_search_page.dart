@@ -19,10 +19,6 @@ class AdvancedSearchPage extends StatelessWidget {
             ),
           ),
           SizedBox(height: 20),
-          Text(
-            'Welcome to your file manager search!',
-            style: TextStyle(color: Colors.grey),
-          ),
         ],
       ),
     );

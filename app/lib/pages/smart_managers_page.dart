@@ -19,10 +19,6 @@ class SmartManagersPage extends StatelessWidget {
             ),
           ),
           SizedBox(height: 20),
-          Text(
-            'Your files will be displayed here.',
-            style: TextStyle(color: Colors.grey),
-          ),
         ],
       ),
     );

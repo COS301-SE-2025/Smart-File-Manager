@@ -85,6 +85,7 @@ class _ShellState extends State<Shell> {
             ),
           ),
         ],
+        shape: Border(bottom: BorderSide(color: Color(0xff3D3D3D), width: 1)),
       ),
       body: Row(
         children: [

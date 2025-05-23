@@ -19,10 +19,6 @@ class DashboardPage extends StatelessWidget {
             ),
           ),
           SizedBox(height: 20),
-          Text(
-            'Welcome to your file manager dashboard!',
-            style: TextStyle(color: Colors.grey),
-          ),
         ],
       ),
     );

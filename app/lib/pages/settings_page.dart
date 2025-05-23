@@ -19,10 +19,6 @@ class SettingsPage extends StatelessWidget {
             ),
           ),
           SizedBox(height: 20),
-          Text(
-            'App settings and preferences.',
-            style: TextStyle(color: Colors.grey),
-          ),
         ],
       ),
     );
