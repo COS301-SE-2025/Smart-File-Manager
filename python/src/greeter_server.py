@@ -19,6 +19,7 @@ import logging
 import grpc
 import helloworld_pb2
 import helloworld_pb2_grpc
+import master
 
 
 class Greeter(helloworld_pb2_grpc.GreeterServicer):
@@ -27,6 +28,8 @@ class Greeter(helloworld_pb2_grpc.GreeterServicer):
     def SayHelloAgain(self, request, context):
         return helloworld_pb2.HelloReply(message=f"Hello again, {request.name}!")
     def RudeGoodbye(self, request, context):
+        reponse = requestHandler.handleSlave(request)
+        return helloworld_pb2.protoReply(message=response)
         return helloworld_pb2.HelloReply(message=f"Go away, {request.name}!")
 
 
