@@ -24,6 +24,9 @@ Once again ensure pytest is added to PATH
 * Mutagen (Used for audio metadata): ```pip install mutagen```
 * PyPDF: ```pip install pypdf```
 * docx: ```pip install python-docx```
+* Pillow: ```pip install Pillow```
+* gRPC: ```pip install grpcio```
+* grpc tools: ```pip install grpcio-tools```
 
 ## Where to place your files
 * Add all code to the src directory
