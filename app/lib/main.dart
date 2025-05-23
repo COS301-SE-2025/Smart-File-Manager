@@ -3,6 +3,7 @@ import 'package:app/navigation/shell.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
+  //Package used to set minimum screen size
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
 
@@ -25,6 +26,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //Basic structure, calls the Shell wich creates structure of top Appbar and Navigation
     return MaterialApp(
       title: 'Smart File Manager',
       theme: ThemeData(

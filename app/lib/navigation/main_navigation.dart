@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app/custom_widgets/create_manager.dart';
 
+//class to keep track of main navigation items icon and labels(easy to add more in the future)
 class NavigationItem {
   final IconData icon;
   final String label;
@@ -8,6 +9,7 @@ class NavigationItem {
   NavigationItem({required this.icon, required this.label});
 }
 
+//child class that adds directory field for managers
 class ManagerNavigationItem extends NavigationItem {
   final String directory;
 
@@ -39,8 +41,10 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
+  //has a list of managers that are created
   final List<ManagerNavigationItem> _managers = [];
 
+  //if manager exist, ignore otherwise proceed
   bool _managerNameExists(String name) {
     for (ManagerNavigationItem item in _managers) {
       if (name.toLowerCase() == item.label.toLowerCase()) {
@@ -61,6 +65,7 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
       child: Column(
         children: [
+          //add all tabs with ... operator
           const SizedBox(height: 20),
           ...widget.items.asMap().entries.map((entry) {
             int index = entry.key;
@@ -75,7 +80,7 @@ class _MainNavigationState extends State<MainNavigation> {
               onTap: () => widget.onTap(index),
             );
           }),
-
+          //start smart manager section
           Align(
             alignment: Alignment.centerLeft,
             widthFactor: 1.5,
@@ -86,6 +91,7 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
           ),
           Expanded(
+            //add all managers to the below scrollable section with ... operator
             child: ListView(
               children: [
                 ..._managers.asMap().entries.map((entry) {
@@ -102,6 +108,7 @@ class _MainNavigationState extends State<MainNavigation> {
               ],
             ),
           ),
+          //button to create a new manager
           TextButton(
             onPressed: () async {
               final result = await createManager(context);
@@ -152,6 +159,7 @@ class _MainNavigationState extends State<MainNavigation> {
   }
 }
 
+//the phyical buttons that are rendered with selection states
 class HoverableNavigationTile extends StatefulWidget {
   final IconData icon;
   final String label;

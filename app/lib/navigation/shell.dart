@@ -14,9 +14,10 @@ class Shell extends StatefulWidget {
 }
 
 class _ShellState extends State<Shell> {
-  int _selectedIndex = 0;
-  String? _selectedManager;
+  int _selectedIndex = 0; //index selected form the main menu (0 to 3)
+  String? _selectedManager; //name of the Manager selected
 
+  //pages are stored in a Widget List to send the correct widget(content) given the selected Index
   final List<Widget> _pages = [
     const DashboardPage(),
     const SmartManagersPage(),
@@ -24,6 +25,7 @@ class _ShellState extends State<Shell> {
     const SettingsPage(),
   ];
 
+  //list of the navigation items for selection states
   final List<NavigationItem> _navigationItems = [
     NavigationItem(icon: Icons.dashboard_rounded, label: 'Dashboard'),
     NavigationItem(icon: Icons.web_stories_outlined, label: 'Smart Managers'),
@@ -31,6 +33,7 @@ class _ShellState extends State<Shell> {
     NavigationItem(icon: Icons.settings, label: 'Settings'),
   ];
 
+  //when main navigation item is tapped, set its index and unselect manager if one is selected
   void _onNavigationTap(int index) {
     setState(() {
       _selectedIndex = index;
@@ -38,6 +41,7 @@ class _ShellState extends State<Shell> {
     });
   }
 
+  //select the manager by passed in name and deselect main navigation if selected
   void _onManagerTap(String managerName) {
     setState(() {
       _selectedManager = managerName;
@@ -45,6 +49,7 @@ class _ShellState extends State<Shell> {
     });
   }
 
+  //find the active page and return its widget
   Widget _getCurrentPage() {
     if (_selectedManager != null) {
       return ManagerPage(name: _selectedManager!);
@@ -59,6 +64,7 @@ class _ShellState extends State<Shell> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xff1E1E1E),
+      //Main Appbar with app title and login button
       appBar: AppBar(
         leading: Padding(
           padding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
@@ -76,7 +82,7 @@ class _ShellState extends State<Shell> {
           Padding(
             padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
             child: FilledButton.icon(
-              onPressed: () {},
+              onPressed: () {}, //TODO: need to add login functionality
               label: const Text("Login"),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xff242424),
@@ -89,6 +95,7 @@ class _ShellState extends State<Shell> {
       ),
       body: Row(
         children: [
+          //Main Navigation Widget with parmeters used to navigate
           MainNavigation(
             items: _navigationItems,
             selectedIndex: _selectedIndex,
@@ -96,6 +103,7 @@ class _ShellState extends State<Shell> {
             onTap: _onNavigationTap,
             onManagerTap: _onManagerTap,
           ),
+          //Page that needs to be rendered depending on navigation index
           Expanded(child: _getCurrentPage()),
         ],
       ),
