@@ -1,16 +1,60 @@
-# app
+# Smart File Manager(SFM) - Flutter App
 
-Smart File Manager
+SFM is a cross-platform desktop application built with Flutter, supporting macOS, Windows, and Linux.
+
+## Prerequisites
+
+Before you can run this project, you'll need to have Flutter installed and configured for desktop development.
+
+### 1. Install Flutter SDK
+
+Download and install Flutter from the official website:
+- **Visit**: https://flutter.dev/docs/get-started/install
+- **Follow** the installation guide for your operating system (use the Vscode instructions, it is the easiest)
+
+### 2. Enable Desktop Support
+
+After installing Flutter, enable desktop support by running these commands in your terminal:
+
+```bash
+flutter config --enable-windows-desktop
+flutter config --enable-macos-desktop  
+flutter config --enable-linux-desktop
+```
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### 1. Install Dependencies
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+flutter pub get
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### 2. Verify Setup
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Check that everything is properly configured:
+
+```bash
+flutter doctor
+```
+
+Resolve any issues that appear in the output before proceeding.
+
+### 3. Run the Application
+
+#### Run on your current platform:
+```bash
+flutter run
+```
+
+#### Run on a specific platform:
+```bash
+# Windows
+flutter run -d windows
+
+# macOS
+flutter run -d macos
+
+# Linux
+flutter run -d linux
+```
