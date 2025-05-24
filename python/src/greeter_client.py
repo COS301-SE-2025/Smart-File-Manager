@@ -1,39 +1,39 @@
-# Copyright 2015 gRPC authors.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""The Python implementation of the GRPC helloworld.Greeter client."""
+#This is Go's job
 
 from __future__ import print_function
 
 import logging
 
 import grpc
-import helloworld_pb2
-import helloworld_pb2_grpc
+import message_structure_pb2
+import message_structure_pb2_grpc
 
+from message_structure_pb2 import DirectoryRequest, Directory, File, Tag, MetadataEntry
 
 def run():
-    # NOTE(gRPC Python Team): .close() is possible on a channel and should be
-    # used in circumstances in which the with statement does not fit the needs
-    # of the code.
-    with grpc.insecure_channel('localhost:50051') as channel:
-        stub = helloworld_pb2_grpc.GreeterStub(channel)
-        response = stub.SayHello(helloworld_pb2.HelloRequest(name='you'))
-        print("Greeter client received: " + response.message)
-        response = stub.SayHelloAgain(helloworld_pb2.HelloRequest(name='you'))
-        print("Greeter client received: " + response.message)
-        response = stub.RudeGoodbye(helloworld_pb2.HelloRequest(name='you'))
-        print("Greeter client received: " + response.message)
+    tag1 = Tag(name="ImFixed")
+    meta1 = MetadataEntry(key="author", value="johnny")
+
+    file1 = File(
+        name="gopdoc.pdf",
+        original_path="/usr/go/bin/gopdoc.pdf",
+        new_path="/usr/trash/gopdoc.pdf",
+        tags=[tag1],
+        metadata=[meta1]
+    )
+
+    dir1 = Directory(
+        name="useless_files",
+        path="/usr/trash",
+        files=[file1],
+        directories=[]
+    )
+    req = DirectoryRequest(root=dir1)        
+    with grpc.insecure_channel('localhost:50051') as channel:        
+        stub = message_structure_pb2_grpc.DirectoryServiceStub(channel)
+        response = stub.SendDirectoryStructure(req)
+        print("Greeter client received: ")
+        print(f"{response.root}")
 
 
 if __name__ == "__main__":

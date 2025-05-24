@@ -1,4 +1,6 @@
-import grpc
+from message_structure_pb2 import DirectoryResponse, Directory
 
-
-channel = grpc.insecure_channel('localhost:50051')
+def process(request):
+    response_directory = request.root
+    response = DirectoryResponse(root=response_directory)
+    return response
