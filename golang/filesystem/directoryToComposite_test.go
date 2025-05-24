@@ -20,12 +20,6 @@ func TestExploreExistingDirectory(t *testing.T) {
 	// Convert root directory to composite
 	root := convertToComposite("001", "TestRoot", rootPath)
 
-	// Explore directory structure
-	err := exploreDown(root, rootPath)
-	if err != nil {
-		t.Fatalf("exploreDown failed: %v", err)
-	}
-
 	// Simple validation
 	if len(root.containedItems) == 0 {
 		t.Error("Expected at least one item in the root folder, but got none.")
@@ -55,6 +49,9 @@ func TestExploreExistingDirectory(t *testing.T) {
 			}
 		}
 	}
+	fmt.Println("==============")
+	root.Display(0)
+	fmt.Println("==============")
 
 	for file, found := range expectedFiles {
 		if !found {

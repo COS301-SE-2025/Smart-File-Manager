@@ -2,6 +2,8 @@ package filesystem
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -119,4 +121,35 @@ func (f *File) AddTag(tagID string, tagName string) bool {
 func (f *Folder) AddTag(tagID string, tagName string) bool {
 	f.itemTags = append(f.itemTags, tag{tagID, tagName})
 	return true
+}
+func (f *Folder) Display(indent int) {
+	prefix := strings.Repeat("  ", indent)
+	fmt.Printf("%sFolder: %s\n", prefix, f.itemName)
+
+	if len(f.itemTags) > 0 {
+		fmt.Printf("%s  Tags:\n", prefix)
+		for _, tag := range f.itemTags {
+			fmt.Printf("%s    - %s: %s\n", prefix, tag.tagID, tag.tagName)
+		}
+	}
+
+	for _, item := range f.containedItems {
+		switch v := item.(type) {
+		case *Folder:
+			v.Display(indent + 1)
+		case *File:
+			v.Display(indent + 1)
+		}
+	}
+}
+func (f *File) Display(indent int) {
+	prefix := strings.Repeat("  ", indent)
+	fmt.Printf("%sFile: %s\n", prefix, f.itemName)
+
+	if len(f.itemTags) > 0 {
+		fmt.Printf("%s  Tags:\n", prefix)
+		for _, tag := range f.itemTags {
+			fmt.Printf("%s    - %s: %s\n", prefix, tag.tagID, tag.tagName)
+		}
+	}
 }
