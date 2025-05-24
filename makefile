@@ -22,3 +22,24 @@ python:
 
 python_test:
 	pytest -v -s --color=yes --tb=short python/testing/
+
+proto_gen:
+	python -m grpc_tools.protoc \
+		-Iprotos \
+		--python_out=python/src \
+		--pyi_out=python/src \
+		--grpc_python_out=python/src \
+		protos/message_structure.proto
+
+#	protoc \
+		--go_out=golang \
+		--go-grpc_out=golang \
+		--proto_path=protos \
+		protos/helloworld.proto
+
+
+python_server:
+	python3 python/src/request_handler.py
+
+python_client:
+	python3 python/src/greeter_client.py
