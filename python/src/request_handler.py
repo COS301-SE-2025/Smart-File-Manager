@@ -7,9 +7,15 @@ import message_structure_pb2_grpc
 
 import master
 
+# Class for handling requests to gRPC python server
+# Assigns request to master for processing (currently assigns each request to a single master)
 class RequestHandler(message_structure_pb2_grpc.DirectoryService):
+
+    def __init__(self):
+        self.master = master.Master(10)
+
     def SendDirectoryStructure(self, request, context):
-        response = master.process(request)
+        response = self.master.submitTask(request).result()
         return response
 
     def serve(self):
