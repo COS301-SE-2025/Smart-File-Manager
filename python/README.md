@@ -24,6 +24,14 @@ Once again ensure pytest is added to PATH
 * Mutagen (Used for audio metadata): ```pip install mutagen```
 * PyPDF: ```pip install pypdf```
 * docx: ```pip install python-docx```
+* Pillow: ```pip install Pillow```
+* gRPC: ```pip install grpcio```
+* grpc tools: ```pip install grpcio-tools```
+* protoc: ```sudo apt install -y protobuf-compiler```
+* ```go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest```
+* ```go install google.golang.org/protobuf/cmd/protoc-gen-go@latest```
+
+
 
 ## Where to place your files
 * Add all code to the src directory
@@ -31,6 +39,28 @@ Once again ensure pytest is added to PATH
 
 ## Adding testing files
 Ensure all tests are placed in python/src/testing and start with the prefix test_ to allow pytest to automatically collect all tests.
+
+## gRPC (all python)
+* Ensure `grpcio` and `grpcio-tools` are installed.
+
+### Usage
+* Add function to proto. `python/src/protos/your-name.proto`
+* Add function definition to server. `python/src/greeter_server.py` 
+* Add function call in client. `python/src/greeter_client.py`
+
+### Build and run
+**Generate pb2 files from the proto file (when there are any changes to proto)** 
+```
+make proto_gen
+```
+**Run the python server**
+```
+make python_server
+```
+**Run the python client** 
+```
+make python_client
+```
 
 ## Build and run instructions
 
