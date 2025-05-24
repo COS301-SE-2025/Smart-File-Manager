@@ -1,9 +1,9 @@
+import request_handler
+
 def main():
-    print("Testing")
+    # Start the gRPC server
+    handler = request_handler.RequestHandler()
+    handler.serve()
 
-
-def test():
-    print("grpc")
-# Entry point
 if __name__ == "__main__":
     main()
