@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/custom_widgets/file_item_widget.dart';
-import 'package:app/custom_widgets/file_details_panel.dart';
 
 class FolderViewPage extends StatefulWidget {
   final FileTreeNode treeData;
@@ -88,7 +87,7 @@ class _FolderViewPageState extends State<FolderViewPage> {
 
               return Row(
                 children: [
-                  const Text(' > ', style: TextStyle(color: Color(0xff6B7280))),
+                  const Text('/', style: TextStyle(color: Color(0xff6B7280))),
                   _buildBreadcrumbItem(pathSegment, pathToHere, isLast),
                 ],
               );
@@ -105,15 +104,12 @@ class _FolderViewPageState extends State<FolderViewPage> {
         widget.onNavigate(path);
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xffFFB400) : Colors.transparent,
-          borderRadius: BorderRadius.circular(4),
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4)),
         child: Text(
           name,
           style: TextStyle(
-            color: isActive ? Colors.black : const Color(0xff9CA3AF),
+            color: isActive ? Color(0xffFFB400) : const Color(0xff9CA3AF),
             fontSize: 12,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
           ),
@@ -127,7 +123,7 @@ class _FolderViewPageState extends State<FolderViewPage> {
       padding: const EdgeInsets.all(16.0),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final itemWidth = 120.0;
+          final itemWidth = 100.0;
           final spacing = 12.0;
           final availableWidth =
               constraints.maxWidth - 32.0; // Account for padding
