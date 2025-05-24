@@ -38,6 +38,7 @@ dependencies:
   file_picker: ^10.1.9
   toggle_switch: ^2.3.0
   flutter_force_directed_graph: ^1.0.7
+  http: ^1.4.0
 
 dev_dependencies:
   flutter_test:

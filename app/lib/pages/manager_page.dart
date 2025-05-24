@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/pages/folder_view_page.dart';
 import 'package:app/pages/graph_view_page.dart';
 import 'package:app/custom_widgets/file_details_panel.dart';
+import 'package:http/http.dart' as http;
+import 'dart:math';
 
 class ManagerPage extends StatefulWidget {
   final String name;
@@ -27,85 +30,27 @@ class _ManagerPageState extends State<ManagerPage> {
   }
 
   Future<void> _loadTreeData() async {
-    // Simulate delay
-    await Future.delayed(const Duration(seconds: 2));
+    final response1 = await http.get(
+      Uri.parse('https://run.mocky.io/v3/b3097f03-5576-4e45-ab9e-54e12fa12d87'),
+    );
 
-    //mock data
-    final mockJsonData = {
-      "name": "root",
-      "isFolder": true,
-      "id": "root",
-      "children": [
-        {
-          "name": "file1.txt",
-          "isFolder": false,
-          "id": "file1",
-          "tags": ["work", "important"],
-        },
-        {
-          "name": "file2.docx",
-          "isFolder": false,
-          "id": "file2",
-          "tags": ["document"],
-        },
-        {
-          "name": "Documents",
-          "isFolder": true,
-          "id": "documents",
-          "children": [
-            {
-              "name": "resume.pdf",
-              "isFolder": false,
-              "id": "resume",
-              "tags": ["personal", "career"],
-            },
-            {
-              "name": "Projects",
-              "isFolder": true,
-              "id": "projects",
-              "children": [
-                {
-                  "name": "project1.docx",
-                  "isFolder": false,
-                  "id": "project1",
-                  "tags": ["work", "project"],
-                },
-                {
-                  "name": "project2.xlsx",
-                  "isFolder": false,
-                  "id": "project2",
-                  "tags": ["spreadsheet", "data"],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          "name": "Pictures",
-          "isFolder": true,
-          "id": "pictures",
-          "children": [
-            {
-              "name": "vacation.jpg",
-              "isFolder": false,
-              "id": "vacation",
-              "tags": ["photo", "vacation"],
-            },
-            {
-              "name": "Family",
-              "isFolder": true,
-              "id": "family",
-              "children": [],
-            },
-          ],
-        },
-      ],
-    };
+    final response2 = await http.get(
+      Uri.parse('https://run.mocky.io/v3/a809ac12-e410-4a79-95b3-604837f22e59'),
+    );
 
-    setState(() {
-      _treeData = FileTreeNode.fromJson(mockJsonData);
-      _isLoading = false;
-    });
+    final randomChoice = Random().nextBool();
+    final selectedResponse = randomChoice ? response1 : response2;
+
+    if (selectedResponse.statusCode == 200) {
+      setState(() {
+        _treeData = FileTreeNode.fromJson(
+          jsonDecode(selectedResponse.body) as Map<String, dynamic>,
+        );
+        _isLoading = false;
+      });
+    } else {
+      throw Exception('Failed to load data');
+    }
   }
 
   void _handleViewChange(int index) {
