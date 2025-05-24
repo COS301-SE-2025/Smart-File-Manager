@@ -39,7 +39,7 @@ proto_gen:
 
 
 python_server:
-	python3 python/src/greeter_server.py
+	python3 python/src/request_handler.py
 
 python_client:
 	python3 python/src/greeter_client.py
