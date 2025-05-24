@@ -5,22 +5,28 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
 func convertToComposite(managerID string, managerName string, filePath string) *Folder {
 
 	fmt.Println("Converting: ", managerName, " to composite")
+	var newPath = filePath
+	if IsWindowsPath(filePath) {
+		newPath = ConvertWindowsToWSLPath(filePath)
+	}
+
 	//creating managedItem
 	root := &Folder{managedItem: managedItem{
 		itemID:       managerID,
 		itemName:     managerName,
-		itemPath:     filePath,
+		itemPath:     newPath,
 		creationDate: time.Now(),
 	}}
 
 	// Recursively populate the folder with its contents
-	err := exploreDown(root, filePath)
+	err := exploreDown(root, newPath)
 	if err != nil {
 		fmt.Println("Error exploring folder:", err)
 	}
@@ -79,4 +85,20 @@ func exploreDown(folder *Folder, path string) error {
 }
 func detectFileType(info fs.FileInfo) string {
 	return filepath.Ext(info.Name())
+}
+
+// IsWindowsPath returns true if the path looks like a Windows absolute path
+func IsWindowsPath(path string) bool {
+	return len(path) > 2 &&
+		path[1] == ':' &&
+		(path[2] == '\\' || path[2] == '/')
+}
+
+func ConvertWindowsToWSLPath(winPath string) string {
+	winPath = strings.ReplaceAll(winPath, "\\", "/")
+	if len(winPath) > 2 && winPath[1] == ':' {
+		drive := strings.ToLower(string(winPath[0]))
+		return "/mnt/" + drive + winPath[2:]
+	}
+	return winPath
 }
