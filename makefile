@@ -17,6 +17,19 @@
 go:
 	go run ./golang/main.go
 
+go_proto_gen:
+	mkdir -p golang/client
+	protoc -I. \
+	--go_out=golang/client \
+	--go_opt=paths=source_relative \
+	--go_opt=Mprotos/message_structure.proto=github.com/COS301-SE-2025/Smart-File-Manager/golang/client \
+	--go-grpc_out=golang/client \
+	--go-grpc_opt=paths=source_relative \
+	--go-grpc_opt=Mprotos/message_structure.proto=github.com/COS301-SE-2025/Smart-File-Manager/golang/client \
+	protos/message_structure.proto
+
+
+
 python:
 	python3 python/src/main.py
 
