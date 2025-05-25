@@ -53,8 +53,9 @@ class Master():
                 # Valid path => scrape
                 self.scraper.get_metadata()
                 extracted_metadata = self.scraper.metadata
-                for k,v in extracted_metadata:
-                    meta_entry = MetadataEntry(key=k, value=v)
+                for k,v in extracted_metadata.items():
+
+                    meta_entry = MetadataEntry(key=str(k), value = str(v))
                     curFile.metadata.append(meta_entry)
 
         # Recurisve call

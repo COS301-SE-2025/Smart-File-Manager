@@ -100,6 +100,21 @@ def test_docx_metadata(mock_docx_doc, mock_path_exist):
     assert metadata["title"] == "Test Doc"
     assert metadata["created"] == "2021-01-01T00:00:00"
 
+# Test non existing file
+@patch("src.metadata_scraper.os.path.exists", return_value=False)
+@patch("src.metadata_scraper.docx.Document")
+def test_nonexisting_file(mock_docx_doc, mock_path_exist):
+    mock_doc = MagicMock()
+    mock_doc.core_properties.modified = datetime.datetime(2021, 2, 2)
+    mock_docx_doc.return_value = mock_doc
+
+    from src.metadata_scraper import MetaDataScraper
+    scraper = MetaDataScraper()
+
+    with pytest.raises(ValueError, match="New path does not exist on this filesystem"):
+        scraper.set_file("myWordDoc.docx")
+
+
 # < ------ INTEGRATION TESTING ------ >
 # Real pdf
 def test_real_pdf():
