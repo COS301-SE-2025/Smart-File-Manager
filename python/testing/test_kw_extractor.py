@@ -1,6 +1,19 @@
+import sys
 import unittest
 from unittest.mock import patch, MagicMock
 import pytest
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+from src.kw_extractor import KWExtractor
+
+
+TEST_DIR = os.path.dirname(__file__)
+TEST_FILES_DIR = os.path.join(TEST_DIR, "test_files")
+
+def get_test_file(name):
+    return os.path.join(TEST_FILES_DIR, name)
 
 # < ------ UNIT TESTING ------>
 #kw extraction from sentence
