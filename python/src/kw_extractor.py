@@ -13,7 +13,8 @@ from message_structure_pb2 import Directory, DirectoryRequest, File, MetadataEnt
 # Receive data as D
 class KWExtractor:
     #Yake instance
-    yake_extractor = KeywordExtractor()
+    def __init__(self):
+        self.yake_extractor = KeywordExtractor()
 
     #Main extractor function
     def extract_kw(self, input):
@@ -21,7 +22,7 @@ class KWExtractor:
         for file in input.files:    
             file_name = f"{file.original_path}"
             mime_type = next((entry.value for entry in file.metadata if entry.key == "mime_type"), None)
-            result += self.open_file(file_name, 10, mime_type) #Only process x sentences per file #May be larger but just for now so that not too many lines are process
+            result += self.open_file(file_name, 10 , mime_type) #Only process x sentences per file #May be larger but just for now so that not too many lines are process
 
 #        for file_name, keywords in result:
  #           print("== FILE:", file_name, "==")
@@ -69,9 +70,9 @@ class KWExtractor:
         result = []
         final_sentence = ""
         for sentence in self.split_by_delimiter_def(file_name, delimiter):
+            counter += 1
             if(counter > max_sentences):
                 return self.get_kw(final_sentence)
-            counter += 1
             final_sentence += sentence + delimiter
         result = self.get_kw(final_sentence)
         return result
@@ -85,9 +86,9 @@ class KWExtractor:
         for k in range(len(reader.pages)):
                 page = reader.pages[k]
                 for sentence in self.split_by_delimiter_pdf(page.extract_text(), delimiter):
+                    counter += 1
                     if(counter > max_sentences):
                         return self.get_kw(final_sentence)
-                    counter += 1
                     final_sentence += sentence + delimiter
         result = self.get_kw(final_sentence)
         return result
@@ -100,9 +101,9 @@ class KWExtractor:
         doc = docx.Document(file_name)     
         for paragraph in doc.paragraphs:
             for sentence in self.split_by_delimiter_docx(paragraph.text, delimiter):
+                counter += 1
                 if(counter > max_sentences):
                     return self.get_kw(final_sentence)
-                counter += 1
                 final_sentence += sentence + delimiter
         result = self.get_kw(final_sentence)
         return result
