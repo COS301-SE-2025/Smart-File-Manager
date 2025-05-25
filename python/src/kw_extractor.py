@@ -24,20 +24,24 @@ class KWExtractor:
             result += self.open_file(file_name, 10, mime_type) #Only process x sentences per file #May be larger but just for now so that not too many lines are process
         return result   
     
+    def list_to_map(result):
+        for file_name, keywords in result:
+            print(f"\n== FILE: {file_name} ==")
+            for kw, score in keywords:
+                print("Keyword:", kw, "Score:", score)
+        returnMap = []
+
 
     #open a file (check which type and send to be opened in the correct way)
     def open_file(self, file_name, max_sentences, file_type):
         result = []
         if file_type == "application/pdf":
-            print("Pdf extraction")
             keywords = self.pdf_extraction(file_name, '.', max_sentences)
             result.append((file_name, keywords))
         elif file_type in ["application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
-            print("word extraction")
             keywords = self.docx_extraction(file_name, '.', max_sentences)
             result.append((file_name, keywords))
         elif file_type == "text/plain":      
-            print("plain text extraction")
             keywords = self.def_extraction(file_name, '.', max_sentences)    
             result.append((file_name, keywords))
         else:
@@ -56,7 +60,7 @@ class KWExtractor:
         final_sentence = ""
         for sentence in self.split_by_delimiter_def(file_name, delimiter):
             if(counter > max_sentences):
-                break
+                return self.get_kw(final_sentence)
             counter += 1
             final_sentence += sentence + delimiter
         result = self.get_kw(final_sentence)
@@ -72,7 +76,7 @@ class KWExtractor:
                 page = reader.pages[k]
                 for sentence in self.split_by_delimiter_pdf(page.extract_text(), delimiter):
                     if(counter > max_sentences):
-                        break
+                        return self.get_kw(final_sentence)
                     counter += 1
                     final_sentence += sentence + delimiter
         result = self.get_kw(final_sentence)
@@ -86,7 +90,7 @@ class KWExtractor:
         for paragraph in doc.paragraphs:
             for sentence in self.split_by_delimiter_docx(paragraph.text, delimiter):
                 if(counter > max_sentences):
-                    break
+                    return self.get_kw(final_sentence)
                 counter += 1
                 final_sentence += sentence + delimiter
         result = self.get_kw(final_sentence)
@@ -176,10 +180,12 @@ req = DirectoryRequest(root=dir1)
 if __name__ == "__main__":
     kw_extractor = KWExtractor()
     result = kw_extractor.extract_kw(req.root)
-for file_name, keywords in result:
-    print(f"\n== FILE: {file_name} ==")
-    for kw, score in keywords:
-        print("Keyword:", kw, "Score:", score)
+
+    for file_name, keywords in result:
+        print(f"\n== FILE: {file_name} ==")
+        for kw, score in keywords:
+            print("Keyword:", kw, "Score:", score)
+    
 
         
 
