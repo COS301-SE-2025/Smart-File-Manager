@@ -23,7 +23,10 @@ from message_structure_pb2 import Directory, DirectoryRequest, File, MetadataEnt
 
 # Receive data as D
 class KWExtractor:
+    #Yake instance
     yake_extractor = KeywordExtractor()
+
+    #Main extractor function
     def extract_kw(self, input):
         result = []
         for file in input.files:    
@@ -32,41 +35,28 @@ class KWExtractor:
             result += self.open_file(file_name, 1, mime_type) #Only process x sentences per file #May be larger but just for now so that not too many lines are process
         return result
     
-    def get_kw(self, sentence):
-        keyword = self.yake_extractor.extract_keywords(sentence)        
-        return keyword
-
-    #default delimiter (like for .txt)
-    def split_by_delimiter_def(self, file_name, delimiter):
-        buffer = ''
-        with open(file_name, 'r', encoding='utf-8') as file:
-            for line in file:
-                buffer += line
-                while delimiter in buffer:
-                    sentence, buffer = buffer.split(delimiter, 1)
-                    yield sentence.strip() + delimiter
-        if buffer.strip():
-            yield buffer.strip()
-
-    def split_by_delimiter_pdf(self, page_text, delimiter):
-        buffer = page_text
-        while delimiter in buffer:
-            sentence, buffer = buffer.split(delimiter, 1)
-            yield sentence.strip() + delimiter
-        if buffer.strip():
-            yield buffer.strip()
-        
-
+    #open a file (check which type and send to be opened in the correct way)
     def open_file(self, file_name, max_sentences, file_type):
         result = []
         if file_type == "application/pdf":
+            print("Pdf extraction")
             result += self.pdf_extraction(file_name, '.', max_sentences)
         elif file_type in ["application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
+            print("word extraction")
             result += ["word"]
-        else:      
-            result += self.def_extraction(file_name, '.', max_sentences)         
+        elif file_type == "text/plain":      
+            print("plain text extraction")
+            result += self.def_extraction(file_name, '.', max_sentences)    
+        else:
+            print("Unkown type, attempting extract...")
+            #result += [f"Unsupported File Type: {file_type}"]     
+            try:
+                result += self.def_extraction(file_name, '.', max_sentences)
+            except:
+                print("Error occured trying to read unkown type")
         return result
     
+    #open a file with no mime_type (txt) or "text/plain"
     def def_extraction(self, file_name, delimiter, max_sentences):
         counter = 0
         result = []
@@ -77,6 +67,7 @@ class KWExtractor:
             result += self.get_kw(sentence)
         return result
 
+    #Open a PDF file
     def pdf_extraction(self, file_name, delimiter, max_sentences):
         counter = 0
         result = []
@@ -90,6 +81,36 @@ class KWExtractor:
                     counter += 1
         return result
 
+    #default delimiter
+    def split_by_delimiter_def(self, file_name, delimiter):
+        buffer = ''
+        with open(file_name, 'r', encoding='utf-8') as file:
+            for line in file:
+                buffer += line
+                while delimiter in buffer:
+                    sentence, buffer = buffer.split(delimiter, 1)
+                    yield sentence.strip() + delimiter
+        if buffer.strip():
+            yield buffer.strip()
+
+    #pdf delimiter
+    def split_by_delimiter_pdf(self, page_text, delimiter):
+        buffer = page_text
+        while delimiter in buffer:
+            sentence, buffer = buffer.split(delimiter, 1)
+            yield sentence.strip() + delimiter
+        if buffer.strip():
+            yield buffer.strip()
+
+    #extract keywords from the given sentence using yake
+    def get_kw(self, sentence):
+        keyword = self.yake_extractor.extract_keywords(sentence)        
+        return keyword
+
+        
+
+    
+
 
             
 
@@ -97,6 +118,7 @@ class KWExtractor:
 
 tag1 = Tag(name="ImFixed")
 meta1 = MetadataEntry(key="author", value="johnny")
+meta4 = MetadataEntry(key="mime_type", value="text/plain")
 meta2 = MetadataEntry(key="mime_type", value="application/pdf")
 meta3 = MetadataEntry(key="mime_type", value="application/msword")
 
@@ -112,20 +134,20 @@ file2 = File(
     original_path="python/testing/test_files/testFile.txt",
     new_path="/usr/trash/gopdoc.pdf",
     tags=[tag1],
-    metadata=[meta1]
+    metadata=[meta1, meta4]
 )
 file3 = File(
     name="gopdoc2.pdf",
-    original_path="python/testing/test_files/testFile.txt",
+    original_path="python/testing/test_files/myWordDoc.docx",
     new_path="/usr/trash/gopdoc.pdf",
     tags=[tag1],
-    metadata=[meta1]
+    metadata=[meta1, meta3]
 )
 
 dir1 = Directory(
     name="useless_files",
     path="/usr/trash",
-    files=[file1, file2],
+    files=[file1, file2, file3],
     directories=[]
 )
 req = DirectoryRequest(root=dir1)        
@@ -133,8 +155,8 @@ req = DirectoryRequest(root=dir1)
 if __name__ == "__main__":
     kw_extractor = KWExtractor()
     result = kw_extractor.extract_kw(req.root)
-    for kw in result:
-       print("Keyword:", kw[0], "Score:", kw[1])
+    #for kw in result:
+     #  print("Keyword:", kw[0], "Score:", kw[1])
 
         
 
