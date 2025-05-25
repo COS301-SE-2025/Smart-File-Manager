@@ -9,7 +9,7 @@ import master
 
 # Class for handling requests to gRPC python server
 # Assigns request to master for processing (currently assigns each request to a single master)
-class RequestHandler(message_structure_pb2_grpc.DirectoryService):
+class RequestHandler(message_structure_pb2_grpc.DirectoryServiceServicer):
 
     def __init__(self):
         self.master = master.Master(10)
