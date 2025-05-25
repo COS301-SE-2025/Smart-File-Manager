@@ -22,14 +22,24 @@ class KWExtractor:
             file_name = f"{file.original_path}"
             mime_type = next((entry.value for entry in file.metadata if entry.key == "mime_type"), None)
             result += self.open_file(file_name, 10, mime_type) #Only process x sentences per file #May be larger but just for now so that not too many lines are process
-        return result   
+
+#        for file_name, keywords in result:
+ #           print("== FILE:", file_name, "==")
+  #          for kw, score in keywords:
+   #             print("KW:", kw, "\tVAL:", score)
+        return self.list_to_map(result, 10)   
     
-    def list_to_map(result):
+    #Make the result into a sorted map with max keywords
+    def list_to_map(self, result, max_keywords):
+        return_map = {}
+
         for file_name, keywords in result:
-            print(f"\n== FILE: {file_name} ==")
-            for kw, score in keywords:
-                print("Keyword:", kw, "Score:", score)
-        returnMap = []
+            #descending order
+            sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)
+            top_keywords = [kw for kw, _ in sorted_keywords[:max_keywords]]
+            return_map[file_name] = top_keywords
+
+        return return_map
 
 
     #open a file (check which type and send to be opened in the correct way)
@@ -81,6 +91,7 @@ class KWExtractor:
                     final_sentence += sentence + delimiter
         result = self.get_kw(final_sentence)
         return result
+    
     #open docx file
     def docx_extraction(self, file_name, delimiter, max_sentences):
         counter = 0
@@ -181,10 +192,11 @@ if __name__ == "__main__":
     kw_extractor = KWExtractor()
     result = kw_extractor.extract_kw(req.root)
 
-    for file_name, keywords in result:
-        print(f"\n== FILE: {file_name} ==")
-        for kw, score in keywords:
-            print("Keyword:", kw, "Score:", score)
+
+    for filename, keywords in result.items():
+        print(f"\n== FILE: {filename} ==")
+        for kw in keywords:
+            print(kw)
     
 
         
