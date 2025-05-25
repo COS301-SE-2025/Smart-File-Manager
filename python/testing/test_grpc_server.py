@@ -69,6 +69,11 @@ def createDirectoryRequest():
     def get_path(name):
         return os.path.join(TEST_FILE_DIR, name)
 
+    holiday_file = File(
+        name = "holiday.jpg",
+        original_path = get_path("UserFiles/PersonalFiles/holiday.jpg")
+    )
+
     vid_file = File(
         name = "myVideo.webm",
         original_path = get_path("UserFiles/PersonalFiles/myVideo.webm")
@@ -81,7 +86,7 @@ def createDirectoryRequest():
     pers_dir = Directory(
         name = "PersonalFiles",
         path = get_path("UserFiles/PersonalFiles"),
-        files = [vid_file, img2_file]
+        files = [vid_file, img2_file, holiday_file]
     )
 
     pdf_file = File(
@@ -121,7 +126,7 @@ def recHelper(curDir : Directory):
     # Check response contains at least base metadata
     for curFile in curDir.files:
 
-        assert len(curFile.metadata) >= 7 # Must extract at least base stats
+        assert len(curFile.metadata) >= 12 # Must extract at least base stats
 
         # Recurisve call
         if len(curDir.directories) != 0:
@@ -132,7 +137,6 @@ def recHelper(curDir : Directory):
 def test_send_real_dir(grpc_test_server, createDirectoryRequest):
     req = createDirectoryRequest  # Accessing req from the fixture
     response = grpc_test_server.SendDirectoryStructure(req)
-
     # Check if enough metadata was extracted
     recHelper(response.root)
 
