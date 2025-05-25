@@ -43,3 +43,7 @@ python_server:
 
 python_client:
 	python3 python/src/greeter_client.py
+
+#Prelim for testing
+python_kw_extract:
+	python3 python/src/kw_extractor.py
