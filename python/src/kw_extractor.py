@@ -22,25 +22,29 @@ class KWExtractor:
             file_name = f"{file.original_path}"
             mime_type = next((entry.value for entry in file.metadata if entry.key == "mime_type"), None)
             result += self.open_file(file_name, 10, mime_type) #Only process x sentences per file #May be larger but just for now so that not too many lines are process
-        return result
+        return result   
     
+
     #open a file (check which type and send to be opened in the correct way)
     def open_file(self, file_name, max_sentences, file_type):
         result = []
         if file_type == "application/pdf":
             print("Pdf extraction")
-            result += self.pdf_extraction(file_name, '.', max_sentences)
+            keywords = self.pdf_extraction(file_name, '.', max_sentences)
+            result.append((file_name, keywords))
         elif file_type in ["application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
             print("word extraction")
-            result += self.docx_extraction(file_name, '.', max_sentences)
+            keywords = self.docx_extraction(file_name, '.', max_sentences)
+            result.append((file_name, keywords))
         elif file_type == "text/plain":      
             print("plain text extraction")
-            result += self.def_extraction(file_name, '.', max_sentences)    
+            keywords = self.def_extraction(file_name, '.', max_sentences)    
+            result.append((file_name, keywords))
         else:
             print("Unkown type, attempting extract...")
-            #result += [f"Unsupported File Type: {file_type}"]     
             try:
-                result += self.def_extraction(file_name, '.', max_sentences)
+                keywords = self.def_extraction(file_name, '.', max_sentences)
+                result.append((file_name, keywords))
             except:
                 print("Error occured trying to read unkown type")
         return result
@@ -49,37 +53,43 @@ class KWExtractor:
     def def_extraction(self, file_name, delimiter, max_sentences):
         counter = 0
         result = []
+        final_sentence = ""
         for sentence in self.split_by_delimiter_def(file_name, delimiter):
             if(counter > max_sentences):
                 break
             counter += 1
-            result += self.get_kw(sentence)
+            final_sentence += sentence + delimiter
+        result = self.get_kw(final_sentence)
         return result
 
     #Open a PDF file
     def pdf_extraction(self, file_name, delimiter, max_sentences):
         counter = 0
         result = []
+        final_sentence = ""
         reader = PdfReader(file_name)
         for k in range(len(reader.pages)):
                 page = reader.pages[k]
                 for sentence in self.split_by_delimiter_pdf(page.extract_text(), delimiter):
                     if(counter > max_sentences):
-                        return result
-                    result += self.get_kw(sentence)
+                        break
                     counter += 1
+                    final_sentence += sentence + delimiter
+        result = self.get_kw(final_sentence)
         return result
     #open docx file
     def docx_extraction(self, file_name, delimiter, max_sentences):
         counter = 0
         result = []
+        final_sentence = ""
         doc = docx.Document(file_name)     
         for paragraph in doc.paragraphs:
             for sentence in self.split_by_delimiter_docx(paragraph.text, delimiter):
                 if(counter > max_sentences):
-                    return result
-                result += self.get_kw(sentence)
+                    break
                 counter += 1
+                final_sentence += sentence + delimiter
+        result = self.get_kw(final_sentence)
         return result
                 
 
@@ -113,7 +123,6 @@ class KWExtractor:
         if buffer.strip():
             yield buffer.strip()
 
-#THIS LOGIC IS FLAWED. ONLY LOOKS AT RELEVANCE PER SENTENCE 
     #extract keywords from the given sentence using yake
     def get_kw(self, sentence):
         keyword = self.yake_extractor.extract_keywords(sentence)        
@@ -159,7 +168,7 @@ file3 = File(
 dir1 = Directory(
     name="useless_files",
     path="/usr/trash",
-    files=[file3],
+    files=[file1, file2,file3],
     directories=[]
 )
 req = DirectoryRequest(root=dir1)        
@@ -167,8 +176,10 @@ req = DirectoryRequest(root=dir1)
 if __name__ == "__main__":
     kw_extractor = KWExtractor()
     result = kw_extractor.extract_kw(req.root)
-    for kw in result:
-        print("Keyword:", kw[0], "Score:", kw[1])
+for file_name, keywords in result:
+    print(f"\n== FILE: {file_name} ==")
+    for kw, score in keywords:
+        print("Keyword:", kw, "Score:", score)
 
         
 
