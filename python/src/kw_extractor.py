@@ -1,10 +1,3 @@
-#RAKE seems like a decent option
-#YAKE could be better for simple context based comparisons down the line
-
-#pip install yake
-#pip install pypdf
-#pip install python-docx
-
 import time
 import docx
 from yake import KeywordExtractor
@@ -137,51 +130,17 @@ class KWExtractor:
         keyword = self.yake_extractor.extract_keywords(sentence)        
         return keyword
     
-tag1 = Tag(name="ImFixed")
-meta1 = MetadataEntry(key="author", value="johnny")
-meta4 = MetadataEntry(key="mime_type", value="text/plain")
-meta2 = MetadataEntry(key="mime_type", value="application/pdf")
-meta3 = MetadataEntry(key="mime_type", value="application/msword")
+   
 
-file1 = File(
-    name="gopdoc.pdf",
-    original_path="python/testing/test_files/myPdf.pdf",
-    new_path="/usr/trash/gopdoc.pdf",
-    tags=[tag1],
-    metadata=[meta1, meta2]
-)
-file2 = File(
-    name="gopdoc2.pdf",
-    original_path="python/testing/test_files/testFile.txt",
-    new_path="/usr/trash/gopdoc.pdf",
-    tags=[tag1],
-    metadata=[meta1, meta4]
-)
-file3 = File(
-    name="gopdoc2.pdf",
-    original_path="python/testing/test_files/myWordDoc.docx",
-    new_path="/usr/trash/gopdoc.pdf",
-    tags=[tag1],
-    metadata=[meta1, meta3]
-)
-
-dir1 = Directory(
-    name="useless_files",
-    path="/usr/trash",
-    files=[file1, file2,file3],
-    directories=[]
-)
-req = DirectoryRequest(root=dir1)        
-
-if __name__ == "__main__":
-    kw_extractor = KWExtractor()
-    result = kw_extractor.extract_kw(req.root)
+# if __name__ == "__main__":
+#     kw_extractor = KWExtractor()
+#     result = kw_extractor.extract_kw(req.root)
 
 
-    for filename, keywords in result.items():
-        print(f"\n== FILE: {filename} ==")
-        for kw in keywords:
-            print(kw)
+#     for filename, keywords in result.items():
+#         print(f"\n== FILE: {filename} ==")
+#         for kw in keywords:
+#             print(kw)
     
 
         
