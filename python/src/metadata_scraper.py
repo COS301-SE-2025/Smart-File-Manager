@@ -13,16 +13,20 @@ import docx
 
 # Used to extract metadata from various files
 class MetaDataScraper:
-    def __init__(self, filedir):
-        self.filedir = filedir
+    def __init__(self):
         self.metadata = {}
+        self.__filedir = ""
 
-    def set_file(self, new_filedir):
-        self.filedir = new_filedir
+    def set_file(self, new_filedir) -> None:
+        if os.path.exists(new_filedir):
+            self.__filedir = new_filedir
+            self.metadata.clear()
+        else:
+            raise ValueError("New path does not exist on this filesystem")
 
     # Metadata that should be extracted from any file
-    def get_standard_metadata(self):
-        path = Path(self.filedir)
+    def get_standard_metadata(self) -> None:
+        path = Path(self.__filedir)
         stat = path.stat()
 
         self.metadata.update({
@@ -32,13 +36,13 @@ class MetaDataScraper:
             "size_bytes": stat.st_size,
             "created": datetime.datetime.fromtimestamp(stat.st_ctime).isoformat(),
             "modified": datetime.datetime.fromtimestamp(stat.st_mtime).isoformat(),
-            "mime_type": magic.from_file(self.filedir, mime=True)
+            "mime_type": magic.from_file(self.__filedir, mime=True)
         })
 
     # Extracts image file metadata
-    def get_image_metadata(self):
+    def get_image_metadata(self) -> None:
         try:
-            with Image.open(self.filedir) as img:
+            with Image.open(self.__filedir) as img:
                 exif_data = img._getexif()
                 if not exif_data:
                     return {}
@@ -49,9 +53,9 @@ class MetaDataScraper:
             return {}
         
     # Extract audio metadata
-    def get_audio_video_metadata(self):
+    def get_audio_video_metadata(self) -> None:
         try:
-            audio = mutagen.File(self.filedir)
+            audio = mutagen.File(self.__filedir)
             if not audio:
                 return {}
             return {k: str(v) for k, v in audio.items()}
@@ -59,17 +63,17 @@ class MetaDataScraper:
             return {}
     
     # Extract pdf metadata
-    def get_pdf_metadata(self):
+    def get_pdf_metadata(self) -> None:
         try:
-                pdf = PdfReader(self.filedir)
+                pdf = PdfReader(self.__filedir)
                 return dict(pdf.metadata or {})
         except Exception:
             return {}
         
     # Extract .docx metadata
-    def get_docx_metadata(self):
+    def get_docx_metadata(self) -> None:
         try:
-            doc = docx.Document(self.filedir)
+            doc = docx.Document(self.__filedir)
             core_props = doc.core_properties
             return {
                 "author": core_props.author,
@@ -84,7 +88,12 @@ class MetaDataScraper:
     # Extract video metadata
 
     # Extract all metadata possible
-    def get_metadata(self):
+    def get_metadata(self) -> None:
+
+        # Returns empty metadata if directory not set
+        if self.__filedir == "":
+            return
+
         self.get_standard_metadata()
 
         # Check file MIME type to decide what other metadata to scan
