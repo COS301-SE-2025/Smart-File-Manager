@@ -3,10 +3,10 @@ import unittest
 from unittest.mock import patch, MagicMock
 import pytest
 import os
+import tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from src.kw_extractor import KWExtractor
 
 
 TEST_DIR = os.path.dirname(__file__)
@@ -29,9 +29,6 @@ def test_kw_extract(mock_yake_extract):
     assert keywords == [("kw1", 0.1), ("kw2", 0.2)]
 
 #kw split by delimiter default
-import os
-import tempfile
-
 def test_split_by_delimiter_def():
     test_text = "Hello world. This is a test file.\nIt has multiple sentences. End."
     with tempfile.NamedTemporaryFile('w+', delete=False) as tmpfile:
@@ -273,3 +270,117 @@ def test_extract_kw_all_types(mime_type):
 
 
 # < ------ INTEGRATION TESTING ------ >
+#Tests the files as if they are passed through a single directory
+def test_real_data_all_files():
+    from src import message_structure_pb2, message_structure_pb2_grpc
+    from src.message_structure_pb2 import Directory, File, Tag, MetadataEntry, DirectoryRequest
+    from src.kw_extractor import KWExtractor
+    tag1 = Tag(name="ImFixed")
+    meta1 = MetadataEntry(key="author", value="johnny")
+    meta4 = MetadataEntry(key="mime_type", value="text/plain")
+    meta2 = MetadataEntry(key="mime_type", value="application/pdf")
+    meta3 = MetadataEntry(key="mime_type", value="application/msword")
+
+    file1 = File(
+        name="gopdoc.pdf",
+        original_path="python/testing/test_files/myPdf.pdf",
+        new_path="/usr/trash/gopdoc.pdf",
+        tags=[tag1],
+        metadata=[meta1, meta2]
+    )
+    file2 = File(
+        name="gopdoc2.pdf",
+        original_path="python/testing/test_files/testFile.txt",
+        new_path="/usr/trash/gopdoc.pdf",
+        tags=[tag1],
+        metadata=[meta1, meta4]
+    )
+    file3 = File(
+        name="gopdoc2.pdf",
+        original_path="python/testing/test_files/myWordDoc.docx",
+        new_path="/usr/trash/gopdoc.pdf",
+        tags=[tag1],
+        metadata=[meta1, meta3]
+    )
+
+    dir1 = Directory(
+        name="useless_files",
+        path="/usr/trash",
+        files=[file1, file2,file3],
+        directories=[]
+    )
+    req = DirectoryRequest(root=dir1) 
+
+        
+    kw_extractor = KWExtractor()
+    result = kw_extractor.extract_kw(req.root)
+
+    expected_pdf = {"project", "management", "proposal", "folders", "manager", "capstone", "southern", "cross"}
+    expected_txt = {"assignment", "debugged", "midterms", "email", "alarm", "laptops", "evacuating", "java"}
+    expected_docx = {"docker", "class", "diagram", "uml", "rest", "architecture", "deployment", "frontend"}
+
+    def flatten_keywords(kws):
+        flattened = set()
+        for item in kws:
+            if isinstance(item, tuple) and len(item) == 2:
+                kw, _ = item
+            else:
+                kw = item
+            flattened.add(kw.lower().strip())
+        return flattened
+
+    pdf_result = flatten_keywords(result["python/testing/test_files/myPdf.pdf"])
+    txt_result = flatten_keywords(result["python/testing/test_files/testFile.txt"])
+    docx_result = flatten_keywords(result["python/testing/test_files/myWordDoc.docx"])
+
+    #yake results are heuristic based so just check for some keywords and make sure to normalize
+    def normalize(kw):
+        return kw.lower().replace("-", "").strip(".")
+
+
+    for expected in expected_txt:
+        assert any(expected in normalize(result_kw) for result_kw in txt_result), f"Missing: {expected}"
+    for expected in expected_docx:
+        assert any(expected in normalize(result_kw) for result_kw in docx_result), f"Missing: {expected}"
+    for expected in expected_pdf:
+        assert any(expected in normalize(result_kw) for result_kw in pdf_result), f"Missing: {expected}"
+
+
+
+#tests each file type individually
+@pytest.mark.parametrize("file_path, mime_type, expected_keywords", [
+    ("python/testing/test_files/myPdf.pdf", "application/pdf", {"project", "management", "proposal", "folders", "manager", "capstone", "southern", "cross"}),
+    ("python/testing/test_files/testFile.txt", "text/plain", {"assignment", "debugged", "midterms", "email", "alarm", "laptops", "evacuating", "java"}),
+    ("python/testing/test_files/myWordDoc.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", {"docker", "class", "diagram", "uml", "rest", "architecture", "deployment", "frontend"}),
+])
+def test_extract_kw_per_file_type(file_path, mime_type, expected_keywords):
+    from src import message_structure_pb2
+    from src.message_structure_pb2 import File, Tag, MetadataEntry, Directory, DirectoryRequest
+    from src.kw_extractor import KWExtractor  
+    tag = Tag(name="TestTag")
+    meta = MetadataEntry(key="mime_type", value=mime_type)
+    file = File(
+        name=file_path.split("/")[-1],
+        original_path=file_path,
+        new_path="/usr/fake/path",
+        tags=[tag],
+        metadata=[meta]
+    )
+    directory = Directory(
+        name="testdir",
+        path="/usr/fake/path",
+        files=[file],
+        directories=[]
+    )
+    req = DirectoryRequest(root=directory)
+
+    kw_extractor = KWExtractor()
+    result = kw_extractor.extract_kw(req.root)
+
+    assert file_path in result
+    extracted_keywords = set(result[file_path])
+    
+    def normalize(s): return s.lower().replace("-", "").strip(".")
+
+    for expected in expected_keywords:
+        assert any(expected in normalize(kw) for kw in extracted_keywords), f"Missing: {expected} in {file_path}"
