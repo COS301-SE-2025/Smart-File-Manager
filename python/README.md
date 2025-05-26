@@ -31,9 +31,6 @@ Once again ensure pytest is added to PATH
 * protoc gen:```go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest```
 * protoc buf: ```go install google.golang.org/protobuf/cmd/protoc-gen-go@latest```
 * yake: ```pip install yake```
-* pdf processing: ```pip install pypdf```
-* docx processing: ```pip install python-docx```
-
 
 
 ## Where to place your files
