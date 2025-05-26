@@ -1,0 +1,17 @@
+
+# Ignore all __pycache__ folders
+__pycache__/
+
+# Ignore all Python bytecode files
+*.py[cod]
+
+# Ignore pytest cache (wherever it may be)
+.pytest_cache/
+
+#Virtual environment named venv
+venv/
+
+# gRPC generated files
+*_pb2.py
+*_pb2_grpc.py
+*_pb2.pyi

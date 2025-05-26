@@ -30,7 +30,10 @@
 
 ## 📄 Table of Contents
 
-- [📑 Documentation ](#-documentation)
+
+- [📑 Functional Requirements (SRS)](#-functional-requirements-srs)
+- [Architectural Specifications](Documentation/Architecture.md)
+
 - [📊 Project Board](#-project-board)
 
 ---
@@ -48,13 +51,15 @@
 
 ---
 
-| Photo                                                                           | Name & Role                                               | LinkedIn                                                                                                                                                                                                                      |
-| ------------------------------------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ![Jack](images/jack.jpg)                                                        | **Jack Bawden**<br>Golang & Python                        | [![LinkedIn](https://img.shields.io/static/v1?label=LinkedIn&message=Jack+Bawden&color=0077B5&logo=linkedin&style=flat-square)](https://www.linkedin.com/in/jack-bawden/)                                                     |
-| <img src="Documentation/assets/readmeAssets/philipp.jpg" width=100% height=300> | **Philipp du Plessis**<br>Golang & Python                 | [![LinkedIn](https://img.shields.io/static/v1?label=LinkedIn&message=Philipp+duPlessis&color=0077B5&logo=linkedin&style=flat-square)](https://www.linkedin.com/in/https://www.linkedin.com/in/philipp-du-plessis-56974b30a//) |
-| <img src="Documentation/assets/readmeAssets/tiaan.jpeg" width=100% height=300>  | **Tiaan Bosman**<br>UX & UI Developer<br>`Flutter & Dart` | [![LinkedIn](https://img.shields.io/static/v1?label=LinkedIn&message=Tiaan+Bosman&color=0077B5&logo=linkedin&style=flat-square)](https://www.linkedin.com/in/tiaan-bosman-764083220/)                                         |
-| <img src="Documentation/assets/readmeAssets/Henco.jpg" width=100% height=300>   | **Henco Pretorius**<br>Golang & Python<br>                | [![LinkedIn](https://img.shields.io/static/v1?label=LinkedIn&message=Henco+Pretorius&color=0077B5&logo=linkedin&style=flat-square)](www.linkedin.com/in/henco-pretorius-477939228)                                            |
-| <img src="Documentation/assets/readmeAssets/philipp.jpg" width=100% height=300> | **Eve Müller**<br>QA & Testing<br>`Jest & Selenium`       | [![LinkedIn](https://img.shields.io/static/v1?label=LinkedIn&message=Eve+M%C3%BCller&color=0077B5&logo=linkedin&style=flat-square)](https://www.linkedin.com/in/eve-mueller/)                                                 |
+
+| Photo                                                                           | Name & Role                                               | LinkedIn                                                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ![Jack](images/jack.jpg)                                                        | **Jack Bawden**<br>Golang & Python                        | [![LinkedIn](https://img.shields.io/static/v1?label=LinkedIn\&message=Jack+Bawden\&color=0077B5\&logo=linkedin\&style=flat-square)](https://www.linkedin.com/in/jack-bawden/)                                                     |
+| <img src="Documentation/assets/readmeAssets/philipp.jpg" width=100% height=300> | **Philipp du Plessis**<br>Golang & Python                 | [![LinkedIn](https://img.shields.io/static/v1?label=LinkedIn\&message=Philipp+duPlessis\&color=0077B5\&logo=linkedin\&style=flat-square)](https://www.linkedin.com/in/https://www.linkedin.com/in/philipp-du-plessis-56974b30a//) |
+| <img src="Documentation/assets/readmeAssets/tiaan.jpeg" width=100% height=300>  | **Tiaan Bosman**<br>UX & UI Developer<br>`Flutter & Dart` | [![LinkedIn](https://img.shields.io/static/v1?label=LinkedIn\&message=Tiaan+Bosman\&color=0077B5\&logo=linkedin\&style=flat-square)](https://www.linkedin.com/in/tiaan-bosman-764083220/)                                         |
+| <img src="Documentation/assets/readmeAssets/Henco.jpg" width=100% height=300> | **Henco Pretorius**<br>Golang & Python<br>          | [![LinkedIn](https://img.shields.io/static/v1?label=LinkedIn\&message=Henco+Pretorius\&color=0077B5\&logo=linkedin\&style=flat-square)](www.linkedin.com/in/henco-pretorius-477939228)                                                       |
+| <img src="Documentation/assets/readmeAssets/dewald.JPG" width=100% height=300> | **Dewald Colesky**<br>Backend Legend<br>`Golang & Python`       | [![LinkedIn](https://img.shields.io/static/v1?label=LinkedIn\&message=Dewald+Colesky\&color=0077B5\&logo=linkedin\&style=flat-square)](https://www.linkedin.com/in/dewald-colesky-165400217/)                                                 |
+
 
 # Tooling and Automation
 

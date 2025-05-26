@@ -11,5 +11,32 @@
 # build:
 # 	go build -o bin/sfm ./go/cmd/sfm
 
+# Otherwise make thinks these are files and not commands
+.PHONY: python python_test
+
 go:
 	go run ./golang/main.go
+
+python:
+	python3 python/src/main.py
+
+python_test:
+	pytest -v -s --color=yes --tb=short python/testing/
+
+proto_gen:
+	python3 -m grpc_tools.protoc \
+		-Iprotos \
+		--python_out=python/src \
+		--pyi_out=python/src \
+		--grpc_python_out=python/src \
+		protos/message_structure.proto
+
+#	protoc \
+		--go_out=golang \
+		--go-grpc_out=golang \
+		--proto_path=protos \
+		protos/helloworld.proto
+
+python_client:
+	python3 python/src/greeter_client.py
+
