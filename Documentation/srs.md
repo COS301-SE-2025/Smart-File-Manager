@@ -46,6 +46,7 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 __Given__ I am a new user.  
 __When__ I navigate to either the web portal registraton page or choose register on the application.  
 __Then__ My account is created and I should be notified that it took place successfully.   
+**Covers:** UC15
 
 ### 2. User Story: Download the Application
 **As a:** New or registered user.   
@@ -55,6 +56,7 @@ __Then__ My account is created and I should be notified that it took place succe
 __Given__ I have access to the SFM portal.  
 __When__ I click the correct download button for my platform (Windows /macOS / linux).   
 __Then__ The application files are downloaded to my system.   
+**Covers:** UC1
 
 ### 3. User Story: Log into the application
 **As a:** Registered User.     
@@ -63,7 +65,8 @@ __Then__ The application files are downloaded to my system.
 #### Acceptance criteria:
 __Given__ I am a registered user.   
 __When__ I enter my information and click log in.   
-__Then__ My details are authenticated and I am navigated to the application dashboard. 
+__Then__ My details are authenticated and I am navigated to the application dashboard.  
+**Covers:** UC2
 
 ### 4. User Story: Create a smart manager
 **As a:** Registered User.     
@@ -73,7 +76,7 @@ __Then__ My details are authenticated and I am navigated to the application dash
 __Given__ I have installed the application.   
 __When__ I click on create new smart manager.   
 __Then__ I am prompted for the root directory and a smart manager is created which sorts all the content by its semantic meaning.   
-
+**Covers:** UC8
 
 ### 5. User Story: Configure sorting preferences
 **As a:** User.  
@@ -83,6 +86,7 @@ __Then__ I am prompted for the root directory and a smart manager is created whi
 __Given__ I have installed the application.  
 __When__ I open the settings and configure rules for sorting and sorting timers.   
 __Then__ My settings are saved and applied for future sorting.  
+**Covers:** UC3
 
 ### 6. User Story: Tag files manually 
 **As a:** User  
@@ -92,7 +96,7 @@ __Then__ My settings are saved and applied for future sorting.
 __Given__ The application is installed and a smart manager created.  
 __When__ I open the settings and configure rules for sorting and sorting timers.   
 __Then__ My settings are saved and applied for future sorting.  
-
+**Covers:** UC4
 
 ### 7. User Story: Auto-sort files
 **As a:** Smart Folder.  
@@ -102,6 +106,7 @@ __Then__ My settings are saved and applied for future sorting.
 __Given__ Files exist in a monitored directory and user preferences are set.   
 __When__ The timer for sorting expires.   
 __Then__ Files are moved to a more appropriate directory by the AI sorter.  
+**Covers:** UC5
 
 ### 8. User Story: Graph File organization visualization
 **As a:** User.  
@@ -110,7 +115,8 @@ __Then__ Files are moved to a more appropriate directory by the AI sorter.
 #### Acceptance criteria:
 __Given__ I have created a smart manager which contains content.   
 __When__ I click on graph view.   
-__Then__ I see an interactive graph of my files and folders. 
+__Then__ I see an interactive graph of my files and folders.  
+**Covers:** UC7
 
 ### 9. User Story: Traditional File organization visualization
 **As a:** User.  
@@ -119,7 +125,8 @@ __Then__ I see an interactive graph of my files and folders.
 #### Acceptance criteria:
 __Given__ I have created a smart manager which contains content.   
 __When__ I click on folder view.   
-__Then__ I can traverse through the folder structure by clicking on folders.   
+__Then__ I can traverse through the folder structure by clicking on folders.  
+**Covers:** UC7
 
 ### 10. User Story: Trigger Manual Sort 
 **As a:** User.  
@@ -129,6 +136,7 @@ __Then__ I can traverse through the folder structure by clicking on folders.
 __Given__ The application is installed and settings configured.   
 __When__ I click on Sort Now on a smart mananger.     
 __Then__ The system initiates a reorganization of the smart manager.  
+**Covers:** UC9
 
 ### 11. User Story: Lock files and folders
 **As a:** User.  
@@ -138,15 +146,17 @@ __Then__ The system initiates a reorganization of the smart manager.
 __Given__ I have a smart manager with content.   
 __When__ I select a file or folder and click the lock button.   
 __Then__ The item is excluded from future organization operations.  
+**Covers:** UC10
 
-### 12. User Story: Search files, tags or metadata
+### 12. User Story: View File metadata
 **As a:** User.  
-**I want to:** Search for files using names, tags or metadata.   
-**So that I:** Can quickly find relevant content. 
+**I want to:** See metadata associated with a file.  
+**So that I:** Can understand the content associated with my files.   
 #### Acceptance criteria:
-__Given__ My files are sorted in a smart manager.   
-__When__ I enter a search query in the search bar.   
-__Then__ A list of files matching the criteria is returned.  
+__Given__ I have a smart manager with content.   
+__When__ I select a file by clicking on it.   
+__Then__ A side-menu pops up showing me the metadata associated with that file.  
+**Covers:** UC10
 
 ### 13. User Story: Search files, tags or metadata
 **As a:** User.  
@@ -155,7 +165,8 @@ __Then__ A list of files matching the criteria is returned.
 #### Acceptance criteria:
 __Given__ My files are sorted in a smart manager.   
 __When__ I enter a search query in the search bar.   
-__Then__ A list of files matching the criteria is returned. 
+__Then__ A list of files matching the criteria is returned.  
+**Covers:** UC11
 
 ### 14. User Story: Rollback sorting changes
 **As a:** User.  
@@ -165,6 +176,7 @@ __Then__ A list of files matching the criteria is returned.
 __Given__ I have performed a smart organization. 
 __When__ Click on the rollback button for a smart manager.      
 __Then__ All files are returned to their exact previous location.   
+**Covers:** UC11
 
 ### 15. User Story: Add a new file or folder.  
 **As a:** User.  
@@ -174,6 +186,7 @@ __Then__ All files are returned to their exact previous location.
 __Given__ I have a smart manager.  
 __When__  I click to create a new file or folder.  
 __Then__ The new item is added to the smart manager but not yet sorted.  
+**Covers:** UC8
 
 ### 16. User Story: Stay logged in.  
 **As a:** User.  
@@ -183,8 +196,9 @@ __Then__ The new item is added to the smart manager but not yet sorted.
 __Given__ I have logged in and did not log out.   
 __When__  I reopen the app.   
 __Then__ I am automatically still logged in.  
+**Covers:** UC2
 
-### 16. User Story: Customize smart sort behaviour.  
+### 17. User Story: Customize smart sort behaviour.  
 **As a:** Advanced User.    
 **I want to:** Set the influence of tags, metadata and other criteria on the sorting AI>  
 **So that I:** Have fine control over the system.   
@@ -192,6 +206,7 @@ __Then__ I am automatically still logged in.
 __Given__ Advanced customization options are set.   
 __When__ I adjust my customization options.   
 __Then__ The changes influence future sorting.  
+
 
 
 ## Use cases / Use Case Diagram
@@ -303,9 +318,9 @@ __Then__ The changes influence future sorting.
 Client server to allow users to communicate with the server and perform operations (downloading, profile edits, login/register etc.). This is the standard architecture associated with most traditional websites.
 #### Application Architecture
 ![Application architecture](assets/applicationArchitecture.png)
-Hybrid between Monolithic and Master-Slave
-Monolithic structure such that the entire application is deployed as a single unit, which is ideal as our application will be deployed entirely on the user's local machine. Within the single unit, concerns are separated into layers, as required,
-The API layer uses gRPC to communicate from Go to Python. A master slave pattern is applied in our python codebase. A master monitors incoming requests from gRPC and scales the service via python threads (slaves) that perform the AI requirements such as clustering and other tasks such as metadata extraction.
+Hybrid between Monolithic and Master-Slave  
+Monolithic structure such that the entire application is deployed as a single unit, which is ideal as our application will be deployed entirely on the user's local machine.
+The clustering request uses gRPC to communicate from Go to Python. A master slave pattern is applied in our python codebase. A master monitors incoming requests from gRPC and scales the service via python threads (slaves) that perform the AI requirements such as clustering and other tasks such as metadata extraction.
 
 #### Hybrid Approach Benefits
 Combining both Go and Python allows us to leverage the strenghts of each for the best product possible. Go is coveted for its safety and strong concurrency while Python is the de facto standard for any AI related tasks. Combining these allows us to provide an implementation that is both accurate while remaining highly efficient.
