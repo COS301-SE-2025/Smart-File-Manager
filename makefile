@@ -30,7 +30,11 @@ go_proto_gen:
 
 go_grpc_server:
 	cd golang && \
-	go run client/server.go
+	go run grpc/server/server.go
+
+go_grpc_client:
+	cd golang && \
+	go run grpc/client/client.go
 
 
 python:
