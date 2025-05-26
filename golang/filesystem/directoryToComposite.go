@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func convertToComposite(managerID string, managerName string, filePath string) *Folder {
+func ConvertToComposite(managerID string, managerName string, filePath string) *Folder {
 
 	fmt.Println("Converting: ", managerName, " to composite")
 	var newPath = filePath

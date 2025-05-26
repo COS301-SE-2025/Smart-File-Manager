@@ -18,10 +18,10 @@ func TestExploreExistingDirectory(t *testing.T) {
 	}
 
 	// Convert root directory to composite
-	root := convertToComposite("001", "TestRoot", rootPath)
+	root := ConvertToComposite("001", "TestRoot", rootPath)
 
 	// Simple validation
-	if len(root.containedItems) == 0 {
+	if len(root.ContainedItems) == 0 {
 		t.Error("Expected at least one item in the root folder, but got none.")
 	}
 

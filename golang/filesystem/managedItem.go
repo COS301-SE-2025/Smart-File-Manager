@@ -50,11 +50,11 @@ func (f *File) RemoveItem(itemPath string) bool {
 // Composite
 type Folder struct {
 	managedItem
-	containedItems []FileSystemItem
+	ContainedItems []FileSystemItem
 }
 
 func (f *Folder) AddItem(newItem FileSystemItem) error {
-	f.containedItems = append(f.containedItems, newItem)
+	f.ContainedItems = append(f.ContainedItems, newItem)
 	return nil
 }
 
@@ -63,9 +63,9 @@ func (f *File) AddItem(item FileSystemItem) error {
 }
 
 func (f *Folder) RemoveItem(itemPath string) bool {
-	for i, item := range f.containedItems {
+	for i, item := range f.ContainedItems {
 		if item.GetPath() == itemPath {
-			f.containedItems = append(f.containedItems[:i], f.containedItems[i+1:]...)
+			f.ContainedItems = append(f.ContainedItems[:i], f.ContainedItems[i+1:]...)
 			return true
 		}
 		// if item is a Folder, attempt recursive removal
@@ -83,7 +83,7 @@ func (f *Folder) GetPath() string {
 }
 
 func (f *Folder) GetItem(itemPath string) FileSystemItem {
-	for _, item := range f.containedItems {
+	for _, item := range f.ContainedItems {
 		if item.GetPath() == itemPath {
 			return item
 		}
@@ -133,7 +133,7 @@ func (f *Folder) Display(indent int) {
 		}
 	}
 
-	for _, item := range f.containedItems {
+	for _, item := range f.ContainedItems {
 		switch v := item.(type) {
 		case *Folder:
 			v.Display(indent + 1)
