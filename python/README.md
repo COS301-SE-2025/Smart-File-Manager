@@ -25,12 +25,13 @@ Once again ensure pytest is added to PATH
 * PyPDF: ```pip install pypdf```
 * docx: ```pip install python-docx```
 * Pillow: ```pip install Pillow```
+* pymediainfo ```pip install pymediainfo```
 * gRPC: ```pip install grpcio```
 * grpc tools: ```pip install grpcio-tools```
 * protoc: ```sudo apt install -y protobuf-compiler```
-* ```go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest```
-* ```go install google.golang.org/protobuf/cmd/protoc-gen-go@latest```
-
+* protoc gen:```go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest```
+* protoc buf: ```go install google.golang.org/protobuf/cmd/protoc-gen-go@latest```
+* yake: ```pip install yake```
 
 
 ## Where to place your files
