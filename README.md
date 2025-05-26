@@ -30,15 +30,18 @@
 
 ## 📄 Table of Contents
 
+
 - [📑 Functional Requirements (SRS)](#-functional-requirements-srs)
 - [Architectural Specifications](Documentation/Architecture.md)
+
 - [📊 Project Board](#-project-board)
 
 ---
 
-## 📑 Functional Requirements (SRS)
+## 📑 Documentation
 
 🔗 [Functional Requirements Document (SRS)](Documentation/srs.md)
+🔗 [Wireframe Document](Documentation/wireframe.md)
 
 ---
 
@@ -48,6 +51,7 @@
 
 ---
 
+
 | Photo                                                                           | Name & Role                                               | LinkedIn                                                                                                                                                                                                                          |
 | ------------------------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ![Jack](images/jack.jpg)                                                        | **Jack Bawden**<br>Golang & Python                        | [![LinkedIn](https://img.shields.io/static/v1?label=LinkedIn\&message=Jack+Bawden\&color=0077B5\&logo=linkedin\&style=flat-square)](https://www.linkedin.com/in/jack-bawden/)                                                     |
@@ -56,19 +60,20 @@
 | <img src="Documentation/assets/readmeAssets/Henco.jpg" width=100% height=300> | **Henco Pretorius**<br>Golang & Python<br>          | [![LinkedIn](https://img.shields.io/static/v1?label=LinkedIn\&message=Henco+Pretorius\&color=0077B5\&logo=linkedin\&style=flat-square)](www.linkedin.com/in/henco-pretorius-477939228)                                                       |
 | <img src="Documentation/assets/readmeAssets/dewald.JPG" width=100% height=300> | **Dewald Colesky**<br>Backend Legend<br>`Golang & Python`       | [![LinkedIn](https://img.shields.io/static/v1?label=LinkedIn\&message=Dewald+Colesky\&color=0077B5\&logo=linkedin\&style=flat-square)](https://www.linkedin.com/in/dewald-colesky-165400217/)                                                 |
 
-# Tooling and Automation
-| Purpose            | Go                                   | Python                    |
-| ------------------ | ------------------------------------ | ------------------------- |
-| Formatting         | `go fmt` (enforced)                  | `ruff format` (fast)      |
-| Linting            | `golangci-lint`                      | `ruff` + `mypy`           |
-| Dependency updates | Renovate bot                         | Renovate bot              |
-| Testing            | `go test` (with `-race`)             | `pytest`                  |
-| Coverage           | Codecov Action                       | Codecov Action            |
-| Docs               | tbd                                  | tbd                       |
 
+# Tooling and Automation
+
+| Purpose            | Go                       | Python               |
+| ------------------ | ------------------------ | -------------------- |
+| Formatting         | `go fmt` (enforced)      | `ruff format` (fast) |
+| Linting            | `golangci-lint`          | `ruff` + `mypy`      |
+| Dependency updates | Renovate bot             | Renovate bot         |
+| Testing            | `go test` (with `-race`) | `pytest`             |
+| Coverage           | Codecov Action           | Codecov Action       |
+| Docs               | tbd                      | tbd                  |
 
 # Requirements
-	
-  ![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white)
 
-  ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white)
+
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
