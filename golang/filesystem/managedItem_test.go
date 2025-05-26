@@ -58,7 +58,7 @@ func TestSubfolderStillExistsAfterFileRemoval(t *testing.T) {
 
 	// Check if subfolder still exists
 	found := false
-	for _, item := range root.containedItems {
+	for _, item := range root.ContainedItems {
 		if item.GetPath() == "/root/sub" {
 			found = true
 		}
@@ -70,15 +70,15 @@ func TestSubfolderStillExistsAfterFileRemoval(t *testing.T) {
 
 func TestRecursiveRemoval(t *testing.T) {
 	root := createTestStructure()
-	sub := root.containedItems[0].(*Folder)
+	sub := root.ContainedItems[0].(*Folder)
 
-	if len(sub.containedItems) != 1 {
-		t.Fatalf("Expected 1 item in subfolder, got %d", len(sub.containedItems))
+	if len(sub.ContainedItems) != 1 {
+		t.Fatalf("Expected 1 item in subfolder, got %d", len(sub.ContainedItems))
 	}
 
 	root.RemoveItem("/root/sub/file.txt")
 
-	if len(sub.containedItems) != 0 {
+	if len(sub.ContainedItems) != 0 {
 		t.Errorf("Expected subfolder to be empty after file removal")
 	}
 }
