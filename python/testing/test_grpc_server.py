@@ -70,8 +70,8 @@ def createDirectoryRequest():
         return os.path.join(TEST_FILE_DIR, name)
 
     holiday_file = File(
-        name = "holiday.jpg",
-        original_path = get_path("UserFiles/PersonalFiles/holiday.jpg")
+        name = "holiday.JPG",
+        original_path = get_path("UserFiles/PersonalFiles/holiday.JPG")
     )
 
     vid_file = File(
