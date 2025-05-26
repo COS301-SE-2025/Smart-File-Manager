@@ -21,6 +21,7 @@
     * [Architectural Patterns](#architectural-patterns)
     * [Design Patterns](#design-patterns)
     * [Constraints](#constraints)
+* [Technology Requirements](#technology-requirements)
 
 ## Introduction
 The digital age seems to evolve at nearly the speed of light, yet somehow file managers are still learning to take their first steps. Cluttered desktops, folder mazes and the laborious hassle of organizing your files are not tasks the modern computer user should be plagued by.  
@@ -61,7 +62,7 @@ __Then__ The application files are downloaded to my system.
 ### 3. User Story: Log into the application
 **As a:** Registered User.     
 **I want to:** Log in on any device with the application installed.   
-**So that I:** The application uses all my preferences like themes and naming conventions.   
+**So that I:** May have my preferences like themes and naming conventions apply on this device.     
 #### Acceptance criteria:
 __Given__ I am a registered user.   
 __When__ I enter my information and click log in.   
@@ -91,7 +92,7 @@ __Then__ My settings are saved and applied for future sorting.
 ### 6. User Story: Tag files manually 
 **As a:** User  
 **I want to:** Associate tags that I defined with certain files.   
-**So that I:** They may influence how the files are sorted and be used for sorting by tags.   
+**So that I:** May influence how the files are sorted and be used for sorting by tags.   
 #### Acceptance criteria:
 __Given__ The application is installed and a smart manager created.  
 __When__ I open the settings and configure rules for sorting and sorting timers.   
@@ -131,7 +132,7 @@ __Then__ I can traverse through the folder structure by clicking on folders.
 ### 10. User Story: Trigger Manual Sort 
 **As a:** User.  
 **I want to:** Manually initiate a file sorting process.   
-**So that I:** The system begins sorting immediately.   
+**So that I:** May initiate a reorganize immediately.   
 #### Acceptance criteria:
 __Given__ The application is installed and settings configured.   
 __When__ I click on Sort Now on a smart mananger.     
@@ -173,18 +174,18 @@ __Then__ A list of files matching the criteria is returned.
 **I want to:** Undo the last sorting operation.     
 **So that I:** Restore my organization to what is was before the last sort.   
 #### Acceptance criteria:
-__Given__ I have performed a smart organization. 
-__When__ Click on the rollback button for a smart manager.      
+__Given__ I have performed a smart organization.   
+__When__ I Click on the rollback button for a smart manager.        
 __Then__ All files are returned to their exact previous location.   
 **Covers:** UC11
 
 ### 15. User Story: Add a new file or folder.  
 **As a:** User.  
 **I want to:** Create a new file or folder at some location in my smart manager.   
-**So that I:** Interact with my filesystem via SFM.   
+**So that I:** May interact with my filesystem via SFM to perform tasks I would with a regular filesystem.   
 #### Acceptance criteria:
-__Given__ I have a smart manager.  
-__When__  I click to create a new file or folder.  
+__Given__ I have a smart manager.     
+__When__  I click to create a new file or folder.   
 __Then__ The new item is added to the smart manager but not yet sorted.  
 **Covers:** UC8
 
@@ -199,8 +200,8 @@ __Then__ I am automatically still logged in.
 **Covers:** UC2
 
 ### 17. User Story: Customize smart sort behaviour.  
-**As a:** Advanced User.    
-**I want to:** Set the influence of tags, metadata and other criteria on the sorting AI>  
+**As an:** Advanced User.    
+**I want to:** Set the influence of tags, metadata and other criteria on the sorting AI.  
 **So that I:** Have fine control over the system.   
 #### Acceptance criteria:
 __Given__ Advanced customization options are set.   
@@ -241,7 +242,8 @@ __Then__ The changes influence future sorting.
   1.6 Registered user's preferences must be saved for to carry over to other platforms when logged in.  
 
 2. File Metadata.  
-  2.1 Users must be able to inspect file specific metadata associated with their files.  
+  2.1 Users must be able to inspect file specific metadata by clicking on a file.  
+  2.2 Users must be able to view a base set of metadata for all files and an extended set for specific file types.  
 
 3. Directory Organization.  
   3.1 Users must be able to create autonomously managed directories known as "smart folders".   
@@ -304,7 +306,8 @@ __Then__ The changes influence future sorting.
 3.3 Advanced users should be able to tailor smart management to their very particular needs.  
 
 4. Portability.   
-4.1 The system should run on any modern windows, linux or macOS machine.  
+4.1 The system should run on any modern windows, linux or macOS machine via.  
+4.2 The system must be packaged as a singular downloadble application that may be installed on any of the above mentioned platforms.     
 
 5. Security.   
 5.1 The system should never permenantly store any information obtained from user files and all processing should happen locally.  
@@ -345,6 +348,34 @@ Used to store the state of a _SmartFolder_ so it may be reinstated via a rollbac
 Using the composite pattern an entire directory structure may be stored by creating a memento from the root of such a _ManagedItem_. This memento may then be stored in the _SmartFolderBackup_ for later rollback as initiated by the _SmartFolder_ upon request of the user.
 
 ### Constraints
+The following constraints has been highlighted by our team:
+* SFM will not manage any system-level files that would require administrative privileges to move, change, or otherwise manage.
+* SFM will not provide access to any shared user directories as it only manages local machine files.  
+* SFM will not integrate directly with existing cloud storage services such as Microsoft One-Drive or Dropbox.
 
+## Technology Requirements
+This sections acts as a brief overview of the various technologies used in our stack and why they were chosen.
 
+![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)  
+Our application will be packaged as a flutter app. Flutter was chosen due to its ability to create natively compiled applications for mobile, web and desktop from a single codebase. While our application is primarily aimed at being a desktop app this choice allows for expansion in the possible future. 
+**Benefits:**
+- Cross platform 
+- Beautiful material design UIs
+- High Performance
+
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)  
+Our application uses python for its rich data-science applications. It is used for our clustering algorithms, metadata extractions and keyword extraction. The vibrant python ecosystem allows us to make use of packages that performs these algorithms more efficiently than we could have implemented ourselves.  
+**Benefits:**  
+- Ideal for data science and AI applications
+- Fast efficient development
+- High portability
+
+![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white)   
+Golang was chosen to provide the integration between our Python services and Flutter frontend. Go excels at producing high quality safe code. It has a generous learning curve and allows us to easily leverage conucurrency via its goroutines. We attempt to take advantage of Go's high performance to outweigh Python's slower relative performance.  
+**Benefits:**
+- High performance and strong concurrency support
+- Well suited for implemented the endpoints needed by the frontend
+
+### gRPC
+For communication between Go and Python we made use of gRPC. For a detailed explanation of why we used gRPC please refer to our documentation on gRPC [here](/Documentation/grpc.md). 
 
