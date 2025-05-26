@@ -10,7 +10,7 @@ import (
 func TestExploreExistingDirectory(t *testing.T) {
 	dir, _ := os.Getwd()
 	fmt.Println("Current working directory:", dir)
-	rootPath := "/mnt/c/Users/henco/OneDrive/Desktop/BSCCS/COS301/Capstone/GITHUBSTUFF/Smart-File-Manager/testRootFolder"
+	rootPath := "../../testRootFolder"
 
 	// Check that the test directory exists before continuing
 	if _, err := os.Stat(rootPath); os.IsNotExist(err) {
@@ -58,4 +58,5 @@ func TestExploreExistingDirectory(t *testing.T) {
 			t.Errorf("Expected to find %s but did not", file)
 		}
 	}
+	deleteComposite(&root)
 }
