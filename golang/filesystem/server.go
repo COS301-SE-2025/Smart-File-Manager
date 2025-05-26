@@ -4,6 +4,8 @@ import (
 	"net/http"
 )
 
+var storeCompositeFunc func(*Folder)
+
 func getCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	managerID := r.URL.Query().Get("id")
 	managerName := r.URL.Query().Get("name")
@@ -11,15 +13,17 @@ func getCompositeHandler(w http.ResponseWriter, r *http.Request) {
 
 	composite := ConvertToComposite(managerID, managerName, filePath)
 	if composite == nil {
-		http.Error(w, "Could not build composite", http.StatusInternalServerError)
+		w.Write([]byte("false"))
 		return
 	}
-	composite.Display(0)
-	// json.NewEncoder(w).Encode(composite)
+	if storeCompositeFunc != nil {
+		storeCompositeFunc(composite)
+	}
+	w.Write([]byte("true")) //temporary return
 }
 
-func HandleRequests() {
+func HandleRequests(storeFunc func(*Folder)) {
+	storeCompositeFunc = storeFunc
 	http.HandleFunc("/composite", getCompositeHandler)
-	// ...other endpoints...
 	http.ListenAndServe(":51000", nil)
 }

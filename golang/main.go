@@ -9,9 +9,26 @@ import (
 	"sync"
 )
 
-func main() {
+var (
+	composites []*filesystem.Folder
+	mu         sync.Mutex
+)
 
-	filesystem.HandleRequests()
+func storeComposite(c *filesystem.Folder) {
+	mu.Lock()
+	defer mu.Unlock()
+	composites = append(composites, c)
+	// Display all stored composites
+	for _, item := range composites {
+		item.Display(0)
+	}
+}
+func API() {
+	filesystem.HandleRequests(storeComposite)
+}
+func main() {
+	API()
+
 	// const root string = "C:/Users/jackb"
 
 	// var wg sync.WaitGroup
