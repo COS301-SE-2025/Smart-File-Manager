@@ -6,7 +6,7 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
+	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/grpc/protos"
 	"google.golang.org/grpc"
 )
 
