@@ -39,3 +39,4 @@ proto_gen:
 
 python_client:
 	python3 python/src/greeter_client.py
+

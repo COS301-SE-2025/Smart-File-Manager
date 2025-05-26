@@ -2,6 +2,7 @@ from message_structure_pb2 import DirectoryResponse, Directory
 from concurrent.futures import ThreadPoolExecutor
 from metadata_scraper import MetaDataScraper
 from message_structure_pb2 import DirectoryRequest, Directory, File, Tag, MetadataEntry
+from kw_extractor import KWExtractor
 import os
 
 # Master class
@@ -12,6 +13,8 @@ class Master():
     def __init__(self, maxSlaves):
         self.slaves = ThreadPoolExecutor(maxSlaves)
         self.scraper = MetaDataScraper()
+        self.kw_extractor = KWExtractor()
+
 
     # Takes gRPC request's root and sends it to be processed by a slave
     def submitTask(self, request : DirectoryRequest):
@@ -23,6 +26,8 @@ class Master():
         # Modifies directory request by adding metadata
         self.scrapeMetadata(request.root)
         response_directory = request.root
+        kw_response = self.kw_extractor.extract_kw(request.root)
+        # print(kw_response)
         response = DirectoryResponse(root=response_directory)
         return response
     
@@ -40,7 +45,6 @@ class Master():
 
         # Extract metadata
         for curFile in currentDirectory.files:
-
             # Ensure file path is valid
             try:
                 self.scraper.set_file(os.path.abspath(curFile.original_path))
