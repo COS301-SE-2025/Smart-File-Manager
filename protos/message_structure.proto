@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+option go_package = "./";
+
 // Simple tags defined by users
 message Tag {
   string name = 1;
