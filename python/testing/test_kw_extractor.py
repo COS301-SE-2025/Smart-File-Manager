@@ -281,24 +281,28 @@ def test_real_data_all_files():
     meta2 = MetadataEntry(key="mime_type", value="application/pdf")
     meta3 = MetadataEntry(key="mime_type", value="application/msword")
 
+    file1_path = get_test_file("myPdf.pdf")
+    file2_path = get_test_file("testFile.txt")
+    file3_path = get_test_file("myWordDoc.docx")
+
     file1 = File(
         name="gopdoc.pdf",
-        original_path="python/testing/test_files/myPdf.pdf",
+        original_path=file1_path,
         new_path="/usr/trash/gopdoc.pdf",
         tags=[tag1],
         metadata=[meta1, meta2]
     )
     file2 = File(
         name="gopdoc2.pdf",
-        original_path="python/testing/test_files/testFile.txt",
-        new_path="/usr/trash/gopdoc.pdf",
+        original_path=file2_path,
+        new_path="/usr/trash/gopdoc2.pdf",
         tags=[tag1],
         metadata=[meta1, meta4]
     )
     file3 = File(
-        name="gopdoc2.pdf",
-        original_path="python/testing/test_files/myWordDoc.docx",
-        new_path="/usr/trash/gopdoc.pdf",
+        name="gopdoc3.pdf",
+        original_path=file3_path,
+        new_path="/usr/trash/gopdoc3.pdf",
         tags=[tag1],
         metadata=[meta1, meta3]
     )
@@ -306,12 +310,11 @@ def test_real_data_all_files():
     dir1 = Directory(
         name="useless_files",
         path="/usr/trash",
-        files=[file1, file2,file3],
+        files=[file1, file2, file3],
         directories=[]
     )
-    req = DirectoryRequest(root=dir1) 
+    req = DirectoryRequest(root=dir1)
 
-        
     kw_extractor = KWExtractor()
     result = kw_extractor.extract_kw(req.root)
 
@@ -329,21 +332,18 @@ def test_real_data_all_files():
             flattened.add(kw.lower().strip())
         return flattened
 
-    pdf_result = flatten_keywords(result["python/testing/test_files/myPdf.pdf"])
-    txt_result = flatten_keywords(result["python/testing/test_files/testFile.txt"])
-    docx_result = flatten_keywords(result["python/testing/test_files/myWordDoc.docx"])
+    pdf_result = flatten_keywords(result[file1_path])
+    txt_result = flatten_keywords(result[file2_path])
+    docx_result = flatten_keywords(result[file3_path])
 
-    #yake results are heuristic based so just check for some keywords and make sure to normalize
     def normalize(kw):
         return kw.lower().replace("-", "").strip(".")
-    
+
     def check_majority(expected_keywords, result_keywords, threshold=0):
         normalized_results = {normalize(kw) for kw in result_keywords}
         normalized_expected = {normalize(kw) for kw in expected_keywords}
-
         matches = normalized_expected & normalized_results
         ratio = len(matches) / len(normalized_expected)
-
         assert ratio >= threshold, f"Too few matches: {matches} (Ratio: {ratio:.2f})"
 
     check_majority(expected_txt, txt_result)
@@ -351,26 +351,28 @@ def test_real_data_all_files():
     check_majority(expected_pdf, pdf_result)
 
 
-
-#tests each file type individually
-@pytest.mark.parametrize("file_path, mime_type, expected_keywords", [
-    ("python/testing/test_files/myPdf.pdf", "application/pdf", {"project", "management", "proposal", "folders", "manager", "capstone", "southern", "cross"}),
-    ("python/testing/test_files/testFile.txt", "text/plain", {"assignment", "debugged", "midterms", "email", "alarm", "laptops", "evacuating", "java"}),
-    ("python/testing/test_files/myWordDoc.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", {"docker", "class", "diagram", "uml", "rest", "architecture", "deployment", "frontend"}),
+@pytest.mark.parametrize("filename, mime_type, expected_keywords", [
+    ("myPdf.pdf", "application/pdf", {"project", "management", "proposal", "folders", "manager", "capstone", "southern", "cross"}),
+    ("testFile.txt", "text/plain", {"assignment", "debugged", "midterms", "email", "alarm", "laptops", "evacuating", "java"}),
+    ("myWordDoc.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", {"docker", "class", "diagram", "uml", "rest", "architecture", "deployment", "frontend"}),
 ])
-def test_extract_kw_per_file_type(file_path, mime_type, expected_keywords):
+def test_extract_kw_per_file_type(filename, mime_type, expected_keywords):
     from src import message_structure_pb2
     from src.message_structure_pb2 import File, Tag, MetadataEntry, Directory, DirectoryRequest
-    from src.kw_extractor import KWExtractor  
+    from src.kw_extractor import KWExtractor
+
+    path = get_test_file(filename)
+
     tag = Tag(name="TestTag")
     meta = MetadataEntry(key="mime_type", value=mime_type)
     file = File(
-        name=file_path.split("/")[-1],
-        original_path=file_path,
-        new_path="/usr/fake/path",
+        name=filename,
+        original_path=path,
+        new_path="/usr/fake/path/" + filename,
         tags=[tag],
         metadata=[meta]
     )
+
     directory = Directory(
         name="testdir",
         path="/usr/fake/path",
@@ -382,18 +384,15 @@ def test_extract_kw_per_file_type(file_path, mime_type, expected_keywords):
     kw_extractor = KWExtractor()
     result = kw_extractor.extract_kw(req.root)
 
-    assert file_path in result
-    extracted_keywords = set(result[file_path])
-    
-    def normalize(s): return s.lower().replace("-", "").strip(".")
+    assert path in result
+    extracted_keywords = set(result[path])
 
+    def normalize(s): return s.lower().replace("-", "").strip(".")
     def check_majority(expected_keywords, result_keywords, threshold=0):
         normalized_results = {normalize(kw) for kw in result_keywords}
         normalized_expected = {normalize(kw) for kw in expected_keywords}
-
         matches = normalized_expected & normalized_results
         ratio = len(matches) / len(normalized_expected)
-
         assert ratio >= threshold, f"Too few matches: {matches} (Ratio: {ratio:.2f})"
 
     check_majority(expected_keywords, extracted_keywords)

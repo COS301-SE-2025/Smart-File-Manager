@@ -31,6 +31,8 @@ RUN pip install --no-cache-dir \
     pypdf \
     python-docx \
     Pillow \
+    pymediainfo \
+    yake \
     grpcio \
     grpcio-tools
 
@@ -41,6 +43,8 @@ RUN python -m grpc_tools.protoc \
     --pyi_out=./src \
     --grpc_python_out=./src \
     ./protos/message_structure.proto
+
+
 
 
 # Default command (optional)
