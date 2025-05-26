@@ -15,6 +15,7 @@ class Master():
         self.scraper = MetaDataScraper()
         self.kw_extractor = KWExtractor()
 
+
     # Takes gRPC request's root and sends it to be processed by a slave
     def submitTask(self, request : DirectoryRequest):
         future = self.slaves.submit(self.process, request)
@@ -26,7 +27,7 @@ class Master():
         self.scrapeMetadata(request.root)
         response_directory = request.root
         kw_response = self.kw_extractor.extract_kw(request.root)
-        print(kw_response)
+        # print(kw_response)
         response = DirectoryResponse(root=response_directory)
         return response
     
@@ -44,13 +45,22 @@ class Master():
 
         # Extract metadata
         for curFile in currentDirectory.files:
-            self.scraper.set_file(os.path.abspath(curFile.original_path))
-            self.scraper.get_metadata()
-            extracted_metadata = self.scraper.metadata
-            for k,v in extracted_metadata:
-                meta_entry = MetadataEntry(key=k, value=v)
-                curFile.metadata = meta_entry
-            curFile.metadata = extracted_metadata
+            # Ensure file path is valid
+            try:
+                self.scraper.set_file(os.path.abspath(curFile.original_path))
+            except ValueError:
+                # Invalid path => add error tag to metadata entry
+                meta_error = MetadataEntry(key="Error", value="File does not exist - could not extract metadata")
+                curFile.metadata.append(meta_error)
+                continue
+            else:
+                # Valid path => scrape
+                self.scraper.get_metadata()
+                extracted_metadata = self.scraper.metadata
+                for k,v in extracted_metadata.items():
+
+                    meta_entry = MetadataEntry(key=str(k), value = str(v))
+                    curFile.metadata.append(meta_entry)
 
         # Recurisve call
         if len(currentDirectory.directories) != 0:

@@ -25,6 +25,7 @@ Once again ensure pytest is added to PATH
 * PyPDF: ```pip install pypdf```
 * docx: ```pip install python-docx```
 * Pillow: ```pip install Pillow```
+* pymediainfo ```pip install pymediainfo```
 * gRPC: ```pip install grpcio```
 * grpc tools: ```pip install grpcio-tools```
 * protoc: ```sudo apt install -y protobuf-compiler```
