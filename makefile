@@ -34,11 +34,15 @@ proto_gen:
 		--grpc_python_out=python/src \
 		protos/message_structure.proto
 
-	protoc \
-	  --proto_path=protos \
-	  --go_out=golang \
-	  --go-grpc_out=golang \
-	  protos/message_structure.proto
+	    mkdir -p golang/client
+	    protoc -I. \
+	    --go_out=golang/client \
+	    --go_opt=paths=source_relative \
+	    --go_opt=Mprotos/message_structure.proto=github.com/COS301-SE-2025/Smart-File-Manager/golang/client \
+	    --go-grpc_out=golang/client \
+	    --go-grpc_opt=paths=source_relative \
+	    --go-grpc_opt=Mprotos/message_structure.proto=github.com/COS301-SE-2025/Smart-File-Manager/golang/client \
+	    protos/message_structure.proto
 
 
 python_server:
