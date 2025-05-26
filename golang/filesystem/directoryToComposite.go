@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func convertToComposite(managerID string, managerName string, filePath string) *Folder {
+func ConvertToComposite(managerID string, managerName string, filePath string) *Folder {
 
 	fmt.Println("Converting: ", managerName, " to composite")
 	var newPath = filePath
@@ -102,7 +102,7 @@ func ConvertWindowsToWSLPath(winPath string) string {
 	}
 	return winPath
 }
-func deleteComposite(f **Folder) { //will need to be modified when we start storing composites
+func DeleteComposite(f **Folder) { //will need to be modified when we start storing composites
 	if f == nil || *f == nil {
 		fmt.Println("Nothing to delete.")
 		return

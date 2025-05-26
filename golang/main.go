@@ -3,29 +3,30 @@ package main
 import (
 	"fmt"
 	"log"
+	"main/filesystem"
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
 )
 
 func main() {
 
-	const root string = "C:/Users/jackb"
+	filesystem.HandleRequests()
+	// const root string = "C:/Users/jackb"
 
-	var wg sync.WaitGroup
+	// var wg sync.WaitGroup
 
-	start := time.Now()
-	wg.Add(1)
-	go exploreDir(root, &wg)
-	wg.Wait()
+	// start := time.Now()
+	// wg.Add(1)
+	// go exploreDir(root, &wg)
+	// wg.Wait()
 
-	elapsed := time.Since(start)
-	fmt.Printf("Function execution time: %s\n", elapsed)
+	// elapsed := time.Since(start)
+	// fmt.Printf("Function execution time: %s\n", elapsed)
 
-	start2 := time.Now()
-	otherMain(root)
-	fmt.Printf("non conc execution time: %s\n", (time.Since(start2)))
+	// start2 := time.Now()
+	// otherMain(root)
+	// fmt.Printf("non conc execution time: %s\n", (time.Since(start2)))
 
 }
 

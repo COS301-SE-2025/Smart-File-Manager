@@ -18,7 +18,7 @@ func TestExploreExistingDirectory(t *testing.T) {
 	}
 
 	// Convert root directory to composite
-	root := convertToComposite("001", "TestRoot", rootPath)
+	root := ConvertToComposite("001", "TestRoot", rootPath)
 
 	// Simple validation
 	if len(root.containedItems) == 0 {
@@ -58,5 +58,5 @@ func TestExploreExistingDirectory(t *testing.T) {
 			t.Errorf("Expected to find %s but did not", file)
 		}
 	}
-	deleteComposite(&root)
+	DeleteComposite(&root)
 }
