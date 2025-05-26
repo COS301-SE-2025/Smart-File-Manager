@@ -1,56 +1,80 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"strings"
-	"time"
+	"os"
 
-	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/grpc/protos"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	fs "github.com/COS301-SE-2025/Smart-File-Manager/golang/filesystem"
 )
 
 func main() {
-	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("could not create new grpc go client")
-	}
-	defer conn.Close()
+	dir, _ := os.Getwd()
+	fmt.Println("Current working directory:", dir)
+	rootPath := "../testRootFolder"
 
-	client := pb.NewDirectoryServiceClient(conn)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	req := &pb.DirectoryRequest{
-		Root: &pb.Directory{
-			Name: "client-root",
-			Path: "/tmp",
-		},
-	}
-	resp, err := client.SendDirectoryStructure(ctx, req)
-	if err != nil {
-		log.Fatalf("SendDirectoryStructure RPC failed: %v", err)
+	// Check that the test directory exists before continuing
+	if _, err := os.Stat(rootPath); os.IsNotExist(err) {
+		log.Fatalf("Directory %s does not exist. Please create it before running the test.", rootPath)
 	}
 
-	fmt.Printf("Server returned root directory: name=%q, path=%q\n", resp.Root.GetName(), resp.Root.GetPath())
-	printDirectory(resp.Root, 0)
-}
+	// Convert root directory to composite
+	root := fs.ConvertToComposite("001", "TestRoot", rootPath)
 
-func printDirectory(dir *pb.Directory, num int) {
-	fmt.Println("Directory: " + dir.Name)
-	fmt.Println("Path: " + dir.Path)
-	space := strings.Repeat("  ", num)
-	for _, file := range dir.Files {
-		fmt.Println(space + "File name: " + file.Name)
-		fmt.Println(space + "File origional path: " + file.OriginalPath)
-		fmt.Println("----")
+	// Simple validation
+	if len(root.ContainedItems) == 0 {
+		log.Fatalf("Expected at least one item in the root folder, but got none.")
 	}
-	for _, dir := range dir.Directories {
-		newNum := num + 1
-		printDirectory(dir, newNum)
-	}
+
+	// 	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// 	if err != nil {
+	// 		log.Fatalf("could not create new grpc go client")
+	// 	}
+	// 	defer conn.Close()
+
+	// 	client := pb.NewDirectoryServiceClient(conn)
+
+	// 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// 	defer cancel()
+
+	// 	routePath := filepath.Clean(
+	// 		`/mnt/c/Users/jackb`,
+	// 	)
+
+	// 	req := &pb.DirectoryRequest{
+	// 		Root: &pb.Directory{
+	// 			Name: "jackb",
+	// 			Path: routePath,
+	// 		},
+	// 	}
+
+	// 	resp, err := client.SendDirectoryStructure(ctx, req)
+	// 	if err != nil {
+	// 		log.Fatalf("SendDirectoryStructure RPC failed: %v", err)
+	// 	}
+	// 	fmt.Println("++++++++++++++++++++++++++")
+	// 	fmt.Println("route path: " + routePath)
+	// 	fmt.Println("end")
+
+	// 	// fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
+	// 	printDirectory(resp.Root, 0)
+	// }
+
+	// func printDirectory(dir *pb.Directory, num int) {
+
+	// 	fmt.Println("Directory: " + dir.Name)
+	// 	fmt.Println("Path: " + dir.Path)
+
+	// 	space := strings.Repeat("  ", num)
+	// 	for _, file := range dir.Files {
+	// 		fmt.Println(space + "File name: " + file.Name)
+	// 		fmt.Println(space + "File origional path: " + file.OriginalPath)
+	// 		fmt.Println("----")
+	// 	}
+
+	// 	for _, dir := range dir.Directories {
+	// 		newNum := num + 1
+	// 		printDirectory(dir, newNum)
+	// 	}
 
 }
