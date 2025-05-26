@@ -38,6 +38,162 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 
 ## User Stories / User Characteristics
 
+### 1. User Story: Register on portal
+**As a:** New user.     
+**I want to:** Register for an account using either the web portal or after downloading the app.    
+**So that I:** I can log in an sync all my preferences across multiple devices.    
+#### Acceptance criteria:
+__Given__ I am a new user.  
+__When__ I navigate to either the web portal registraton page or choose register on the application.  
+__Then__ My account is created and I should be notified that it took place successfully.   
+
+### 2. User Story: Download the Application
+**As a:** New or registered user.   
+**I want to:** Download the SFM app on to my device.   
+**So that I:** Can install the application.   
+#### Acceptance criteria:
+__Given__ I have access to the SFM portal.  
+__When__ I click the correct download button for my platform (Windows /macOS / linux).   
+__Then__ The application files are downloaded to my system.   
+
+### 3. User Story: Log into the application
+**As a:** Registered User.     
+**I want to:** Log in on any device with the application installed.   
+**So that I:** The application uses all my preferences like themes and naming conventions.   
+#### Acceptance criteria:
+__Given__ I am a registered user.   
+__When__ I enter my information and click log in.   
+__Then__ My details are authenticated and I am navigated to the application dashboard. 
+
+### 4. User Story: Create a smart manager
+**As a:** Registered User.     
+**I want to:** Create a smart manager from a given folder root.   
+**So that I:** Have all contained files automatically organized for me.  
+#### Acceptance criteria:
+__Given__ I have installed the application.   
+__When__ I click on create new smart manager.   
+__Then__ I am prompted for the root directory and a smart manager is created which sorts all the content by its semantic meaning.   
+
+
+### 5. User Story: Configure sorting preferences
+**As a:** User.  
+**I want to:** Configure how and when smart folders are sorted.   
+**So that I:** Have predictability and control over how and when my folders are sorted.   
+#### Acceptance criteria:
+__Given__ I have installed the application.  
+__When__ I open the settings and configure rules for sorting and sorting timers.   
+__Then__ My settings are saved and applied for future sorting.  
+
+### 6. User Story: Tag files manually 
+**As a:** User  
+**I want to:** Associate tags that I defined with certain files.   
+**So that I:** They may influence how the files are sorted and be used for sorting by tags.   
+#### Acceptance criteria:
+__Given__ The application is installed and a smart manager created.  
+__When__ I open the settings and configure rules for sorting and sorting timers.   
+__Then__ My settings are saved and applied for future sorting.  
+
+
+### 7. User Story: Auto-sort files
+**As a:** Smart Folder.  
+**I want to:** Automatically sort folders and files at a regular interval.   
+**So that I:** Keep directories organized without human intervention.   
+#### Acceptance criteria:
+__Given__ Files exist in a monitored directory and user preferences are set.   
+__When__ The timer for sorting expires.   
+__Then__ Files are moved to a more appropriate directory by the AI sorter.  
+
+### 8. User Story: Graph File organization visualization
+**As a:** User.  
+**I want to:** See how my files are organized via an intuitive mind-map / graph view.     
+**So that I:** May more naturally traverse through my files and interact with them.   
+#### Acceptance criteria:
+__Given__ I have created a smart manager which contains content.   
+__When__ I click on graph view.   
+__Then__ I see an interactive graph of my files and folders. 
+
+### 9. User Story: Traditional File organization visualization
+**As a:** User.  
+**I want to:** See how my files are organized via traditional folder viewer.     
+**So that I:** May traverse and interact with files in a well-know manner. 
+#### Acceptance criteria:
+__Given__ I have created a smart manager which contains content.   
+__When__ I click on folder view.   
+__Then__ I can traverse through the folder structure by clicking on folders.   
+
+### 10. User Story: Trigger Manual Sort 
+**As a:** User.  
+**I want to:** Manually initiate a file sorting process.   
+**So that I:** The system begins sorting immediately.   
+#### Acceptance criteria:
+__Given__ The application is installed and settings configured.   
+__When__ I click on Sort Now on a smart mananger.     
+__Then__ The system initiates a reorganization of the smart manager.  
+
+### 11. User Story: Lock files and folders
+**As a:** User.  
+**I want to:** Lock specific files and folders.  
+**So that I:** Prevent them from being moved or sorted during organization.  
+#### Acceptance criteria:
+__Given__ I have a smart manager with content.   
+__When__ I select a file or folder and click the lock button.   
+__Then__ The item is excluded from future organization operations.  
+
+### 12. User Story: Search files, tags or metadata
+**As a:** User.  
+**I want to:** Search for files using names, tags or metadata.   
+**So that I:** Can quickly find relevant content. 
+#### Acceptance criteria:
+__Given__ My files are sorted in a smart manager.   
+__When__ I enter a search query in the search bar.   
+__Then__ A list of files matching the criteria is returned.  
+
+### 13. User Story: Search files, tags or metadata
+**As a:** User.  
+**I want to:** Search for files using names, tags or metadata.   
+**So that I:** Can quickly find relevant content. 
+#### Acceptance criteria:
+__Given__ My files are sorted in a smart manager.   
+__When__ I enter a search query in the search bar.   
+__Then__ A list of files matching the criteria is returned. 
+
+### 14. User Story: Rollback sorting changes
+**As a:** User.  
+**I want to:** Undo the last sorting operation.     
+**So that I:** Restore my organization to what is was before the last sort.   
+#### Acceptance criteria:
+__Given__ I have performed a smart organization. 
+__When__ Click on the rollback button for a smart manager.      
+__Then__ All files are returned to their exact previous location.   
+
+### 15. User Story: Add a new file or folder.  
+**As a:** User.  
+**I want to:** Create a new file or folder at some location in my smart manager.   
+**So that I:** Interact with my filesystem via SFM.   
+#### Acceptance criteria:
+__Given__ I have a smart manager.  
+__When__  I click to create a new file or folder.  
+__Then__ The new item is added to the smart manager but not yet sorted.  
+
+### 16. User Story: Stay logged in.  
+**As a:** User.  
+**I want to:** Remained logged in after restarting the app.   
+**So that I:** Don't have to log in every time I open the app.   
+#### Acceptance criteria:
+__Given__ I have logged in and did not log out.   
+__When__  I reopen the app.   
+__Then__ I am automatically still logged in.  
+
+### 16. User Story: Customize smart sort behaviour.  
+**As a:** Advanced User.    
+**I want to:** Set the influence of tags, metadata and other criteria on the sorting AI>  
+**So that I:** Have fine control over the system.   
+#### Acceptance criteria:
+__Given__ Advanced customization options are set.   
+__When__ I adjust my customization options.   
+__Then__ The changes influence future sorting.  
+
+
 ## Use cases / Use Case Diagram
 | Use Case                              | Actor | Abstract                                                                                                             | Preconditions                             | Postconditions                           |
 | ------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------------------------------------- |
