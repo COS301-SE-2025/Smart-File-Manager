@@ -33,13 +33,13 @@ func TestExploreExistingDirectory(t *testing.T) {
 		"metadata.webp": false,
 	}
 
-	for _, item := range root.containedItems {
+	for _, item := range root.ContainedItems {
 		if item.GetPath() == filepath.Join(rootPath, "a.txt") {
 			expectedFiles["a.txt"] = true
 		}
 		if folder, ok := item.(*Folder); ok && folder.itemName == "subdir" {
 			expectedFiles["subdir"] = true
-			for _, subItem := range folder.containedItems {
+			for _, subItem := range folder.ContainedItems {
 				if subItem.GetPath() == filepath.Join(rootPath, "subdir", "empty.txt") {
 					expectedFiles["empty.txt"] = true
 				}
