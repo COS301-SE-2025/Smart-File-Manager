@@ -28,6 +28,9 @@ go_proto_gen:
 	--go-grpc_opt=Mprotos/message_structure.proto=github.com/COS301-SE-2025/Smart-File-Manager/golang/client \
 	protos/message_structure.proto
 
+go_grpc_server:
+	cd golang && \
+	go run client/server.go
 
 
 python:
