@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/grpc/protos"
@@ -34,7 +35,22 @@ func main() {
 		log.Fatalf("SendDirectoryStructure RPC failed: %v", err)
 	}
 
-	// 5) Print out whatever the server sent back
-	fmt.Printf("Server returned root directory: name=%q, path=%q\n",
-		resp.Root.GetName(), resp.Root.GetPath())
+	fmt.Printf("Server returned root directory: name=%q, path=%q\n", resp.Root.GetName(), resp.Root.GetPath())
+	printDirectory(resp.Root, 0)
+}
+
+func printDirectory(dir *pb.Directory, num int) {
+	fmt.Println("Directory: " + dir.Name)
+	fmt.Println("Path: " + dir.Path)
+	space := strings.Repeat("  ", num)
+	for _, file := range dir.Files {
+		fmt.Println(space + "File name: " + file.Name)
+		fmt.Println(space + "File origional path: " + file.OriginalPath)
+		fmt.Println("----")
+	}
+	for _, dir := range dir.Directories {
+		newNum := num + 1
+		printDirectory(dir, newNum)
+	}
+
 }
