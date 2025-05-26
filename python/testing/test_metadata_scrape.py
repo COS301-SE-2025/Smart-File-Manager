@@ -14,8 +14,9 @@ def get_test_file(name):
 
 # < ------ UNIT TESTING ------>
 # Image files
+@patch("src.metadata_scraper.os.path.exists", return_value=True)
 @patch("src.metadata_scraper.Image.open")
-def test_image_metadata(mock_image_open):
+def test_image_metadata(mock_image_open, mock_path_exist):
     mock_image = MagicMock()
     mock_image.__enter__.return_value = mock_image
     mock_image._getexif.return_value = {
@@ -25,15 +26,17 @@ def test_image_metadata(mock_image_open):
     mock_image_open.return_value = mock_image
 
     from src.metadata_scraper import MetaDataScraper
-    scraper = MetaDataScraper("fake.jpg")
+    scraper = MetaDataScraper()
+    scraper.set_file("fake.jpg")
     metadata = scraper.get_image_metadata()
 
     assert metadata["DateTime"] == "2020:01:01 00:00:00"
     assert metadata["ImageDescription"] == "Test Image"
 
 # Audio and video
+@patch("src.metadata_scraper.os.path.exists", return_value=True)
 @patch("src.metadata_scraper.mutagen.File")
-def test_audio_video_metadata(mock_mutagen_file):
+def test_audio_video_metadata(mock_mutagen_file, mock_path_exist):
     from src.metadata_scraper import MetaDataScraper
 
     mock_audio = {"TPE1": ["Artist Name"], "TIT2": ["Track Title"]}
@@ -42,21 +45,24 @@ def test_audio_video_metadata(mock_mutagen_file):
     mock_mutagen_file.side_effect = [mock_audio, mock_video] # audio then video for mock
 
     # Test audio 
-    audio_scraper = MetaDataScraper("myAudio.mp3")
+    audio_scraper = MetaDataScraper()
+    audio_scraper.set_file("myAudio.mp3")
     audio_metadata = audio_scraper.get_audio_video_metadata()
     assert audio_metadata["TPE1"] == "['Artist Name']"
     assert audio_metadata["TIT2"] == "['Track Title']"
 
     # Test video 
-    video_scraper = MetaDataScraper("myVideo.mp4")
+    video_scraper = MetaDataScraper()
+    video_scraper.set_file("myVideo.mp4")
     video_metadata = video_scraper.get_audio_video_metadata()
     assert video_metadata["©nam"] == "['Test Video']"
     assert video_metadata["©ART"] == "['Video Creator']"
 
 
 # Pdf files
+@patch("src.metadata_scraper.os.path.exists", return_value=True)
 @patch("src.metadata_scraper.PdfReader")
-def test_pdf_metadata(mock_pdf_reader):
+def test_pdf_metadata(mock_pdf_reader, mock_path_exist):
     mock_reader = MagicMock()
     mock_reader.metadata = {
         "/Author": "John Doe",
@@ -65,15 +71,17 @@ def test_pdf_metadata(mock_pdf_reader):
     mock_pdf_reader.return_value = mock_reader
 
     from src.metadata_scraper import MetaDataScraper
-    scraper = MetaDataScraper("myPdf.pdf")
+    scraper = MetaDataScraper()
+    scraper.set_file("myPdf.pdf")
     metadata = scraper.get_pdf_metadata()
 
     assert metadata["/Author"] == "John Doe"
     assert metadata["/Title"] == "Sample PDF"
 
 # Word documents
+@patch("src.metadata_scraper.os.path.exists", return_value=True)
 @patch("src.metadata_scraper.docx.Document")
-def test_docx_metadata(mock_docx_doc):
+def test_docx_metadata(mock_docx_doc, mock_path_exist):
     mock_doc = MagicMock()
     mock_doc.core_properties.author = "Jane Doe"
     mock_doc.core_properties.title = "Test Doc"
@@ -84,19 +92,36 @@ def test_docx_metadata(mock_docx_doc):
     mock_docx_doc.return_value = mock_doc
 
     from src.metadata_scraper import MetaDataScraper
-    scraper = MetaDataScraper("myWordDoc.docx")
+    scraper = MetaDataScraper()
+    scraper.set_file("myWordDoc.docx")
     metadata = scraper.get_docx_metadata()
 
     assert metadata["author"] == "Jane Doe"
     assert metadata["title"] == "Test Doc"
     assert metadata["created"] == "2021-01-01T00:00:00"
 
+# Test non existing file
+@patch("src.metadata_scraper.os.path.exists", return_value=False)
+@patch("src.metadata_scraper.docx.Document")
+def test_nonexisting_file(mock_docx_doc, mock_path_exist):
+    mock_doc = MagicMock()
+    mock_doc.core_properties.modified = datetime.datetime(2021, 2, 2)
+    mock_docx_doc.return_value = mock_doc
+
+    from src.metadata_scraper import MetaDataScraper
+    scraper = MetaDataScraper()
+
+    with pytest.raises(ValueError, match="New path does not exist on this filesystem"):
+        scraper.set_file("myWordDoc.docx")
+
+
 # < ------ INTEGRATION TESTING ------ >
 # Real pdf
 def test_real_pdf():
     test_file = get_test_file("myPdf.pdf")
 
-    scraper = MetaDataScraper(test_file)
+    scraper = MetaDataScraper()
+    scraper.set_file(test_file)
     scraper.get_metadata()
     metadata = scraper.metadata
     
@@ -112,7 +137,8 @@ def test_real_pdf():
 def test_real_img():
     test_file = get_test_file("myImg.jpg")
 
-    scraper = MetaDataScraper(test_file)
+    scraper = MetaDataScraper()
+    scraper.set_file(test_file)
     scraper.get_metadata()
 
     metadata = scraper.metadata
@@ -129,7 +155,8 @@ def test_real_img():
 def test_real_word():
     test_file = get_test_file("myWordDoc.docx")
 
-    scraper = MetaDataScraper(test_file)
+    scraper = MetaDataScraper()
+    scraper.set_file(test_file)
     scraper.get_metadata()
 
     metadata = scraper.metadata
@@ -149,7 +176,8 @@ def test_real_word():
 def test_real_audio():
     test_file = get_test_file("myAudio.m4a")
 
-    scraper = MetaDataScraper(test_file)
+    scraper = MetaDataScraper()
+    scraper.set_file(test_file)
     scraper.get_metadata()
 
     metadata = scraper.metadata
@@ -166,7 +194,8 @@ def test_real_audio():
 def test_real_video():
     test_file = get_test_file("myVideo.webm")
 
-    scraper = MetaDataScraper(test_file)
+    scraper = MetaDataScraper()
+    scraper.set_file(test_file)
     scraper.get_metadata()
 
     metadata = scraper.metadata
