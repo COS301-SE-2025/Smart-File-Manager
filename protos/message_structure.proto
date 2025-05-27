@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+option go_package = "./";
+
+// Simple tags defined by users
+message Tag {
+  string name = 1;
+}
+
+// Key-val metadata as extracted (don't use maps as this is more portable for go)
+message MetadataEntry {
+  string key = 1;
+  string value = 2;
+}
+
+message File {
+  string name = 1;
+  string original_path = 2;
+  string new_path = 3;
+  repeated Tag tags = 4;
+  repeated MetadataEntry metadata = 5;
+}
+
+message Directory {
+  string name = 1;
+  string path = 2;
+  repeated File files = 3;
+  repeated Directory directories = 4;
+}
+
+// For request/response messages
+// Go to python 
+message DirectoryRequest {
+  Directory root = 1;
+}
+
+// Python to go
+message DirectoryResponse {
+  Directory root = 1;
+}
+
+service DirectoryService {
+  rpc SendDirectoryStructure(DirectoryRequest) returns (DirectoryResponse);
+}

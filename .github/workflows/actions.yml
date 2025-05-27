@@ -1,0 +1,98 @@
+name: Test and Build Containers
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'Documentation/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'Documentation/**'
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Install Go gRPC tools
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+      - name: Add Go bin to PATH
+        run: echo "${HOME}/go/bin" >> $GITHUB_PATH
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            libmagic1 \
+            file \
+            build-essential \
+            gcc \
+            protobuf-compiler
+
+      - name: Install Python dependencies
+        run: |
+          pip install \
+            pytest \
+            python-magic \
+            mutagen \
+            pypdf \
+            python-docx \
+            Pillow \
+            pymediainfo \
+            yake \
+            grpcio \
+            grpcio-tools
+
+      - name: Run Python tests
+        run: |
+          python -m grpc_tools.protoc \
+            -I./protos \
+            --python_out=./python/src \
+            --pyi_out=./python/src \
+            --grpc_python_out=./python/src \
+            ./protos/message_structure.proto
+          pytest -v -s --color=yes --tb=short python/testing/
+
+      - name: Generate Go gRPC code
+        run: |
+          mkdir -p golang/client
+          protoc -I. \
+            --go_out=golang/client \
+            --go_opt=paths=source_relative \
+            --go_opt=Mprotos/message_structure.proto=github.com/COS301-SE-2025/Smart-File-Manager/golang/client \
+            --go-grpc_out=golang/client \
+            --go-grpc_opt=paths=source_relative \
+            --go-grpc_opt=Mprotos/message_structure.proto=github.com/COS301-SE-2025/Smart-File-Manager/golang/client \
+            protos/message_structure.proto
+
+      - name: Run Go tests
+        working-directory: ./golang
+        run: go test -v ./filesystem
+
+      - name: Build and start containers
+        run: docker compose -f docker-compose.yml up --build -d
+
+      - name: Wait for services
+        run: sleep 10
+
+      - name: Shut down containers
+        run: docker compose -f docker-compose.yml down
+
