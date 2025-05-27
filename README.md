@@ -162,4 +162,6 @@ We follow a structured GitFlow branching model to ensure efficient development a
 [![Contributors](https://img.shields.io/github/contributors/COS301-SE-2025/Smart-File-Manager?style=flat-square)](https://github.com/COS301-SE-2025/Smart-File-Manager/graphs/contributors)
 [![Last Commit](https://img.shields.io/github/last-commit/COS301-SE-2025/Smart-File-Manager?style=flat-square)](https://github.com/COS301-SE-2025/Smart-File-Manager/commits/main)
 [![Repository Size](https://img.shields.io/github/repo-size/COS301-SE-2025/Smart-File-Manager?style=flat-square)](https://github.com/COS301-SE-2025/Smart-File-Manager)
+[![CI/CD](https://github.com/COS301-SE-2025/Smart-File-Manager/actions/workflows/actions.yml/badge.svg)](https://github.com/COS301-SE-2025/Smart-File-Manager/actions/workflows/actions.yml)
+
 
