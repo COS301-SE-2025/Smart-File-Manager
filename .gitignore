@@ -15,5 +15,6 @@ venv/
 *_pb2.py
 *_pb2_grpc.py
 *_pb2.pyi
-*pb.go
-*pb.go
+message_structure.pb.go
+message_structure_grpc.pb.go
+

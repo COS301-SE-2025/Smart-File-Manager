@@ -9,17 +9,17 @@ import (
 
 func createTestStructure() *Folder {
 	root := &Folder{managedItem: managedItem{
-		itemPath: "/root", itemName: "root",
+		ItemPath: "/root", ItemName: "root",
 	}}
 
 	sub := &Folder{managedItem: managedItem{
-		itemPath: "/root/sub", itemName: "sub",
+		ItemPath: "/root/sub", ItemName: "sub",
 	}}
 
 	file := &File{managedItem: managedItem{
-		itemPath:     "/root/sub/file.txt",
-		itemName:     "file.txt",
-		creationDate: time.Now(),
+		ItemPath:     "/root/sub/file.txt",
+		ItemName:     "file.txt",
+		CreationDate: time.Now(),
 	}}
 
 	err := sub.AddItem(file)
@@ -58,7 +58,7 @@ func TestSubfolderStillExistsAfterFileRemoval(t *testing.T) {
 
 	// Check if subfolder still exists
 	found := false
-	for _, item := range root.containedItems {
+	for _, item := range root.ContainedItems {
 		if item.GetPath() == "/root/sub" {
 			found = true
 		}
@@ -70,15 +70,15 @@ func TestSubfolderStillExistsAfterFileRemoval(t *testing.T) {
 
 func TestRecursiveRemoval(t *testing.T) {
 	root := createTestStructure()
-	sub := root.containedItems[0].(*Folder)
+	sub := root.ContainedItems[0].(*Folder)
 
-	if len(sub.containedItems) != 1 {
-		t.Fatalf("Expected 1 item in subfolder, got %d", len(sub.containedItems))
+	if len(sub.ContainedItems) != 1 {
+		t.Fatalf("Expected 1 item in subfolder, got %d", len(sub.ContainedItems))
 	}
 
 	root.RemoveItem("/root/sub/file.txt")
 
-	if len(sub.containedItems) != 0 {
+	if len(sub.ContainedItems) != 0 {
 		t.Errorf("Expected subfolder to be empty after file removal")
 	}
 }
@@ -112,10 +112,10 @@ func TestAddTagToItem(t *testing.T) {
 		t.Fatalf("Expected item to be of type *File")
 	}
 
-	if len(file.itemTags) != 1 {
-		t.Errorf("Expected 1 tag, found %d", len(file.itemTags))
-	} else if file.itemTags[0].tagID != "t1" || file.itemTags[0].tagName != "Important" {
-		t.Errorf("Expected tag (t1, Important), got (%s, %s)", file.itemTags[0].tagID, file.itemTags[0].tagName)
+	if len(file.ItemTags) != 1 {
+		t.Errorf("Expected 1 tag, found %d", len(file.ItemTags))
+	} else if file.ItemTags[0].tagID != "t1" || file.ItemTags[0].tagName != "Important" {
+		t.Errorf("Expected tag (t1, Important), got (%s, %s)", file.ItemTags[0].tagID, file.ItemTags[0].tagName)
 	}
 }
 func TestAddTagToNonExistentItem(t *testing.T) {
@@ -143,7 +143,7 @@ func TestAddTagToFolder(t *testing.T) {
 
 	found := false
 	if folder, ok := sub.(*Folder); ok {
-		for _, tag := range folder.itemTags {
+		for _, tag := range folder.ItemTags {
 			if tag.tagID == "t2" && tag.tagName == "ProjectDocs" {
 				found = true
 			}

@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func convertToComposite(managerID string, managerName string, filePath string) *Folder {
+func ConvertToComposite(managerID string, managerName string, filePath string) *Folder {
 
 	fmt.Println("Converting: ", managerName, " to composite")
 	var newPath = filePath
@@ -19,10 +19,10 @@ func convertToComposite(managerID string, managerName string, filePath string) *
 
 	//creating managedItem
 	root := &Folder{managedItem: managedItem{
-		itemID:       managerID,
-		itemName:     managerName,
-		itemPath:     newPath,
-		creationDate: time.Now(),
+		ItemID:       managerID,
+		ItemName:     managerName,
+		ItemPath:     newPath,
+		CreationDate: time.Now(),
 	}}
 
 	// Recursively populate the folder with its contents
@@ -51,12 +51,12 @@ func exploreDown(folder *Folder, path string) error {
 		}
 
 		if entry.IsDir() {
-			fmt.Println("Found folder:", fullPath)
+			// fmt.Println("Found folder:", fullPath)
 			subFolder := &Folder{
 				managedItem: managedItem{
-					itemName:     entry.Name(),
-					itemPath:     fullPath,
-					creationDate: info.ModTime(),
+					ItemName:     entry.Name(),
+					ItemPath:     fullPath,
+					CreationDate: info.ModTime(),
 				},
 			}
 			folder.AddItem(subFolder)
@@ -65,13 +65,13 @@ func exploreDown(folder *Folder, path string) error {
 				fmt.Println("Error exploring subfolder:", err)
 			}
 		} else {
-			fmt.Println("Found file:", fullPath)
+			// fmt.Println("Found file:", fullPath)
 			file := &File{
 				managedItem: managedItem{
-					itemName:     entry.Name(),
-					itemPath:     fullPath,
-					creationDate: info.ModTime(),
-					fileType:     detectFileType(info), // optional
+					ItemName:     entry.Name(),
+					ItemPath:     fullPath,
+					CreationDate: info.ModTime(),
+					FileType:     detectFileType(info), // optional
 				},
 			}
 			err := folder.AddItem(file)
@@ -102,3 +102,21 @@ func ConvertWindowsToWSLPath(winPath string) string {
 	}
 	return winPath
 }
+
+func DeleteComposite(f **Folder) { //will need to be modified when we start storing composites
+	if f == nil || *f == nil {
+		fmt.Println("Nothing to delete.")
+		return
+	}
+	*f = nil
+	fmt.Println("Composite deleted successfully.")
+}
+
+//to find absolute path of any path
+// absPath, err := filepath.Abs("Users\\henco\\OneDrive\\Desktop\\BSCCS\\SEMESTER_1\\COS 332(NTWRKS)")
+// 	if err != nil {
+// 		fmt.Println("Error getting absolute path:", err)
+// 		return
+// 	}
+// 	fmt.Println("Absolute path:", absPath)
+

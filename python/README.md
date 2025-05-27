@@ -33,6 +33,7 @@ Once again ensure pytest is added to PATH
 * protoc buf: ```go install google.golang.org/protobuf/cmd/protoc-gen-go@latest```
 * yake: ```pip install yake```
 
+to install all the above mentioned: ```pip install python-magic mutagen pypdf python-docx Pillow pymediainfo grpcio grpcio-tools yake```
 
 ## Where to place your files
 * Add all code to the src directory
