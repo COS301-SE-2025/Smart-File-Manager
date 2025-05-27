@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  python-service:
+    build:
+      context: .
+      dockerfile: python/Dockerfile
+    ports:
+      - "50051:50051"
+    container_name: python-grpc-server
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1 # So output shows directly in stdout
+    working_dir: /app
+    command: ["python", "src/main.py"]
+
+  go-service:
+    build:
+      context: .
+      dockerfile: golang/Dockerfile
+    ports:
+      - "51000:51000"
+    container_name: go-grpc-server
+    restart: unless-stopped
+    working_dir: /app/golang
+    command: ["go", "run", "main.go"]

@@ -45,10 +45,14 @@ RUN python -m grpc_tools.protoc \
     ./protos/message_structure.proto
 
 
+# Expose gRPC server port
+EXPOSE 50051
 
+# Start the gRPC server`
+CMD ["python", "src/main.py"]
 
-# Default command (optional)
-CMD ["pytest", "-v", "-s", "--color=yes", "--tb=short", "testing/"]
+# Old command for running tests directly in docker (taking this out for now as the workflow will do this)
+# CMD ["pytest", "-v", "-s", "--color=yes", "--tb=short", "testing/"]
 
 
 

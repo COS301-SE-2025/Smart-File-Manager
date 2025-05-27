@@ -32,5 +32,11 @@ RUN protoc \
 
 WORKDIR /app/golang
 
-# Default command (optional)
-CMD ["go", "test", "-v", "./filesystem"]
+# Expose the API server port
+EXPOSE 51000
+
+# Start the server for API requests
+CMD ["go", "run", "main.go"]
+
+# Old command that used to run tests directly in docker (Comment this out for now as the workflow will do it)
+# CMD ["go", "test", "-v", "./filesystem"]
