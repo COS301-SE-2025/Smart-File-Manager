@@ -24,17 +24,17 @@ type FileSystemItem interface {
 
 // base struct
 type managedItem struct {
-	itemID       string
-	itemName     string
-	itemPath     string
-	itemTags     []tag
-	locked       bool
-	fileType     string
-	creationDate time.Time
+	ItemID       string
+	ItemName     string
+	ItemPath     string
+	ItemTags     []tag
+	Locked       bool
+	FileType     string
+	CreationDate time.Time
 }
 
 func (m *managedItem) GetPath() string {
-	return m.itemPath
+	return m.ItemPath
 }
 
 // Leaf
@@ -79,7 +79,7 @@ func (f *Folder) RemoveItem(itemPath string) bool {
 }
 
 func (f *Folder) GetPath() string {
-	return f.itemPath
+	return f.ItemPath
 }
 
 func (f *Folder) GetItem(itemPath string) FileSystemItem {
@@ -110,25 +110,25 @@ func (f *Folder) AddTagToItem(itemPath string, tagID string, tagName string) boo
 }
 
 func (f *Folder) AddTagToSelf(tagID string, tagName string) {
-	f.itemTags = append(f.itemTags, tag{tagID, tagName})
+	f.ItemTags = append(f.ItemTags, tag{tagID, tagName})
 }
 
 func (f *File) AddTag(tagID string, tagName string) bool {
-	f.itemTags = append(f.itemTags, tag{tagID, tagName})
+	f.ItemTags = append(f.ItemTags, tag{tagID, tagName})
 	return true
 }
 
 func (f *Folder) AddTag(tagID string, tagName string) bool {
-	f.itemTags = append(f.itemTags, tag{tagID, tagName})
+	f.ItemTags = append(f.ItemTags, tag{tagID, tagName})
 	return true
 }
 func (f *Folder) Display(indent int) {
 	prefix := strings.Repeat("  ", indent)
-	fmt.Printf("%sFolder: %s\n", prefix, f.itemName)
+	fmt.Printf("%sFolder: %s\n", prefix, f.ItemName)
 
-	if len(f.itemTags) > 0 {
+	if len(f.ItemTags) > 0 {
 		fmt.Printf("%s  Tags:\n", prefix)
-		for _, tag := range f.itemTags {
+		for _, tag := range f.ItemTags {
 			fmt.Printf("%s    - %s: %s\n", prefix, tag.tagID, tag.tagName)
 		}
 	}
@@ -144,11 +144,11 @@ func (f *Folder) Display(indent int) {
 }
 func (f *File) Display(indent int) {
 	prefix := strings.Repeat("  ", indent)
-	fmt.Printf("%sFile: %s\n", prefix, f.itemName)
+	fmt.Printf("%sFile: %s\n", prefix, f.ItemName)
 
-	if len(f.itemTags) > 0 {
+	if len(f.ItemTags) > 0 {
 		fmt.Printf("%s  Tags:\n", prefix)
-		for _, tag := range f.itemTags {
+		for _, tag := range f.ItemTags {
 			fmt.Printf("%s    - %s: %s\n", prefix, tag.tagID, tag.tagName)
 		}
 	}

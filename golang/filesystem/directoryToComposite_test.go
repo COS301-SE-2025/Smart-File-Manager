@@ -37,7 +37,7 @@ func TestExploreExistingDirectory(t *testing.T) {
 		if item.GetPath() == filepath.Join(rootPath, "a.txt") {
 			expectedFiles["a.txt"] = true
 		}
-		if folder, ok := item.(*Folder); ok && folder.itemName == "subdir" {
+		if folder, ok := item.(*Folder); ok && folder.ItemName == "subdir" {
 			expectedFiles["subdir"] = true
 			for _, subItem := range folder.ContainedItems {
 				if subItem.GetPath() == filepath.Join(rootPath, "subdir", "empty.txt") {

@@ -19,10 +19,10 @@ func ConvertToComposite(managerID string, managerName string, filePath string) *
 
 	//creating managedItem
 	root := &Folder{managedItem: managedItem{
-		itemID:       managerID,
-		itemName:     managerName,
-		itemPath:     newPath,
-		creationDate: time.Now(),
+		ItemID:       managerID,
+		ItemName:     managerName,
+		ItemPath:     newPath,
+		CreationDate: time.Now(),
 	}}
 
 	// Recursively populate the folder with its contents
@@ -54,9 +54,9 @@ func exploreDown(folder *Folder, path string) error {
 			fmt.Println("Found folder:", fullPath)
 			subFolder := &Folder{
 				managedItem: managedItem{
-					itemName:     entry.Name(),
-					itemPath:     fullPath,
-					creationDate: info.ModTime(),
+					ItemName:     entry.Name(),
+					ItemPath:     fullPath,
+					CreationDate: info.ModTime(),
 				},
 			}
 			folder.AddItem(subFolder)
@@ -68,10 +68,10 @@ func exploreDown(folder *Folder, path string) error {
 			fmt.Println("Found file:", fullPath)
 			file := &File{
 				managedItem: managedItem{
-					itemName:     entry.Name(),
-					itemPath:     fullPath,
-					creationDate: info.ModTime(),
-					fileType:     detectFileType(info), // optional
+					ItemName:     entry.Name(),
+					ItemPath:     fullPath,
+					CreationDate: info.ModTime(),
+					FileType:     detectFileType(info), // optional
 				},
 			}
 			err := folder.AddItem(file)
