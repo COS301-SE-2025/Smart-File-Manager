@@ -21,6 +21,7 @@
     * [Architectural Patterns](#architectural-patterns)
     * [Design Patterns](#design-patterns)
     * [Constraints](#constraints)
+* [Technology Requirements](#technology-requirements)
 
 ## Introduction
 The digital age seems to evolve at nearly the speed of light, yet somehow file managers are still learning to take their first steps. Cluttered desktops, folder mazes and the laborious hassle of organizing your files are not tasks the modern computer user should be plagued by.  
@@ -37,6 +38,177 @@ Navigate your directories with an intuitive mind map exposing the underlying web
 SFM is not just another tool, it's your new digital housekeeper, your AI file finder and your new best friend.  
 
 ## User Stories / User Characteristics
+
+### 1. User Story: Register on portal
+**As a:** New user.     
+**I want to:** Register for an account using either the web portal or after downloading the app.    
+**So that I:** I can log in an sync all my preferences across multiple devices.    
+#### Acceptance criteria:
+__Given__ I am a new user.  
+__When__ I navigate to either the web portal registraton page or choose register on the application.  
+__Then__ My account is created and I should be notified that it took place successfully.   
+**Covers:** UC15
+
+### 2. User Story: Download the Application
+**As a:** New or registered user.   
+**I want to:** Download the SFM app on to my device.   
+**So that I:** Can install the application.   
+#### Acceptance criteria:
+__Given__ I have access to the SFM portal.  
+__When__ I click the correct download button for my platform (Windows /macOS / linux).   
+__Then__ The application files are downloaded to my system.   
+**Covers:** UC1
+
+### 3. User Story: Log into the application
+**As a:** Registered User.     
+**I want to:** Log in on any device with the application installed.   
+**So that I:** May have my preferences like themes and naming conventions apply on this device.     
+#### Acceptance criteria:
+__Given__ I am a registered user.   
+__When__ I enter my information and click log in.   
+__Then__ My details are authenticated and I am navigated to the application dashboard.  
+**Covers:** UC2
+
+### 4. User Story: Create a smart manager
+**As a:** Registered User.     
+**I want to:** Create a smart manager from a given folder root.   
+**So that I:** Have all contained files automatically organized for me.  
+#### Acceptance criteria:
+__Given__ I have installed the application.   
+__When__ I click on create new smart manager.   
+__Then__ I am prompted for the root directory and a smart manager is created which sorts all the content by its semantic meaning.   
+**Covers:** UC8
+
+### 5. User Story: Configure sorting preferences
+**As a:** User.  
+**I want to:** Configure how and when smart folders are sorted.   
+**So that I:** Have predictability and control over how and when my folders are sorted.   
+#### Acceptance criteria:
+__Given__ I have installed the application.  
+__When__ I open the settings and configure rules for sorting and sorting timers.   
+__Then__ My settings are saved and applied for future sorting.  
+**Covers:** UC3
+
+### 6. User Story: Tag files manually 
+**As a:** User  
+**I want to:** Associate tags that I defined with certain files.   
+**So that I:** May influence how the files are sorted and be used for sorting by tags.   
+#### Acceptance criteria:
+__Given__ The application is installed and a smart manager created.  
+__When__ I open the settings and configure rules for sorting and sorting timers.   
+__Then__ My settings are saved and applied for future sorting.  
+**Covers:** UC4
+
+### 7. User Story: Auto-sort files
+**As a:** Smart Folder.  
+**I want to:** Automatically sort folders and files at a regular interval.   
+**So that I:** Keep directories organized without human intervention.   
+#### Acceptance criteria:
+__Given__ Files exist in a monitored directory and user preferences are set.   
+__When__ The timer for sorting expires.   
+__Then__ Files are moved to a more appropriate directory by the AI sorter.  
+**Covers:** UC5
+
+### 8. User Story: Graph File organization visualization
+**As a:** User.  
+**I want to:** See how my files are organized via an intuitive mind-map / graph view.     
+**So that I:** May more naturally traverse through my files and interact with them.   
+#### Acceptance criteria:
+__Given__ I have created a smart manager which contains content.   
+__When__ I click on graph view.   
+__Then__ I see an interactive graph of my files and folders.  
+**Covers:** UC7
+
+### 9. User Story: Traditional File organization visualization
+**As a:** User.  
+**I want to:** See how my files are organized via traditional folder viewer.     
+**So that I:** May traverse and interact with files in a well-know manner. 
+#### Acceptance criteria:
+__Given__ I have created a smart manager which contains content.   
+__When__ I click on folder view.   
+__Then__ I can traverse through the folder structure by clicking on folders.  
+**Covers:** UC7
+
+### 10. User Story: Trigger Manual Sort 
+**As a:** User.  
+**I want to:** Manually initiate a file sorting process.   
+**So that I:** May initiate a reorganize immediately.   
+#### Acceptance criteria:
+__Given__ The application is installed and settings configured.   
+__When__ I click on Sort Now on a smart mananger.     
+__Then__ The system initiates a reorganization of the smart manager.  
+**Covers:** UC9
+
+### 11. User Story: Lock files and folders
+**As a:** User.  
+**I want to:** Lock specific files and folders.  
+**So that I:** Prevent them from being moved or sorted during organization.  
+#### Acceptance criteria:
+__Given__ I have a smart manager with content.   
+__When__ I select a file or folder and click the lock button.   
+__Then__ The item is excluded from future organization operations.  
+**Covers:** UC10
+
+### 12. User Story: View File metadata
+**As a:** User.  
+**I want to:** See metadata associated with a file.  
+**So that I:** Can understand the content associated with my files.   
+#### Acceptance criteria:
+__Given__ I have a smart manager with content.   
+__When__ I select a file by clicking on it.   
+__Then__ A side-menu pops up showing me the metadata associated with that file.  
+**Covers:** UC10
+
+### 13. User Story: Search files, tags or metadata
+**As a:** User.  
+**I want to:** Search for files using names, tags or metadata.   
+**So that I:** Can quickly find relevant content. 
+#### Acceptance criteria:
+__Given__ My files are sorted in a smart manager.   
+__When__ I enter a search query in the search bar.   
+__Then__ A list of files matching the criteria is returned.  
+**Covers:** UC11
+
+### 14. User Story: Rollback sorting changes
+**As a:** User.  
+**I want to:** Undo the last sorting operation.     
+**So that I:** Restore my organization to what is was before the last sort.   
+#### Acceptance criteria:
+__Given__ I have performed a smart organization.   
+__When__ I Click on the rollback button for a smart manager.        
+__Then__ All files are returned to their exact previous location.   
+**Covers:** UC11
+
+### 15. User Story: Add a new file or folder.  
+**As a:** User.  
+**I want to:** Create a new file or folder at some location in my smart manager.   
+**So that I:** May interact with my filesystem via SFM to perform tasks I would with a regular filesystem.   
+#### Acceptance criteria:
+__Given__ I have a smart manager.     
+__When__  I click to create a new file or folder.   
+__Then__ The new item is added to the smart manager but not yet sorted.  
+**Covers:** UC8
+
+### 16. User Story: Stay logged in.  
+**As a:** User.  
+**I want to:** Remained logged in after restarting the app.   
+**So that I:** Don't have to log in every time I open the app.   
+#### Acceptance criteria:
+__Given__ I have logged in and did not log out.   
+__When__  I reopen the app.   
+__Then__ I am automatically still logged in.  
+**Covers:** UC2
+
+### 17. User Story: Customize smart sort behaviour.  
+**As an:** Advanced User.    
+**I want to:** Set the influence of tags, metadata and other criteria on the sorting AI.  
+**So that I:** Have fine control over the system.   
+#### Acceptance criteria:
+__Given__ Advanced customization options are set.   
+__When__ I adjust my customization options.   
+__Then__ The changes influence future sorting.  
+
+
 
 ## Use cases / Use Case Diagram
 | Use Case                              | Actor | Abstract                                                                                                             | Preconditions                             | Postconditions                           |
@@ -70,7 +242,8 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
   1.6 Registered user's preferences must be saved for to carry over to other platforms when logged in.  
 
 2. File Metadata.  
-  2.1 Users must be able to inspect file specific metadata associated with their files.  
+  2.1 Users must be able to inspect file specific metadata by clicking on a file.  
+  2.2 Users must be able to view a base set of metadata for all files and an extended set for specific file types.  
 
 3. Directory Organization.  
   3.1 Users must be able to create autonomously managed directories known as "smart folders".   
@@ -133,7 +306,8 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 3.3 Advanced users should be able to tailor smart management to their very particular needs.  
 
 4. Portability.   
-4.1 The system should run on any modern windows, linux or macOS machine.  
+4.1 The system should run on any modern windows, linux or macOS machine via.  
+4.2 The system must be packaged as a singular downloadble application that may be installed on any of the above mentioned platforms.     
 
 5. Security.   
 5.1 The system should never permenantly store any information obtained from user files and all processing should happen locally.  
@@ -147,9 +321,9 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 Client server to allow users to communicate with the server and perform operations (downloading, profile edits, login/register etc.). This is the standard architecture associated with most traditional websites.
 #### Application Architecture
 ![Application architecture](assets/applicationArchitecture.png)
-Hybrid between Monolithic and Master-Slave
-Monolithic structure such that the entire application is deployed as a single unit, which is ideal as our application will be deployed entirely on the user's local machine. Within the single unit, concerns are separated into layers, as required,
-The API layer uses gRPC to communicate from Go to Python. A master slave pattern is applied in our python codebase. A master monitors incoming requests from gRPC and scales the service via python threads (slaves) that perform the AI requirements such as clustering and other tasks such as metadata extraction.
+Hybrid between Monolithic and Master-Slave  
+Monolithic structure such that the entire application is deployed as a single unit, which is ideal as our application will be deployed entirely on the user's local machine.
+The clustering request uses gRPC to communicate from Go to Python. A master slave pattern is applied in our python codebase. A master monitors incoming requests from gRPC and scales the service via python threads (slaves) that perform the AI requirements such as clustering and other tasks such as metadata extraction.
 
 #### Hybrid Approach Benefits
 Combining both Go and Python allows us to leverage the strenghts of each for the best product possible. Go is coveted for its safety and strong concurrency while Python is the de facto standard for any AI related tasks. Combining these allows us to provide an implementation that is both accurate while remaining highly efficient.
@@ -174,6 +348,34 @@ Used to store the state of a _SmartFolder_ so it may be reinstated via a rollbac
 Using the composite pattern an entire directory structure may be stored by creating a memento from the root of such a _ManagedItem_. This memento may then be stored in the _SmartFolderBackup_ for later rollback as initiated by the _SmartFolder_ upon request of the user.
 
 ### Constraints
+The following constraints has been highlighted by our team:
+* SFM will not manage any system-level files that would require administrative privileges to move, change, or otherwise manage.
+* SFM will not provide access to any shared user directories as it only manages local machine files.  
+* SFM will not integrate directly with existing cloud storage services such as Microsoft One-Drive or Dropbox.
 
+## Technology Requirements
+This sections acts as a brief overview of the various technologies used in our stack and why they were chosen.
 
+![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)  
+Our application will be packaged as a flutter app. Flutter was chosen due to its ability to create natively compiled applications for mobile, web and desktop from a single codebase. While our application is primarily aimed at being a desktop app this choice allows for expansion in the possible future. 
+**Benefits:**
+- Cross platform 
+- Beautiful material design UIs
+- High Performance
+
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)  
+Our application uses python for its rich data-science applications. It is used for our clustering algorithms, metadata extractions and keyword extraction. The vibrant python ecosystem allows us to make use of packages that performs these algorithms more efficiently than we could have implemented ourselves.  
+**Benefits:**  
+- Ideal for data science and AI applications
+- Fast efficient development
+- High portability
+
+![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white)   
+Golang was chosen to provide the integration between our Python services and Flutter frontend. Go excels at producing high quality safe code. It has a generous learning curve and allows us to easily leverage conucurrency via its goroutines. We attempt to take advantage of Go's high performance to outweigh Python's slower relative performance.  
+**Benefits:**
+- High performance and strong concurrency support
+- Well suited for implemented the endpoints needed by the frontend
+
+### gRPC
+For communication between Go and Python we made use of gRPC. For a detailed explanation of why we used gRPC please refer to our documentation on gRPC [here](/Documentation/grpc.md). 
 
