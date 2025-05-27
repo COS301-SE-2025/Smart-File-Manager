@@ -1,6 +1,5 @@
 name: Test and Build Containers
 
-# Runs when pushing / pulling from main and ignores any changes to documentation
 on:
   push:
     branches: [main]
@@ -17,7 +16,6 @@ jobs:
   test-and-build:
     runs-on: ubuntu-latest
 
-    # Set up Python and Go and install all dependencies (sys and libraries)
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -31,6 +29,14 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.21'
+
+      - name: Install Go gRPC tools
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+      - name: Add Go bin to PATH
+        run: echo "${HOME}/go/bin" >> $GITHUB_PATH
 
       - name: Install system dependencies
         run: |
@@ -55,7 +61,6 @@ jobs:
             grpcio \
             grpcio-tools
 
-        # Generate gRPC code and run python tests
       - name: Run Python tests
         run: |
           python -m grpc_tools.protoc \
@@ -66,7 +71,6 @@ jobs:
             ./protos/message_structure.proto
           pytest -v -s --color=yes --tb=short python/testing/
 
-        # Generate gRPC code and run go tests
       - name: Run Go tests
         run: |
           protoc \
@@ -76,14 +80,11 @@ jobs:
             protos/message_structure.proto
           go test -v ./golang/filesystem
 
-        # Build and deploy container (starts gRPC server and server for Go -> UI API)
       - name: Build and start containers
-        run: |
-          docker-compose up --build -d
+        run: docker-compose -f docker-compose.yml up --build -d
 
-      - name: Wait briefly for services
+      - name: Wait for services
         run: sleep 10
 
-        # Kill container to prevent from running indefinitely  
       - name: Shut down containers
-        run: docker-compose down
+        run: docker-compose -f docker-compose.yml down
