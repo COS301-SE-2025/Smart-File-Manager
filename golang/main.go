@@ -6,46 +6,22 @@ import (
 	"main/filesystem"
 	"os"
 	"path/filepath"
-	"slices"
 	"sync"
 )
 
-var (
-	composites []*filesystem.Folder
-	mu         sync.Mutex
-)
-
-func handleComposite(c *filesystem.Folder, request int, path string) {
-	mu.Lock()
-	defer mu.Unlock()
-
-	switch request {
-	case 0: // append
-		composites = append(composites, c)
-		c.Display(0)
-	case 1: // remove
-		for i, item := range composites {
-			if item.GetPath() == filesystem.ConvertWindowsToWSLPath(path) {
-				composites = slices.Delete(composites, i, i+1)
-				item = nil
-				break
-			}
-		}
-	}
-
-	// Display all stored composites
-	fmt.Println("##########################")
-	for _, item := range composites {
-		fmt.Println("PATH: ", item.GetPath())
-	}
-	fmt.Println("##########################")
-}
 func API() {
 	fmt.Println("Server started, awaiting requests")
-	filesystem.HandleRequests(handleComposite)
+	filesystem.HandleRequests()
 }
+
 func main() {
 	API()
+
+	//print current composites
+	composites := filesystem.GetComposites()
+	for _, item := range composites {
+		item.Display(0)
+	}
 
 	// const root string = "C:/Users/jackb"
 
