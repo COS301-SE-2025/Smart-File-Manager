@@ -51,7 +51,7 @@ func exploreDown(folder *Folder, path string) error {
 		}
 
 		if entry.IsDir() {
-			fmt.Println("Found folder:", fullPath)
+			// fmt.Println("Found folder:", fullPath)
 			subFolder := &Folder{
 				managedItem: managedItem{
 					ItemName:     entry.Name(),
