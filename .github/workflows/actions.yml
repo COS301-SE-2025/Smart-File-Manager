@@ -1,0 +1,89 @@
+name: Test and Build Containers
+
+# Runs when pushing / pulling from main and ignores any changes to documentation
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'Documentation/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'Documentation/**'
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    # Set up Python and Go and install all dependencies (sys and libraries)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            libmagic1 \
+            file \
+            build-essential \
+            gcc \
+            protobuf-compiler
+
+      - name: Install Python dependencies
+        run: |
+          pip install \
+            pytest \
+            python-magic \
+            mutagen \
+            pypdf \
+            python-docx \
+            Pillow \
+            pymediainfo \
+            yake \
+            grpcio \
+            grpcio-tools
+
+        # Generate gRPC code and run python tests
+      - name: Run Python tests
+        run: |
+          python -m grpc_tools.protoc \
+            -I./protos \
+            --python_out=./python/src \
+            --pyi_out=./python/src \
+            --grpc_python_out=./python/src \
+            ./protos/message_structure.proto
+          pytest -v -s --color=yes --tb=short python/testing/
+
+        # Generate gRPC code and run go tests
+      - name: Run Go tests
+        run: |
+          protoc \
+            --proto_path=protos \
+            --go_out=golang \
+            --go-grpc_out=golang \
+            protos/message_structure.proto
+          go test -v ./golang/filesystem
+
+        # Build and deploy container (starts gRPC server and server for Go -> UI API)
+      - name: Build and start containers
+        run: |
+          docker-compose up --build -d
+
+      - name: Wait briefly for services
+        run: sleep 10
+
+        # Kill container to prevent from running indefinitely  
+      - name: Shut down containers
+        run: docker-compose down
