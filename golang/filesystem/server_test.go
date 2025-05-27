@@ -6,19 +6,106 @@ import (
 	"testing"
 )
 
-func TestGetCompositeHandler(t *testing.T) {
-	req, err := http.NewRequest("GET", "/composite?id=testid&name=testname&path=../../testRootFolder", nil)
-	if err != nil {
-		t.Fatal(err)
+func TestAddDirectoryHandler(t *testing.T) {
+	// Create a test server
+	ts := httptest.NewServer(http.HandlerFunc(getCompositeHandler))
+	defer ts.Close()
+
+	// Test cases
+	testCases := []struct {
+		name         string
+		id           string
+		dirName      string
+		path         string
+		expectedCode int
+	}{
+		{
+			name:         "Valid Request",
+			id:           "testid",
+			dirName:      "testname",
+			path:         "../testRootFolder",
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "Missing Parameters",
+			id:           "",
+			dirName:      "",
+			path:         "",
+			expectedCode: http.StatusBadRequest,
+		},
 	}
 
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(getCompositeHandler)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create request
+			req, err := http.NewRequest("POST",
+				ts.URL+"/addDirectory?id="+tc.id+
+					"&name="+tc.dirName+
+					"&path="+tc.path, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	handler.ServeHTTP(rr, req)
+			// Make request
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer resp.Body.Close()
 
-	if status := rr.Code; status != http.StatusOK && status != http.StatusInternalServerError {
-		t.Errorf("handler returned wrong status code: got %v want %v or %v",
-			status, http.StatusOK, http.StatusInternalServerError)
+			// Check status code
+			if resp.StatusCode != tc.expectedCode {
+				t.Errorf("Expected status code %d, got %d",
+					tc.expectedCode, resp.StatusCode)
+			}
+		})
+	}
+}
+
+func TestRemoveDirectoryHandler(t *testing.T) {
+	// Create a test server
+	ts := httptest.NewServer(http.HandlerFunc(removeCompositeHandler))
+	defer ts.Close()
+
+	// Test cases
+	testCases := []struct {
+		name         string
+		path         string
+		expectedCode int
+	}{
+		{
+			name:         "Valid Request",
+			path:         "../testRootFolder",
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "Missing Parameters",
+			path:         "",
+			expectedCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create request
+			req, err := http.NewRequest("DELETE",
+				ts.URL+"/removeDirectory?path="+tc.path, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Make request
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer resp.Body.Close()
+
+			// Check status code
+			if resp.StatusCode != tc.expectedCode {
+				t.Errorf("Expected status code %d, got %d",
+					tc.expectedCode, resp.StatusCode)
+			}
+		})
 	}
 }

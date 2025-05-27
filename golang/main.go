@@ -6,6 +6,7 @@ import (
 	"main/filesystem"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 )
 
@@ -14,17 +15,34 @@ var (
 	mu         sync.Mutex
 )
 
-func storeComposite(c *filesystem.Folder) {
+func handleComposite(c *filesystem.Folder, request int, path string) {
 	mu.Lock()
 	defer mu.Unlock()
-	composites = append(composites, c)
-	// Display all stored composites
-	for _, item := range composites {
-		item.Display(0)
+
+	switch request {
+	case 0: // append
+		composites = append(composites, c)
+		c.Display(0)
+	case 1: // remove
+		for i, item := range composites {
+			if item.GetPath() == filesystem.ConvertWindowsToWSLPath(path) {
+				composites = slices.Delete(composites, i, i+1)
+				item = nil
+				break
+			}
+		}
 	}
+
+	// Display all stored composites
+	fmt.Println("##########################")
+	for _, item := range composites {
+		fmt.Println("PATH: ", item.GetPath())
+	}
+	fmt.Println("##########################")
 }
 func API() {
-	filesystem.HandleRequests(storeComposite)
+	fmt.Println("Server started, awaiting requests")
+	filesystem.HandleRequests(handleComposite)
 }
 func main() {
 	API()

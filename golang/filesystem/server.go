@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-var storeCompositeFunc func(*Folder)
+var handleComposite func(*Folder, int, string)
 
 func getCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	managerID := r.URL.Query().Get("id")
@@ -16,14 +16,21 @@ func getCompositeHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("false"))
 		return
 	}
-	if storeCompositeFunc != nil {
-		storeCompositeFunc(composite)
+	if handleComposite != nil {
+		handleComposite(composite, 0, "")
 	}
 	w.Write([]byte("true")) //temporary return
 }
-
-func HandleRequests(storeFunc func(*Folder)) {
-	storeCompositeFunc = storeFunc
-	http.HandleFunc("/composite", getCompositeHandler)
+func removeCompositeHandler(w http.ResponseWriter, r *http.Request) {
+	filePath := r.URL.Query().Get("path")
+	if handleComposite != nil {
+		handleComposite(nil, 1, filePath)
+	}
+	w.Write([]byte("true")) //temporary return
+}
+func HandleRequests(storeFunc func(*Folder, int, string)) {
+	handleComposite = storeFunc
+	http.HandleFunc("/addDirectory", getCompositeHandler)
+	http.HandleFunc("/removeDirectory", removeCompositeHandler)
 	http.ListenAndServe(":51000", nil)
 }
