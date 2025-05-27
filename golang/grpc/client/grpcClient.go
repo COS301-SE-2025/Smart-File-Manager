@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
-	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/grpc/protos"
+	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
 
 	fs "github.com/COS301-SE-2025/Smart-File-Manager/golang/filesystem"
 	"google.golang.org/grpc"
@@ -16,7 +17,14 @@ import (
 )
 
 func main() {
-	rootPath := "/mnt/c/Users/jackb/OneDrive - University of Pretoria/Documents/TUKS/year 3/COS301/capstone/Smart-File-Manager/python/testing"
+	// rootPath := "/mnt/c/Users/jackb/OneDrive - University of Pretoria/Documents/TUKS/year 3/COS301/capstone/Smart-File-Manager/python/testing"
+
+	path, _ := os.Getwd()
+	fmt.Println("THE PATH: " + path)
+	path = filepath.Dir(path)
+	path = filepath.Join(path, "python/testing")
+	fmt.Println("THE PATH: " + path)
+	rootPath := path
 
 	if _, err := os.Stat(rootPath); os.IsNotExist(err) {
 		log.Fatalf("Directory %s does not exist. Please create it before running the test.", rootPath)
