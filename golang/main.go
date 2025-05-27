@@ -55,11 +55,6 @@ func exploreDir(root string, wg *sync.WaitGroup) {
 			continue
 		}
 
-		// fmt.Printf("  Size: %d bytes\n", info.Size())
-		// fmt.Printf("  Permissions: %v\n", info.Mode())
-		// fmt.Printf("  Modified:    %v\n", info.ModTime())
-		// fmt.Printf("  IsDir:       %v\n", info.IsDir())
-		// fmt.Println()
 
 		if info.IsDir() {
 			wg.Add(1)
