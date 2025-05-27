@@ -18,6 +18,7 @@ func TestExploreExistingDirectory(t *testing.T) {
 	}
 
 	// Convert root directory to composite
+
 	root := ConvertToComposite("001", "TestRoot", rootPath)
 
 	// Simple validation
@@ -32,6 +33,7 @@ func TestExploreExistingDirectory(t *testing.T) {
 		"empty.txt":     false,
 		"metadata.webp": false,
 	}
+
 
 	for _, item := range root.ContainedItems {
 		if item.GetPath() == filepath.Join(rootPath, "a.txt") {
@@ -58,5 +60,7 @@ func TestExploreExistingDirectory(t *testing.T) {
 			t.Errorf("Expected to find %s but did not", file)
 		}
 	}
+
 	DeleteComposite(&root)
+
 }

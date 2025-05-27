@@ -102,6 +102,7 @@ func ConvertWindowsToWSLPath(winPath string) string {
 	}
 	return winPath
 }
+
 func DeleteComposite(f **Folder) { //will need to be modified when we start storing composites
 	if f == nil || *f == nil {
 		fmt.Println("Nothing to delete.")
@@ -118,3 +119,4 @@ func DeleteComposite(f **Folder) { //will need to be modified when we start stor
 // 		return
 // 	}
 // 	fmt.Println("Absolute path:", absPath)
+

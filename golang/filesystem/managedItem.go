@@ -63,6 +63,7 @@ func (f *File) AddItem(item FileSystemItem) error {
 }
 
 func (f *Folder) RemoveItem(itemPath string) bool {
+
 	for i, item := range f.ContainedItems {
 		if item.GetPath() == itemPath {
 			f.ContainedItems = append(f.ContainedItems[:i], f.ContainedItems[i+1:]...)
