@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
-	"main/filesystem"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/COS301-SE-2025/Smart-File-Manager/golang/filesystem"
 )
 
 func API() {
@@ -66,7 +67,6 @@ func exploreDir(root string, wg *sync.WaitGroup) {
 			log.Printf("  (error getting info for %q): %v\n", e.Name(), err)
 			continue
 		}
-
 
 		if info.IsDir() {
 			wg.Add(1)
