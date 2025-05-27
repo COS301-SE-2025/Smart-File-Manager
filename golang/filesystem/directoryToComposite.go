@@ -65,7 +65,7 @@ func exploreDown(folder *Folder, path string) error {
 				fmt.Println("Error exploring subfolder:", err)
 			}
 		} else {
-			fmt.Println("Found file:", fullPath)
+			// fmt.Println("Found file:", fullPath)
 			file := &File{
 				managedItem: managedItem{
 					ItemName:     entry.Name(),
