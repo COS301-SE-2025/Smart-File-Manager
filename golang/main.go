@@ -3,29 +3,41 @@ package main
 import (
 	"fmt"
 	"log"
+	"main/filesystem"
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
 )
 
+func API() {
+	fmt.Println("Server started, awaiting requests")
+	filesystem.HandleRequests()
+}
+
 func main() {
+	API()
 
-	const root string = "C:/Users/jackb"
+	//print current composites
+	composites := filesystem.GetComposites()
+	for _, item := range composites {
+		item.Display(0)
+	}
 
-	var wg sync.WaitGroup
+	// const root string = "C:/Users/jackb"
 
-	start := time.Now()
-	wg.Add(1)
-	go exploreDir(root, &wg)
-	wg.Wait()
+	// var wg sync.WaitGroup
 
-	elapsed := time.Since(start)
-	fmt.Printf("Function execution time: %s\n", elapsed)
+	// start := time.Now()
+	// wg.Add(1)
+	// go exploreDir(root, &wg)
+	// wg.Wait()
 
-	start2 := time.Now()
-	otherMain(root)
-	fmt.Printf("non conc execution time: %s\n", (time.Since(start2)))
+	// elapsed := time.Since(start)
+	// fmt.Printf("Function execution time: %s\n", elapsed)
+
+	// start2 := time.Now()
+	// otherMain(root)
+	// fmt.Printf("non conc execution time: %s\n", (time.Since(start2)))
 
 }
 

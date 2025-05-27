@@ -58,5 +58,5 @@ func TestExploreExistingDirectory(t *testing.T) {
 			t.Errorf("Expected to find %s but did not", file)
 		}
 	}
-	deleteComposite(&root)
+	DeleteComposite(&root)
 }

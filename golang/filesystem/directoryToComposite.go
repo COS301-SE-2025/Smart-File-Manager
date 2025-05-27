@@ -102,7 +102,7 @@ func ConvertWindowsToWSLPath(winPath string) string {
 	}
 	return winPath
 }
-func deleteComposite(f **Folder) { //will need to be modified when we start storing composites
+func DeleteComposite(f **Folder) { //will need to be modified when we start storing composites
 	if f == nil || *f == nil {
 		fmt.Println("Nothing to delete.")
 		return
@@ -110,3 +110,11 @@ func deleteComposite(f **Folder) { //will need to be modified when we start stor
 	*f = nil
 	fmt.Println("Composite deleted successfully.")
 }
+
+//to find absolute path of any path
+// absPath, err := filepath.Abs("Users\\henco\\OneDrive\\Desktop\\BSCCS\\SEMESTER_1\\COS 332(NTWRKS)")
+// 	if err != nil {
+// 		fmt.Println("Error getting absolute path:", err)
+// 		return
+// 	}
+// 	fmt.Println("Absolute path:", absPath)
