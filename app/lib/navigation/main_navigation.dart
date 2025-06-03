@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:app/custom_widgets/create_manager.dart';
+import 'package:app/constants.dart';
 
 //class to keep track of main navigation items icon and labels(easy to add more in the future)
 class NavigationItem {
@@ -60,12 +61,12 @@ class _MainNavigationState extends State<MainNavigation> {
       width: 250,
       padding: EdgeInsets.only(bottom: 50),
       decoration: BoxDecoration(
-        border: Border(right: BorderSide(color: Color(0xff3D3D3D))),
-        color: const Color(0xff1E1E1E),
+        border: Border(right: BorderSide(color: kOutlineBorder)),
+        color: kScaffoldColor,
       ),
       child: Column(
         children: [
-          //add all tabs with ... operator
+          //add all tab
           const SizedBox(height: 20),
           ...widget.items.asMap().entries.map((entry) {
             int index = entry.key;
@@ -131,7 +132,7 @@ class _MainNavigationState extends State<MainNavigation> {
                       content: Text(
                         'Smart Manager "${result.name}" created successfully',
                       ),
-                      backgroundColor: Color(0xffFFB400),
+                      backgroundColor: kYellowText,
                       duration: Duration(seconds: 2),
                     ),
                   );
@@ -150,7 +151,7 @@ class _MainNavigationState extends State<MainNavigation> {
             },
             child: Text(
               "+ Create Smart Manager",
-              style: TextStyle(color: Color(0xffFFB400)),
+              style: TextStyle(color: kYellowText),
             ),
           ),
         ],
@@ -190,9 +191,9 @@ class _HoverableNavigationTileState extends State<HoverableNavigationTile> {
 
     Color bgColor =
         isSelected
-            ? const Color(0xffFFB400)
+            ? kYellowText
             : _hovering
-            ? const Color(0xff2E2E2E)
+            ? kAppBarColor
             : Colors.transparent;
 
     Color iconTextColor = isSelected ? Colors.black : const Color(0xffF5F5F5);
