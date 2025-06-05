@@ -11,13 +11,18 @@ type Tag struct {
 	ID   string
 	Name string
 }
+type MetadataEntry struct {
+	Key   string
+	Value string
+}
 
 // File structure
 type File struct {
 	Name     string
 	Path     string
-	Metadata map[string]string
-	Tags     []Tag
+	newPath  string
+	Metadata []*MetadataEntry
+	Tags     []*Tag
 }
 
 // Folder structure
@@ -25,11 +30,12 @@ type Folder struct {
 	ID           string
 	Name         string
 	Path         string
+	newPath      string
 	CreationDate time.Time
 	Locked       bool
 	Files        []*File
 	Subfolders   []*Folder
-	Tags         []Tag
+	Tags         []*Tag
 }
 
 // -------------------- Folder Methods --------------------
@@ -94,22 +100,19 @@ func (f *Folder) GetSubfolder(folderPath string) *Folder {
 	return nil
 }
 
-// AddTagToFile adds a tag to a file inside the folder
 func (f *Folder) AddTagToFile(filePath, tagID, tagName string) bool {
 	file := f.GetFile(filePath)
 	if file != nil {
-		file.Tags = append(file.Tags, Tag{ID: tagID, Name: tagName})
+		file.Tags = append(file.Tags, &Tag{ID: tagID, Name: tagName})
 		return true
 	}
 	return false
 }
 
-// AddTagToSelf adds a tag directly to this folder
 func (f *Folder) AddTagToSelf(tagID, tagName string) {
-	f.Tags = append(f.Tags, Tag{ID: tagID, Name: tagName})
+	f.Tags = append(f.Tags, &Tag{ID: tagID, Name: tagName})
 }
 
-// Display the folder and its contents recursively
 func (f *Folder) Display(indent int) {
 	prefix := strings.Repeat("  ", indent)
 	fmt.Printf("%sFolder: %s\n", prefix, f.Name)
@@ -131,16 +134,14 @@ func (f *Folder) Display(indent int) {
 }
 
 // -------------------- File Methods --------------------
-
-// Display file and its metadata
 func (f *File) Display(indent int) {
 	prefix := strings.Repeat("  ", indent)
 	fmt.Printf("%sFile: %s\n", prefix, f.Name)
 
 	if len(f.Metadata) > 0 {
 		fmt.Printf("%s  Metadata:\n", prefix)
-		for key, value := range f.Metadata {
-			fmt.Printf("%s    - %s: %s\n", prefix, key, value)
+		for _, entry := range f.Metadata {
+			fmt.Printf("%s    - %s: %s\n", prefix, entry.Key, entry.Value)
 		}
 	}
 
