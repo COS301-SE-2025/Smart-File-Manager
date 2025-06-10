@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_force_directed_graph/flutter_force_directed_graph.dart';
 import 'package:app/models/file_tree_node.dart';
@@ -30,14 +31,14 @@ class _GraphViewPageState extends State<GraphViewPage> {
   Set<FileTreeNode> highlightedNodes = {};
 
   //max depth
-  static const int maxDepth = 2;
+  static const int maxDepth = 3;
   FileTreeNode? currentRootNode;
 
   static const List<Color> levelColors = [
-    Color(0xFFE74C3C),
+    kprimaryColor,
     Color(0xFF3498DB),
     Color(0xFF2ECC71),
-    Color(0xFFF39C12),
+    Color(0xFFE74C3C),
     Color(0xFF9B59B6),
   ];
 
@@ -61,6 +62,7 @@ class _GraphViewPageState extends State<GraphViewPage> {
       graph: ForceDirectedGraph.generateNNodes(
         nodeCount: 0,
         generator: () => FileTreeNode(name: "data", isFolder: false),
+        config: GraphConfig(scaling: 0.1, elasticity: 0.8, repulsionRange: 200),
       ),
     );
   }
@@ -69,7 +71,7 @@ class _GraphViewPageState extends State<GraphViewPage> {
     // Clear existing graph
     _initializeController();
     nodeDepths.clear();
-
+    print('hello');
     // current root based on currentPath
     currentRootNode = _getCurrentRoot();
 
@@ -185,6 +187,14 @@ class _GraphViewPageState extends State<GraphViewPage> {
       List<String> pathToNode = _getPathToNode(node);
       widget.onNavigate(pathToNode);
     } else {
+      print("open file");
+    }
+  }
+
+  void _handleNodeRightTap(FileTreeNode node) {
+    if (node.isFolder) {
+      return;
+    } else {
       widget.onFileSelected(node);
     }
   }
@@ -240,158 +250,171 @@ class _GraphViewPageState extends State<GraphViewPage> {
   }
 
   Widget _buildGraph() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [kScaffoldColor, kScaffoldColor.withBlue(30)],
+    return Listener(
+      onPointerSignal: (event) {
+        setState(() {
+          if (event is PointerScrollEvent) {
+            double yScroll = event.scrollDelta.dy;
+            if (yScroll < 0 && controller.scale < 2) {
+              controller.scale += 0.1;
+            } else if (yScroll > 0 && controller.scale > 0.1) {
+              controller.scale -= 0.1;
+            }
+          }
+        });
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [kScaffoldColor, kScaffoldColor.withBlue(30)],
+          ),
         ),
-      ),
-      child: ForceDirectedGraphWidget(
-        controller: controller,
-        onDraggingStart: (data) {
-          setState(() {
-            draggedNode = data;
-            highlightedNodes = _getConnectedNodes(data);
-          });
-        },
-        onDraggingEnd: (data) {
-          setState(() {
-            draggedNode = null;
-            highlightedNodes.clear();
-          });
-        },
-        onDraggingUpdate: (data) {},
-        nodesBuilder: (context, data) {
-          final isFolder = data.isFolder;
-          final hasChildren = data.children?.isNotEmpty ?? false;
-          final depth = _calculateDepth(data);
-          final isBeingDragged = draggedNode == data;
-          final isHighlighted = highlightedNodes.contains(data);
-          final levelColor = _getLevelColor(depth);
+        child: ForceDirectedGraphWidget(
+          controller: controller,
+          onDraggingStart: (data) {
+            setState(() {
+              draggedNode = data;
+              highlightedNodes = _getConnectedNodes(data);
+            });
+          },
+          onDraggingEnd: (data) {
+            setState(() {
+              draggedNode = null;
+              highlightedNodes.clear();
+            });
+          },
+          onDraggingUpdate: (data) {},
+          nodesBuilder: (context, data) {
+            final isFolder = data.isFolder;
+            final hasChildren = data.children?.isNotEmpty ?? false;
+            final depth = _calculateDepth(data);
+            final isBeingDragged = draggedNode == data;
+            final isHighlighted = highlightedNodes.contains(data);
+            final levelColor = _getLevelColor(depth);
 
-          final baseSize = isFolder ? 50.0 : 35.0;
-          final nodeSize = math.max(20.0, baseSize - (depth * 6.0));
+            final baseSize = isFolder ? 50.0 : 35.0;
+            final nodeSize = math.max(20.0, baseSize - (depth * 6.0));
 
-          return GestureDetector(
-            onDoubleTap: () => _handleNodeDoubleTap(data),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedContainer(
-                  duration: Duration(milliseconds: 200),
-                  width: nodeSize,
-                  height: nodeSize,
-                  decoration: BoxDecoration(
-                    color: _getNodeColor(
-                      isFolder,
-                      depth,
-                      isBeingDragged,
-                      isHighlighted,
-                      levelColor,
-                    ),
-                    border: Border.all(
-                      color: _getBorderColor(
+            return GestureDetector(
+              onDoubleTap: () => _handleNodeDoubleTap(data),
+              onSecondaryTap: () => _handleNodeRightTap(data),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: nodeSize,
+                    height: nodeSize,
+                    decoration: BoxDecoration(
+                      color: _getNodeColor(
                         isFolder,
+                        depth,
                         isBeingDragged,
                         isHighlighted,
                         levelColor,
                       ),
-                      width: isBeingDragged ? 3.0 : 2.0,
-                    ),
-                    borderRadius: BorderRadius.circular(
-                      isFolder ? 8 : nodeSize / 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: isBeingDragged ? 6.0 : 3.0,
-                        offset: Offset(0, isBeingDragged ? 3.0 : 1.5),
+                      border: Border.all(
+                        color: _getBorderColor(
+                          isFolder,
+                          isBeingDragged,
+                          isHighlighted,
+                          levelColor,
+                        ),
+                        width: isBeingDragged ? 3.0 : 2.0,
                       ),
-                    ],
-                  ),
-                  child: Stack(
-                    children: [
-                      Center(
-                        child: Icon(
-                          isFolder
-                              ? (hasChildren
-                                  ? Icons.folder
-                                  : Icons.folder_outlined)
-                              : _getFileIcon(data.name),
-                          color: _getIconColor(
-                            isFolder,
-                            isBeingDragged,
-                            isHighlighted,
-                            levelColor,
-                          ),
-                          size: math.max(
-                            10.0,
-                            (isFolder ? 26.0 : 20.0) - (depth * 3.0),
+                      borderRadius: BorderRadius.circular(
+                        isFolder ? 8 : nodeSize / 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: isBeingDragged ? 6.0 : 3.0,
+                          offset: Offset(0, isBeingDragged ? 3.0 : 1.5),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        Center(
+                          child: Icon(
+                            isFolder
+                                ? (hasChildren
+                                    ? Icons.folder
+                                    : Icons.folder_outlined)
+                                : _getFileIcon(data.name),
+                            color: _getIconColor(
+                              isFolder,
+                              isBeingDragged,
+                              isHighlighted,
+                              levelColor,
+                            ),
+                            size: math.max(
+                              10.0,
+                              (isFolder ? 26.0 : 20.0) - (depth * 3.0),
+                            ),
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+
+                  // Label below node
+                  const SizedBox(height: 4),
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 80),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: kScaffoldColor.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: isHighlighted ? levelColor : kOutlineBorder,
+                        width: isHighlighted ? 1.0 : 0.5,
                       ),
-                    ],
-                  ),
-                ),
-
-                // Label below node
-                const SizedBox(height: 4),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  constraints: const BoxConstraints(maxWidth: 80),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: kScaffoldColor.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(
-                      color: isHighlighted ? levelColor : kOutlineBorder,
-                      width: isHighlighted ? 1.0 : 0.5,
+                    ),
+                    child: Text(
+                      data.name,
+                      style: TextStyle(
+                        color: isHighlighted ? levelColor : Colors.white70,
+                        fontSize: math.max(9.0, 11.0 - (depth * 0.5)),
+                        fontWeight:
+                            isHighlighted ? FontWeight.w600 : FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  child: Text(
-                    data.name,
-                    style: TextStyle(
-                      color: isHighlighted ? levelColor : Colors.white70,
-                      fontSize: math.max(9.0, 11.0 - (depth * 0.5)),
-                      fontWeight:
-                          isHighlighted ? FontWeight.w600 : FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-        edgesBuilder: (context, a, b, distance) {
-          final depthA = _calculateDepth(a);
-          final depthB = _calculateDepth(b);
-          final parentDepth = math.min(depthA, depthB);
-          final levelColor = _getLevelColor(parentDepth);
+                ],
+              ),
+            );
+          },
+          edgesBuilder: (context, a, b, distance) {
+            final depthA = _calculateDepth(a);
+            final depthB = _calculateDepth(b);
+            final parentDepth = math.min(depthA, depthB);
+            final levelColor = _getLevelColor(parentDepth);
 
-          // Modified edge highlighting - only highlight edges going to children
-          final isHighlighted =
-              (draggedNode == a && highlightedNodes.contains(b));
+            // Modified edge highlighting - only highlight edges going to children
+            final isHighlighted =
+                (draggedNode == a && highlightedNodes.contains(b));
 
-          return Container(
-            width: distance,
-            height: isHighlighted ? 2.5 : 1.5,
-            decoration: BoxDecoration(
-              color:
-                  isHighlighted
-                      ? levelColor.withValues(alpha: 0.8)
-                      : levelColor.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(1),
-            ),
-          );
-        },
+            return Container(
+              width: distance,
+              height: isHighlighted ? 2.5 : 1.5,
+              decoration: BoxDecoration(
+                color:
+                    isHighlighted
+                        ? levelColor.withValues(alpha: 0.8)
+                        : levelColor.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
