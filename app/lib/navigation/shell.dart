@@ -5,6 +5,7 @@ import '../pages/settings_page.dart';
 import '../pages/advanced_search_page.dart';
 import 'main_navigation.dart';
 import '../pages/manager_page.dart';
+import 'package:app/constants.dart';
 
 class Shell extends StatefulWidget {
   const Shell({super.key});
@@ -63,30 +64,24 @@ class _ShellState extends State<Shell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xff1E1E1E),
+      backgroundColor: kScaffoldColor,
       //Main Appbar with app title and login button
       appBar: AppBar(
         leading: Padding(
           padding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
           child: Image.asset("images/logo.png"),
         ),
-        backgroundColor: const Color(0xff2E2E2E),
+        backgroundColor: kAppBarColor,
         title: const Text("SMART FILE MANAGER"),
         centerTitle: false,
-        titleTextStyle: const TextStyle(
-          color: Color(0xffFFB400),
-          fontWeight: FontWeight.bold,
-          fontSize: 20,
-        ),
+        titleTextStyle: kTitle1,
         actions: [
           Padding(
             padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
             child: FilledButton.icon(
               onPressed: () {}, //TODO: need to add login functionality
               label: const Text("Login"),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xff242424),
-              ),
+              style: FilledButton.styleFrom(backgroundColor: kScaffoldColor),
               icon: const Icon(Icons.account_circle),
             ),
           ),

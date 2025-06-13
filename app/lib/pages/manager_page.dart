@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
-import 'package:app/pages/folder_view_page.dart';
-import 'package:app/pages/graph_view_page.dart';
+import 'package:app/pages/manager_page_sub/folder_view_page.dart';
+import 'package:app/pages/manager_page_sub/graph_view_page.dart';
 import 'package:app/custom_widgets/file_details_panel.dart';
-import 'package:http/http.dart' as http;
-import 'dart:math';
+import 'package:app/api.dart';
 
 class ManagerPage extends StatefulWidget {
   final String name;
@@ -26,31 +24,18 @@ class _ManagerPageState extends State<ManagerPage> {
   @override
   void initState() {
     super.initState();
-    _loadTreeData();
+    getTree();
   }
 
-  Future<void> _loadTreeData() async {
-    final response1 = await http.get(
-      Uri.parse('https://run.mocky.io/v3/b3097f03-5576-4e45-ab9e-54e12fa12d87'),
+  Future<void> getTree() async {
+    FileTreeNode response = await Api.loadTreeData(
+      'https://run.mocky.io/v3/b3097f03-5576-4e45-ab9e-54e12fa12d87',
     );
 
-    final response2 = await http.get(
-      Uri.parse('https://run.mocky.io/v3/a809ac12-e410-4a79-95b3-604837f22e59'),
-    );
-
-    final randomChoice = Random().nextBool();
-    final selectedResponse = randomChoice ? response1 : response2;
-
-    if (selectedResponse.statusCode == 200) {
-      setState(() {
-        _treeData = FileTreeNode.fromJson(
-          jsonDecode(selectedResponse.body) as Map<String, dynamic>,
-        );
-        _isLoading = false;
-      });
-    } else {
-      throw Exception('Failed to load data');
-    }
+    setState(() {
+      _treeData = response;
+      _isLoading = false;
+    });
   }
 
   void _handleViewChange(int index) {
@@ -89,19 +74,56 @@ class _ManagerPageState extends State<ManagerPage> {
         children: [
           _buildSearchBar(),
           Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  flex: _isDetailsVisible ? 3 : 1,
-                  child: _buildMainContent(),
-                ),
-                if (_isDetailsVisible)
-                  SizedBox(width: 200, child: _buildDetailsPanel()),
-              ],
-            ),
+            child:
+                _currentView == 0
+                    ? _buildFolderViewLayout()
+                    : _buildGraphViewLayout(),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFolderViewLayout() {
+    return Row(
+      children: [
+        Expanded(flex: _isDetailsVisible ? 3 : 1, child: _buildMainContent()),
+        if (_isDetailsVisible)
+          SizedBox(width: 200, child: _buildDetailsPanel()),
+      ],
+    );
+  }
+
+  Widget _buildGraphViewLayout() {
+    return Stack(
+      children: [
+        _buildMainContent(),
+
+        // Details panel overlay
+        if (_isDetailsVisible)
+          Positioned(
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: 200,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xff2E2E2E),
+                border: const Border(
+                  left: BorderSide(color: Color(0xff3D3D3D), width: 1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(-2, 0),
+                  ),
+                ],
+              ),
+              child: _buildDetailsPanel(),
+            ),
+          ),
+      ],
     );
   }
 
@@ -340,9 +362,14 @@ class _ManagerPageState extends State<ManagerPage> {
           onNavigate: _handleNavigation,
         );
       case 1:
-        return GraphViewPage();
+        return GraphViewPage(
+          treeData: _treeData!,
+          currentPath: _currentPath,
+          onFileSelected: _handleFileSelect,
+          onNavigate: _handleNavigation,
+        );
       default:
-        return Placeholder();
+        return const Placeholder();
     }
   }
 
