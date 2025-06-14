@@ -26,7 +26,7 @@ class KWExtractor:
         for file_name, keywords in result:
             #descending order
             sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)
-            top_keywords = [kw for kw, _ in sorted_keywords[:max_keywords]]
+            top_keywords = sorted_keywords[:max_keywords]
             return_map[file_name] = top_keywords
 
         return return_map
@@ -173,8 +173,8 @@ if __name__ == "__main__":
 
     for filename, keywords in result.items():
         print(f"\n== FILE: {filename} ==")
-        for kw in keywords:
-            print(kw)
+        for kw, score in keywords:
+            print("Keyword: ", kw, "\tScore: ", score)
     
 
         
