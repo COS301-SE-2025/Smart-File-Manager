@@ -27,7 +27,12 @@ class Master():
         self.scrapeMetadata(request.root)
         response_directory = request.root
         kw_response = self.kw_extractor.extract_kw(request.root)
-        # print(kw_response)
+        # Create filetype encoded vectors
+        # Add keywords w/scores
+        # [{one hot encoded filetype}, {keyword, score pair for file}, {size}]
+        # -> return full vector = [{pdf,doc,txt},{(keyword, score),(keyword, score),(keyword, score)},{size_kb}]
+        # -> Files = [{full vec1}, {full vec2}, ... ]
+        # def find clusters (files, numClusters)
         response = DirectoryResponse(root=response_directory)
         return response
     
