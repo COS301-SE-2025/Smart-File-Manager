@@ -1,5 +1,6 @@
 import time
 import docx
+import math
 from yake import KeywordExtractor
 from pypdf import PdfReader
 from message_structure_pb2 import Directory, DirectoryRequest, File, MetadataEntry, Tag
@@ -8,7 +9,7 @@ from message_structure_pb2 import Directory, DirectoryRequest, File, MetadataEnt
 class KWExtractor:
     #Yake instance
     def __init__(self):
-        self.yake_extractor = KeywordExtractor()
+        self.yake_extractor = KeywordExtractor(lan="en", n=1)
 
     #Main extractor function
     def extract_kw(self, input):
@@ -17,7 +18,7 @@ class KWExtractor:
             file_name = f"{file.original_path}"
             mime_type = next((entry.value for entry in file.metadata if entry.key == "mime_type"), None)
             result += self.open_file(file_name,mime_type, 1) #Seconds based time limit
-        return self.list_to_map(result, 10)   
+        return self.list_to_map(result, 100)   
     
     #Make the result into a sorted map with max keywords
     def list_to_map(self, result, max_keywords):
@@ -27,7 +28,13 @@ class KWExtractor:
             #descending order
             sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)
             top_keywords = sorted_keywords[:max_keywords]
-            return_map[file_name] = top_keywords
+            # Extract scores and normalize them (L2 norm)
+            scores = [score for _, score in top_keywords]
+            norm = math.sqrt(sum(s**2 for s in scores)) or 1  # avoid div by zero
+
+            normalized_keywords = [(kw, score / norm) for kw, score in top_keywords]
+
+            return_map[file_name] = normalized_keywords
 
         return return_map
 
