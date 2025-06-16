@@ -29,15 +29,18 @@ class Master():
 
         # Modifies directory request by adding metadata
         self.scrapeMetadata(request.root)
-        response_directory = request.root
         kw_response = self.kw_extractor.extract_kw(request.root)
         vocabKW = self.vocab.createVocab(kw_response)
-        cluster_vec = self.full_vec.assignTF_IDF(kw_response,vocabKW)
-        for vec in cluster_vec:
-            print("\n")
-            print(vec)
-            print("\n")
+        filetypes = []
+        sizes = []
+        full_vec = self.full_vec.createFullVector(kw_response,vocabKW, filetypes, sizes)
+        # for vec in cluster_vec:
+        #     print("\n")
+        #     print(vec)
+        #     print("\n")
 
+        # response_directory = kmeans.cluster
+        response_directory = request.root
         response = DirectoryResponse(root=response_directory)
         return response
     
