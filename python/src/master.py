@@ -3,6 +3,8 @@ from concurrent.futures import ThreadPoolExecutor
 from metadata_scraper import MetaDataScraper
 from message_structure_pb2 import DirectoryRequest, Directory, File, Tag, MetadataEntry
 from kw_extractor import KWExtractor
+from full_vector import FullVector
+from vocabulary import Vocabulary
 import os
 
 # Master class
@@ -14,6 +16,8 @@ class Master():
         self.slaves = ThreadPoolExecutor(maxSlaves)
         self.scraper = MetaDataScraper()
         self.kw_extractor = KWExtractor()
+        self.vocab = Vocabulary()
+        self.full_vec = FullVector()
 
 
     # Takes gRPC request's root and sends it to be processed by a slave
@@ -27,12 +31,13 @@ class Master():
         self.scrapeMetadata(request.root)
         response_directory = request.root
         kw_response = self.kw_extractor.extract_kw(request.root)
-        # Create filetype encoded vectors
-        # Add keywords w/scores
-        # [{one hot encoded filetype}, {keyword, score pair for file}, {size}]
-        # -> return full vector = [{pdf,doc,txt},{(keyword, score),(keyword, score),(keyword, score)},{size_kb}]
-        # -> Files = [{full vec1}, {full vec2}, ... ]
-        # def find clusters (files, numClusters)
+        vocabKW = self.vocab.createVocab(kw_response)
+        cluster_vec = self.full_vec.assignTF_IDF(kw_response,vocabKW)
+        for vec in cluster_vec:
+            print("\n")
+            print(vec)
+            print("\n")
+
         response = DirectoryResponse(root=response_directory)
         return response
     
@@ -71,3 +76,44 @@ class Master():
         if len(currentDirectory.directories) != 0:
             for curDir in currentDirectory.directories:
                 self.scrapeMetadata(curDir)
+
+########################
+tag1 = Tag(name="ImFixed")
+meta1 = MetadataEntry(key="author", value="johnny")
+meta4 = MetadataEntry(key="mime_type", value="text/plain")
+meta2 = MetadataEntry(key="mime_type", value="application/pdf")
+meta3 = MetadataEntry(key="mime_type", value="application/msword")
+
+file1 = File(
+    name="gopdoc.pdf",
+    original_path="python/testing/test_files/myPdf.pdf",
+    new_path="/usr/trash/gopdoc.pdf",
+    tags=[tag1],
+    metadata=[meta1, meta2]
+)
+file2 = File(
+    name="gopdoc2.pdf",
+    original_path="python/testing/test_files/testFile.txt",
+    new_path="/usr/trash/gopdoc.pdf",
+    tags=[tag1],
+    metadata=[meta1, meta4]
+)
+file3 = File(
+    name="gopdoc2.pdf",
+    original_path="python/testing/test_files/myWordDoc.docx",
+    new_path="/usr/trash/gopdoc.pdf",
+    tags=[tag1],
+    metadata=[meta1, meta3]
+)
+
+dir1 = Directory(
+    name="useless_files",
+    path="/usr/trash",
+    files=[file1, file2,file3],
+    directories=[]
+)
+req = DirectoryRequest(root=dir1) 
+
+if __name__ == "__main__":
+    master = Master(1)
+    master.process(req)
