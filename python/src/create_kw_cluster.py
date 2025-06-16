@@ -1,5 +1,6 @@
 class KWCluster:
 
+    # only add exact matches for now
     def createCluster(self, keywords, vocab):
         kw_score_map = {kw: score for kw, score in keywords}
         cluster_vector = []
