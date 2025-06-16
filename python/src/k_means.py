@@ -2,6 +2,7 @@
 
 from sklearn.cluster import KMeans
 import numpy as np
+import json # for reading a json file. Will not be used
 
 
 class KMeansCluster:
@@ -14,20 +15,36 @@ class KMeansCluster:
 
     def cluster(self,files):
         self.kmeans.fit(files)
-        self.kmeans.labels_
-        np.array([1, 1, 1, 0, 0, 0], dtype=np.int32)
+        return self.kmeans.labels_
 
-    def predict(self):
-        self.kmeans.predict([[0,0],[12,3]])
-        np.array([1,0], dtype=np.int32)
-        self.kmeans.cluster_centers_
-        np.array([[10.,2.],[1.,2.]])
+    def predict(self, points):
+        predictions = self.kmeans.predict(points)
+        centers = self.kmeans.cluster_centers_
+        return predictions, centers
 
 
 if __name__ == "__main__":
-    X = np.array([[1, 2], [1, 4], [1, 0],
-                [10, 2], [10, 4], [10, 0]])
-    k_means = KMeansCluster(2)
-    k_means.cluster(X)
-    result = k_means.predict()
-    print(result)
+    #Temporary read data from file
+    X = []
+    with open("python/testing/exampleDataKMeans.txt", "r") as f:
+        for line in f:
+            entry = json.loads(line.strip())   
+            X.append(entry["full_vector"])     
+
+    X = np.array(X)  # Convert list of lists to numpy array
+         
+    k_means = KMeansCluster(3)
+    labels = k_means.cluster(X)
+    print("Labels: ", labels)
+        # Here, vectors have length = 3 keyword + 3 filetype + 1 size = 7 features
+    new_points = [
+        [0.5, 0.5, 0.5, 1, 0, 0, 0.1],
+        [0.1, 0.2, 0.3, 0, 1, 0, 0.4],
+        [0.9, 0.9, 0.9, 0, 0, 1, 0.7]
+    ]
+
+    predictions,centers = k_means.predict(new_points)
+    print("Pred: ", predictions)
+    print("Centers: ", centers)    
+
+
