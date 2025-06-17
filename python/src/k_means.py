@@ -20,7 +20,8 @@ class KMeansCluster:
     def predict(self, points):
         predictions = self.kmeans.predict(points)
         centers = self.kmeans.cluster_centers_
-        return predictions, centers
+        centers_rounded = np.round(centers, 4) # rounded to get mostly matching        
+        return predictions, centers_rounded
 
 
 if __name__ == "__main__":

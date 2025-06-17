@@ -29,7 +29,12 @@ class FullVector:
         #     print("\n")
         #     print(entry)
 
-        return self.full_vector
+        combined_points = []
+        # combine into a single tuple
+        for vec in self.full_vector:
+            combined_points.append(list(vec[0]) + list(vec[1]) + [vec[2]])
+
+        return combined_points
 
     #helper function
     def assignTF_IDF(self, result, vocabKW):
