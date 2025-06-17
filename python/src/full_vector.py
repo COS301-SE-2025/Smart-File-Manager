@@ -15,9 +15,6 @@ class FullVector:
         self.filetypes, self.sizes = self.assignFileTypeAndSize(root)
         self.encoded_filetypes = self.oneHotEncoding(self.filetypes)
 
-        # print(len(self.tfidf_vec))
-        # print(len(self.sizes))
-        # print(len(self.encoded_filetypes))
         # Catch bad data
         if len(self.tfidf_vec) != len(self.encoded_filetypes):
             return []
@@ -28,40 +25,18 @@ class FullVector:
         for i in range(len(self.tfidf_vec)):
             self.full_vector.append((self.tfidf_vec[i], self.encoded_filetypes[i], self.sizes[i]))
         
-        for entry in self.full_vector:
-            print("\n")
-            print(entry)
+        # for entry in self.full_vector:
+        #     print("\n")
+        #     print(entry)
 
-        # print(self.encoded_filetypes)
-        # assign_IDF         
-        # one hot encoding 
-        # 
-        # for all files:
-        #   self.full.vec.append(clustervec[index], filetype[index], size[index])
-        # for vec in self.tfidf_vec:
-        #     print("\n")
-        #     print(vec)
-        # for vec in self.filetypes:
-        #     print("\n")
-        #     print(vec)
-        # for vec in self.sizes:
-        #     print("\n")
-        #     print(vec)
+        return self.full_vector
+
     #helper function
     def assignTF_IDF(self, result, vocabKW):
-        # process request root
-        # Return vector of TF-IDF
-        # Compare direct words, similiar words (cat - cats), contained words (AI - AI-driven)
-        # Assign TF-IDF score
-        # returns:
-        # [
-        # [0,0,0,0.51,0,0.1],
-        # [...]
-        # ]
+
         kwclust = KWCluster()
         tfidf = []
-        # for kw in vocabKW:
-        #     print(kw)
+
         
         for filename, keywords in result.items():
             kwcluster = kwclust.createCluster(keywords,vocabKW)
@@ -74,6 +49,7 @@ class FullVector:
         sizes = []
         for file in root.files:   
             file_type = next((entry.value for entry in file.metadata if entry.key == "file_extension"), None)
+            # try catch incase conversion fails? -> add fixed data then?
             file_size = next((int(entry.value) for entry in file.metadata if entry.key == "size_bytes"), None)
             types.append(file_type)
             sizes.append(file_size)
@@ -91,14 +67,7 @@ class FullVector:
         # print(f"encoded data: \n{one_hot_df}")
 
         return one_hot_df.values.tolist()
-# scrape metadata -> modify root -> return none
-# extract kw -> modify none -> return Map<filename, keywords(kw, tf idf)>
-# create vocab -> modify none -> return list(vocabulary)
-# full_vector: 
-# assign tf idf -> modify none -> return list(tf idf)
-# assign file type -> modify none -> return filetypes (redundant but this is my bandaid)
-# assign size -> modify none -> return sizes (redundant aswell)
-# modify full vec to combine [tfidf, type, size]
+
 
 
 
