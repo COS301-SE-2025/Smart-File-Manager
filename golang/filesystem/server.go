@@ -1,6 +1,3 @@
-//go:build ignore
-// +build ignore
-
 package filesystem
 
 import (
@@ -16,12 +13,11 @@ var (
 )
 
 func getCompositeHandler(w http.ResponseWriter, r *http.Request) {
-	managerID := r.URL.Query().Get("id")
 	managerName := r.URL.Query().Get("name")
 	filePath := r.URL.Query().Get("path")
-
-	composite := ConvertToComposite(managerID, managerName, filePath)
-	if composite == nil {
+	fmt.Println("PATH", filePath)
+	composite, err := ConvertToObject(managerName, filePath)
+	if err != nil || composite == nil {
 		w.Write([]byte("false"))
 		return
 	}
@@ -37,11 +33,11 @@ func getCompositeHandler(w http.ResponseWriter, r *http.Request) {
 
 func removeCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	filePath := r.URL.Query().Get("path")
-	convertedPath := ConvertWindowsToWSLPath(filePath)
+	convertedPath := ConvertToWSLPath(filePath)
 
 	mu.Lock()
 	for i, item := range composites {
-		if item.GetPath() == convertedPath {
+		if item.Path == convertedPath {
 			composites = slices.Delete(composites, i, i+1)
 			break
 		}
@@ -54,19 +50,17 @@ func removeCompositeHandler(w http.ResponseWriter, r *http.Request) {
 
 func addTagHandler(w http.ResponseWriter, r *http.Request) {
 	filePath := r.URL.Query().Get("path")
-	key := r.URL.Query().Get("key")
-	value := r.URL.Query().Get("value")
+	tag := r.URL.Query().Get("tag")
 
-	convertedPath := ConvertWindowsToWSLPath(filePath)
+	convertedPath := ConvertToWSLPath(filePath)
 
 	mu.Lock()
 	defer mu.Unlock()
 
 	for _, c := range composites {
-		item := c.GetItem(convertedPath)
+		item := c.GetFile(convertedPath)
 		if item != nil {
-			item.AddTag(key, value)
-			fmt.Println("Tag added to", convertedPath, ":", key, "=", value)
+			c.AddTagToFile(convertedPath, tag)
 			c.Display(0)
 			w.Write([]byte("true"))
 			return
@@ -81,6 +75,7 @@ func HandleRequests() {
 	http.HandleFunc("/addDirectory", getCompositeHandler)
 	http.HandleFunc("/removeDirectory", removeCompositeHandler)
 	http.HandleFunc("/addTag", addTagHandler)
+	fmt.Println("Server started on port 51000")
 	http.ListenAndServe(":51000", nil)
 }
 

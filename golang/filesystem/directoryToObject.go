@@ -4,26 +4,24 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
-// ConvertToObject builds a Folder tree from the given path (absolute or relative).
+// ConvertToObject builds a Folder tree from the given path (relative, WSL, or converted from Windows).
 func ConvertToObject(managerName, folderPath string) (*Folder, error) {
-	// Resolve to absolute path
-	absPath, err := filepath.Abs(folderPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get absolute path for %q: %w", folderPath, err)
-	}
+	// Convert Windows path to WSL format if needed
+	cleanPath := ConvertToWSLPath(folderPath)
 
 	root := &Folder{
 		Name:         managerName,
-		Path:         absPath,
+		Path:         cleanPath,
 		CreationDate: time.Now(),
 	}
 
 	// Recursively scan filesystem
-	if err := exploreDown(root, absPath); err != nil {
-		return nil, fmt.Errorf("error exploring folder %q: %w", absPath, err)
+	if err := exploreDown(root, cleanPath); err != nil {
+		return nil, fmt.Errorf("error exploring folder %q: %w", cleanPath, err)
 	}
 
 	return root, nil
@@ -50,7 +48,6 @@ func exploreDown(folder *Folder, path string) error {
 				CreationDate: info.ModTime(),
 			}
 			folder.AddSubfolder(sub)
-			// recurse into subfolder
 			if err := exploreDown(sub, fullPath); err != nil {
 				fmt.Printf("warning: cannot explore %s: %v\n", fullPath, err)
 			}
@@ -65,4 +62,17 @@ func exploreDown(folder *Folder, path string) error {
 		}
 	}
 	return nil
+}
+
+func ConvertToWSLPath(winPath string) string {
+	winPath = strings.TrimSpace(winPath)
+	winPath = strings.ReplaceAll(winPath, "\\", "/")
+
+	if len(winPath) > 2 && winPath[1] == ':' {
+		drive := strings.ToLower(string(winPath[0]))
+		rest := winPath[2:]
+		return "/mnt/" + drive + rest
+	}
+
+	return winPath
 }
