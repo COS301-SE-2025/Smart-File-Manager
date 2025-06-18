@@ -20,48 +20,41 @@ class FullVector:
 #     },
 #     ...
 # ]
-    def createFullVector(self, files, vocabKW, filetypes, sizes):
-        for file in files:
+    def createFullVector(self, files, vocabKW):
+        sizes = [file["size_bytes"] for file in files]
+        filetypes = sorted(set(file["filetype"] for file in files))
+        scaler = MinMaxScaler()   
+        norm_sizes = scaler.fit_transform(np.array(sizes).reshape(-1,1))
+        filetype_to_onehot = {ft:self.oneHotEncoding(ft,filetypes) for ft in filetypes}
+        for idx, file in enumerate(files):
             self.full_vector = []
             tfidf_vec = self.assignTF_IDF(file["keywords"],vocabKW)            
-            encoded_filetype = self.oneHotEncoding(file["filetype"], filetypes)        
-            scaler = MinMaxScaler() #############################      
-            scaler.fit_transform(np.array(sizes))
-            file["full_vector"] = tfidf_vec
+            encoded_filetype = filetype_to_onehot[file["filetype"]]     
+            normalized_size = norm_sizes[idx].tolist()
+            if isinstance(tfidf_vec,np.ndarray):
+                tfidf_vec = tfidf_vec.flatten().tolist()
+
+            file["full_vector"] = tfidf_vec + encoded_filetype+ normalized_size
 
 
 
     #helper function
     def assignTF_IDF(self, result, vocabKW):
 
-        kwclust = KWCluster()
-        tfidf = []
-        
-        for filename, keywords in result.items():
-            kwcluster = kwclust.createCluster(keywords,vocabKW)
-            tfidf.append(kwcluster)
+        kwclust = KWCluster()       
 
-        return tfidf
-    
-    def assignFileTypeAndSize(self, root):
-        types = []
-        sizes = []
-        for file in root.files:   
-            file_type = next((entry.value for entry in file.metadata if entry.key == "file_extension"), None)
-            # try catch incase conversion fails? -> add fixed data then?
-            file_size = next((int(entry.value) for entry in file.metadata if entry.key == "size_bytes"), None)
-            types.append(file_type)
-            sizes.append(file_size)            
-        return types, sizes
+        return kwclust.createCluster(result,vocabKW)    
+
     
 
     def oneHotEncoding(self, filetype, filetypes):
         df = pd.DataFrame(filetypes, columns=["filetype"])
         encoder = OneHotEncoder(sparse_output=False)
         one_hot_encoded = encoder.fit_transform(df[["filetype"]])
-        one_hot_df = pd.DataFrame(one_hot_encoded, columns=encoder.get_feature_names_out(["filetype"]))
-        # print(f"encoded data: \n{one_hot_df}")
-        return one_hot_df.values.tolist()
+
+        # Find the index of the requested filetype
+        index = df[df["filetype"] == filetype].index[0]
+        return one_hot_encoded[index].tolist()
 
 
 
