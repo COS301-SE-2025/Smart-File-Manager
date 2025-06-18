@@ -2,7 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'models/file_tree_node.dart';
 
-const uri = "localhost:51000";
+const uri = "http://localhost:51000";
 
 class Api {
   //Call to load tree data
@@ -32,7 +32,7 @@ class Api {
       final response = await http.post(
         Uri.parse("$uri/addDirectory?name=$name&path=$path"),
       );
-
+      print("$uri/addDirectory?name=$name&path=$path");
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
