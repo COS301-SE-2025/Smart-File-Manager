@@ -11,13 +11,20 @@ class KWExtractor:
         self.yake_extractor = KeywordExtractor()
 
     #Main extractor function
-    def extract_kw(self, input):
-        result = []
-        for file in input.files:    
-            file_name = f"{file.original_path}"
-            mime_type = next((entry.value for entry in file.metadata if entry.key == "mime_type"), None)
-            result += self.open_file(file_name,mime_type, 1) #Seconds based time limit
-        return self.list_to_map(result, 10)   
+    def extract_kw(self, input: File) -> list[str]:
+        file_name = input.original_path
+        mime_type = next((entry.value for entry in input.metadata if entry.key == "mime_type"), None)
+
+        result = self.open_file(file_name, mime_type, 1)  # List of (filename, keywords)
+        if not result:
+            return []
+
+        # keywords for this file
+        _, keywords = result[0]
+        sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)
+        top_keywords = [kw for kw, _ in sorted_keywords[:10]]
+        return top_keywords
+
     
     #Make the result into a sorted map with max keywords
     def list_to_map(self, result, max_keywords):

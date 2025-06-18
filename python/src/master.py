@@ -15,7 +15,6 @@ class Master():
         self.scraper = MetaDataScraper()
         self.kw_extractor = KWExtractor()
 
-
     # Takes gRPC request's root and sends it to be processed by a slave
     def submitTask(self, request : DirectoryRequest):
         future = self.slaves.submit(self.process, request)
@@ -23,46 +22,48 @@ class Master():
 
     def process(self, request : DirectoryRequest) -> DirectoryResponse:
 
+        # Contains list of objects which stores metadata, keywords etc...
+        files = []
+
         # Modifies directory request by adding metadata
-        self.scrapeMetadata(request.root)
+        self.getFileInfo(request.root, files)
         response_directory = request.root
         kw_response = self.kw_extractor.extract_kw(request.root)
         # print(kw_response)
+        print(files)
         response = DirectoryResponse(root=response_directory)
         return response
     
-        '''
-        What is this method supposed to really do?
-        * Extract metadata
-        * Perform clustering
-        * Generate new tree strucutre as gRPC Directory
 
-        Preferably each of the above should be handled by its own class for seperation of concerns
-        '''
-
-    # Traverses Directory recursively and extracts metadata for each file
-    def scrapeMetadata(self, currentDirectory : Directory) -> None:
-
-        # Extract metadata
+    # Traverses Directory recursively and extracts metadata and keywords for each file
+    def getFileInfo(self, currentDirectory: Directory, files: list) -> None:
         for curFile in currentDirectory.files:
-            # Ensure file path is valid
             try:
                 self.scraper.set_file(os.path.abspath(curFile.original_path))
             except ValueError:
-                # Invalid path => add error tag to metadata entry
                 meta_error = MetadataEntry(key="Error", value="File does not exist - could not extract metadata")
                 curFile.metadata.append(meta_error)
                 continue
-            else:
-                # Valid path => scrape
-                self.scraper.get_metadata()
-                extracted_metadata = self.scraper.metadata
-                for k,v in extracted_metadata.items():
 
-                    meta_entry = MetadataEntry(key=str(k), value = str(v))
-                    curFile.metadata.append(meta_entry)
+            # Extract metadata
+            self.scraper.get_metadata()
+            extracted_metadata = self.scraper.metadata
 
-        # Recurisve call
-        if len(currentDirectory.directories) != 0:
-            for curDir in currentDirectory.directories:
-                self.scrapeMetadata(curDir)
+            # Add to curFile.metadata
+            for k, v in extracted_metadata.items():
+                curFile.metadata.append(MetadataEntry(key=str(k), value=str(v)))
+
+            # Build output entry
+            file_entry = {}
+            file_entry["filename"] = curFile.original_path
+            file_entry["filetype"] = extracted_metadata.get("mime_type", "unknown")
+            file_entry["size_kb"] = int(extracted_metadata.get("size", 0)) // 1024
+
+            # Extract keywords
+            keywords = self.kw_extractor.extract_kw(curFile)
+            file_entry["keywords"] = keywords
+
+            files.append(file_entry)
+
+        for curDir in currentDirectory.directories:
+            self.getFileInfo(curDir, files)

@@ -156,13 +156,13 @@ class MetaDataScraper:
 
         # Check file MIME type to decide what other metadata to scan
         mime_type = str(self.metadata["mime_type"])
-        if "image" in mime_type:
-            self.metadata.update(self.get_image_metadata())
-        elif "audio" in mime_type:
-            self.metadata.update(self.get_audio_video_metadata())
-        elif "video" in mime_type:
-            self.metadata.update(self.get_video_metadata())
-        elif mime_type == "application/pdf":
-            self.metadata.update(self.get_pdf_metadata())
-        elif mime_type in ["application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
-            self.metadata.update(self.get_docx_metadata())
+        #if "image" in mime_type:
+        #    self.metadata.update(self.get_image_metadata())
+        #elif "audio" in mime_type:
+        #    self.metadata.update(self.get_audio_video_metadata())
+        #elif "video" in mime_type:
+        #    self.metadata.update(self.get_video_metadata())
+        #elif mime_type == "application/pdf":
+        #    self.metadata.update(self.get_pdf_metadata())
+        #elif mime_type in ["application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
+        #    self.metadata.update(self.get_docx_metadata())
