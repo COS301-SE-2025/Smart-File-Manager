@@ -78,6 +78,13 @@ class _ShellState extends State<Shell> {
         actions: [
           Padding(
             padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+            child: IconButton(
+              onPressed: () {},
+              icon: Icon(Icons.help_outline_rounded, color: kprimaryColor),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
             child: FilledButton.icon(
               onPressed: () {}, //TODO: need to add login functionality
               label: const Text("Login"),

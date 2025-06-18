@@ -2,20 +2,23 @@ class FileTreeNode {
   final String name;
   final bool isFolder;
   final List<FileTreeNode>? children;
-  final String? id;
   final List<String>? tags;
+  final String? path;
+  final List<String>? metadata;
 
   FileTreeNode({
     required this.name,
     required this.isFolder,
     this.children,
-    this.id,
     this.tags,
+    this.path,
+    this.metadata,
   });
 
   factory FileTreeNode.fromJson(Map<String, dynamic> json) {
     return FileTreeNode(
       name: json['name'] ?? '',
+      path: json['path'] ?? '',
       isFolder: json['isFolder'] ?? false,
       children:
           json['children'] != null
@@ -23,18 +26,20 @@ class FileTreeNode {
                   .map((child) => FileTreeNode.fromJson(child))
                   .toList()
               : null,
-      id: json['id'],
       tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
+      metadata:
+          json['metadata'] != null ? List<String>.from(json['metadata']) : [],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'name': name,
+      'path': path,
       'isFolder': isFolder,
       'children': children?.map((child) => child.toJson()).toList(),
-      'id': id,
       'tags': tags,
+      'metadata': metadata,
     };
   }
 
