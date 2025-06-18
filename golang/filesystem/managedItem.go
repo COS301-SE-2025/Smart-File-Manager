@@ -22,7 +22,6 @@ type File struct {
 
 // Folder structure
 type Folder struct {
-	ID           string
 	Name         string
 	Path         string
 	newPath      string
