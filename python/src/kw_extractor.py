@@ -4,7 +4,6 @@ from yake import KeywordExtractor
 from pypdf import PdfReader
 from message_structure_pb2 import Directory, DirectoryRequest, File, MetadataEntry, Tag
 
-# Receive data as D
 class KWExtractor:
     #Yake instance
     def __init__(self):
@@ -22,21 +21,9 @@ class KWExtractor:
         # keywords for this file
         _, keywords = result[0]
         sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)
-        top_keywords = [kw for kw, _ in sorted_keywords[:10]]
+        # top_keywords = [kw for kw in sorted_keywords[:10]]
+        top_keywords = sorted_keywords[:10]
         return top_keywords
-
-    
-    #Make the result into a sorted map with max keywords
-    def list_to_map(self, result, max_keywords):
-        return_map = {}
-
-        for file_name, keywords in result:
-            #descending order
-            sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)
-            top_keywords = [kw for kw, _ in sorted_keywords[:max_keywords]]
-            return_map[file_name] = top_keywords
-
-        return return_map
 
 
     #open a file (check which type and send to be opened in the correct way)

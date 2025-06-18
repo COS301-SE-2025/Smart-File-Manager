@@ -28,8 +28,6 @@ class Master():
         # Modifies directory request by adding metadata
         self.getFileInfo(request.root, files)
         response_directory = request.root
-        kw_response = self.kw_extractor.extract_kw(request.root)
-        # print(kw_response)
         print(files)
         response = DirectoryResponse(root=response_directory)
         return response
@@ -55,10 +53,7 @@ class Master():
 
             # Build output entry
             file_entry = {}
-            file_entry["filename"] = curFile.original_path
-            file_entry["filetype"] = extracted_metadata.get("mime_type", "unknown")
-            file_entry["size_kb"] = int(extracted_metadata.get("size", 0)) // 1024
-
+            file_entry.update(extracted_metadata)
             # Extract keywords
             keywords = self.kw_extractor.extract_kw(curFile)
             file_entry["keywords"] = keywords
