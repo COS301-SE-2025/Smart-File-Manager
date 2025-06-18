@@ -6,11 +6,6 @@ import (
 	"time"
 )
 
-// Tag structure
-type Tag struct {
-	ID   string
-	Name string
-}
 type MetadataEntry struct {
 	Key   string
 	Value string
@@ -22,7 +17,7 @@ type File struct {
 	Path     string
 	newPath  string
 	Metadata []*MetadataEntry
-	Tags     []*Tag
+	Tags     []string
 }
 
 // Folder structure
@@ -35,7 +30,7 @@ type Folder struct {
 	Locked       bool
 	Files        []*File
 	Subfolders   []*Folder
-	Tags         []*Tag
+	Tags         []string
 }
 
 // -------------------- Folder Methods --------------------
@@ -100,17 +95,17 @@ func (f *Folder) GetSubfolder(folderPath string) *Folder {
 	return nil
 }
 
-func (f *Folder) AddTagToFile(filePath, tagID, tagName string) bool {
+func (f *Folder) AddTagToFile(filePath, tagName string) bool {
 	file := f.GetFile(filePath)
 	if file != nil {
-		file.Tags = append(file.Tags, &Tag{ID: tagID, Name: tagName})
+		file.Tags = append(file.Tags, tagName)
 		return true
 	}
 	return false
 }
 
 func (f *Folder) AddTagToSelf(tagID, tagName string) {
-	f.Tags = append(f.Tags, &Tag{ID: tagID, Name: tagName})
+	f.Tags = append(f.Tags, tagName)
 }
 
 func (f *Folder) Display(indent int) {
@@ -120,7 +115,7 @@ func (f *Folder) Display(indent int) {
 	if len(f.Tags) > 0 {
 		fmt.Printf("%s  Tags:\n", prefix)
 		for _, tag := range f.Tags {
-			fmt.Printf("%s    - %s: %s\n", prefix, tag.ID, tag.Name)
+			fmt.Printf("%s    - %s: %s\n", prefix, tag)
 		}
 	}
 
@@ -148,7 +143,7 @@ func (f *File) Display(indent int) {
 	if len(f.Tags) > 0 {
 		fmt.Printf("%s  Tags:\n", prefix)
 		for _, tag := range f.Tags {
-			fmt.Printf("%s    - %s: %s\n", prefix, tag.ID, tag.Name)
+			fmt.Printf("%s    - %s: %s\n", prefix, tag)
 		}
 	}
 }
