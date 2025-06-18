@@ -1,156 +1,168 @@
 package filesystem
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 )
 
-// tag structure
-type tag struct {
-	tagID   string
-	tagName string
+type MetadataEntry struct {
+	Key   string
+	Value string
 }
 
-// component interface
-type FileSystemItem interface {
-	GetPath() string
-	RemoveItem(itemPath string) bool
-	AddItem(item FileSystemItem) error
-	GetItem(itemPath string) FileSystemItem
-	AddTag(tagID string, tagName string) bool
-}
-
-// base struct
-type managedItem struct {
-	ItemID       string
-	ItemName     string
-	ItemPath     string
-	ItemTags     []tag
-	Locked       bool
-	FileType     string
-	CreationDate time.Time
-}
-
-func (m *managedItem) GetPath() string {
-	return m.ItemPath
-}
-
-// Leaf
+// File structure
 type File struct {
-	managedItem
+	Name     string
+	Path     string
+	newPath  string
+	Metadata []*MetadataEntry
+	Tags     []string
 }
 
-func (f *File) RemoveItem(itemPath string) bool {
-	// A file has no children; return false
-	return false
-}
-
-// Composite
+// Folder structure
 type Folder struct {
-	managedItem
-	ContainedItems []FileSystemItem
+	Name         string
+	Path         string
+	newPath      string
+	CreationDate time.Time
+	Locked       bool
+	Files        []*File
+	Subfolders   []*Folder
+	Tags         []string
 }
 
-func (f *Folder) AddItem(newItem FileSystemItem) error {
-	f.ContainedItems = append(f.ContainedItems, newItem)
-	return nil
+// -------------------- Folder Methods --------------------
+
+// AddFile adds a file to the folder
+func (f *Folder) AddFile(file *File) {
+	f.Files = append(f.Files, file)
 }
 
-func (f *File) AddItem(item FileSystemItem) error {
-	return errors.New("cannot add item to a File: operation not supported")
+// AddSubfolder adds a subfolder to the folder
+func (f *Folder) AddSubfolder(folder *Folder) {
+	f.Subfolders = append(f.Subfolders, folder)
 }
 
-func (f *Folder) RemoveItem(itemPath string) bool {
-
-	for i, item := range f.ContainedItems {
-		if item.GetPath() == itemPath {
-			f.ContainedItems = append(f.ContainedItems[:i], f.ContainedItems[i+1:]...)
+// RemoveFile removes a file by path
+func (f *Folder) RemoveFile(filePath string) bool {
+	for i, file := range f.Files {
+		if file.Path == filePath {
+			f.Files = append(f.Files[:i], f.Files[i+1:]...)
 			return true
 		}
-		// if item is a Folder, attempt recursive removal
-		if folder, ok := item.(*Folder); ok {
-			if folder.RemoveItem(itemPath) {
-				return true
-			}
+	}
+	return false
+}
+
+// RemoveSubfolder removes a folder by path
+func (f *Folder) RemoveSubfolder(folderPath string) bool {
+	for i, folder := range f.Subfolders {
+		if folder.Path == folderPath {
+			f.Subfolders = append(f.Subfolders[:i], f.Subfolders[i+1:]...)
+			return true
 		}
 	}
 	return false
 }
 
-func (f *Folder) GetPath() string {
-	return f.ItemPath
-}
-
-func (f *Folder) GetItem(itemPath string) FileSystemItem {
-	for _, item := range f.ContainedItems {
-		if item.GetPath() == itemPath {
-			return item
+// GetFile returns a file by path
+func (f *Folder) GetFile(filePath string) *File {
+	for _, file := range f.Files {
+		if file.Path == filePath {
+			return file
 		}
-		if folder, ok := item.(*Folder); ok {
-			if found := folder.GetItem(itemPath); found != nil {
-				return found
-			}
+	}
+	for _, folder := range f.Subfolders {
+		if found := folder.GetFile(filePath); found != nil {
+			return found
 		}
 	}
 	return nil
 }
-func (f *File) GetItem(itemPath string) FileSystemItem {
-	//get item needs to be called on folder
+
+// GetSubfolder returns a folder by path
+func (f *Folder) GetSubfolder(folderPath string) *Folder {
+	for _, folder := range f.Subfolders {
+		if folder.Path == folderPath {
+			return folder
+		}
+		if found := folder.GetSubfolder(folderPath); found != nil {
+			return found
+		}
+	}
 	return nil
 }
 
-func (f *Folder) AddTagToItem(itemPath string, tagID string, tagName string) bool {
-	item := f.GetItem(itemPath)
-	if item != nil {
-		item.AddTag(tagID, tagName)
+func (f *Folder) AddTagToFile(filePath, tagName string) bool {
+	file := f.GetFile(filePath)
+	if file != nil {
+		file.Tags = append(file.Tags, tagName)
 		return true
 	}
 	return false
 }
 
-func (f *Folder) AddTagToSelf(tagID string, tagName string) {
-	f.ItemTags = append(f.ItemTags, tag{tagID, tagName})
+func (f *Folder) AddTagToSelf(tagID, tagName string) {
+	f.Tags = append(f.Tags, tagName)
 }
 
-func (f *File) AddTag(tagID string, tagName string) bool {
-	f.ItemTags = append(f.ItemTags, tag{tagID, tagName})
-	return true
-}
-
-func (f *Folder) AddTag(tagID string, tagName string) bool {
-	f.ItemTags = append(f.ItemTags, tag{tagID, tagName})
-	return true
-}
 func (f *Folder) Display(indent int) {
 	prefix := strings.Repeat("  ", indent)
-	fmt.Printf("%sFolder: %s\n", prefix, f.ItemName)
+	fmt.Printf("%sFolder: %s\n", prefix, f.Name)
 
-	if len(f.ItemTags) > 0 {
+	if len(f.Tags) > 0 {
 		fmt.Printf("%s  Tags:\n", prefix)
-		for _, tag := range f.ItemTags {
-			fmt.Printf("%s    - %s: %s\n", prefix, tag.tagID, tag.tagName)
+		for _, tag := range f.Tags {
+			fmt.Printf("%s    - %s\n", prefix, tag)
 		}
 	}
 
-	for _, item := range f.ContainedItems {
-		switch v := item.(type) {
-		case *Folder:
-			v.Display(indent + 1)
-		case *File:
-			v.Display(indent + 1)
-		}
+	for _, sub := range f.Subfolders {
+		sub.Display(indent + 1)
+	}
+
+	for _, file := range f.Files {
+		file.Display(indent + 1)
 	}
 }
-func (f *File) Display(indent int) {
-	prefix := strings.Repeat("  ", indent)
-	fmt.Printf("%sFile: %s\n", prefix, f.ItemName)
-
-	if len(f.ItemTags) > 0 {
-		fmt.Printf("%s  Tags:\n", prefix)
-		for _, tag := range f.ItemTags {
-			fmt.Printf("%s    - %s: %s\n", prefix, tag.tagID, tag.tagName)
+func (f *File) RemoveTag(tag string) bool {
+	for i, t := range f.Tags {
+		if t == tag {
+			f.Tags = append(f.Tags[:i], f.Tags[i+1:]...)
+			return true
 		}
 	}
+	return false
+}
+
+func (f *Folder) RemoveTag(tag string) bool {
+	for i, t := range f.Tags {
+		if t == tag {
+			f.Tags = append(f.Tags[:i], f.Tags[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// -------------------- File Methods --------------------
+func (f *File) Display(indent int) {
+	prefix := strings.Repeat("  ", indent)
+	fmt.Printf("%sFile: %s %s\n", prefix, f.Name, f.Path)
+
+	if len(f.Metadata) > 0 {
+		fmt.Printf("%s  Metadata:\n", prefix)
+		for _, entry := range f.Metadata {
+			fmt.Printf("%s    - %s: %s\n", prefix, entry.Key, entry.Value)
+		}
+	}
+
+	if len(f.Tags) > 0 {
+		fmt.Printf("%s  Tags:\n", prefix)
+		for _, tag := range f.Tags {
+			fmt.Printf("%s    - %s\n", prefix, tag)
+		}
+	}
+
 }
