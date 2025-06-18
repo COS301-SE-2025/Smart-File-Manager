@@ -115,7 +115,7 @@ func (f *Folder) Display(indent int) {
 	if len(f.Tags) > 0 {
 		fmt.Printf("%s  Tags:\n", prefix)
 		for _, tag := range f.Tags {
-			fmt.Printf("%s    - %s: %s\n", prefix, tag)
+			fmt.Printf("%s    - %s\n", prefix, tag)
 		}
 	}
 
@@ -126,6 +126,25 @@ func (f *Folder) Display(indent int) {
 	for _, file := range f.Files {
 		file.Display(indent + 1)
 	}
+}
+func (f *File) RemoveTag(tag string) bool {
+	for i, t := range f.Tags {
+		if t == tag {
+			f.Tags = append(f.Tags[:i], f.Tags[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+func (f *Folder) RemoveTag(tag string) bool {
+	for i, t := range f.Tags {
+		if t == tag {
+			f.Tags = append(f.Tags[:i], f.Tags[i+1:]...)
+			return true
+		}
+	}
+	return false
 }
 
 // -------------------- File Methods --------------------
@@ -143,7 +162,7 @@ func (f *File) Display(indent int) {
 	if len(f.Tags) > 0 {
 		fmt.Printf("%s  Tags:\n", prefix)
 		for _, tag := range f.Tags {
-			fmt.Printf("%s    - %s: %s\n", prefix, tag)
+			fmt.Printf("%s    - %s\n", prefix, tag)
 		}
 	}
 }

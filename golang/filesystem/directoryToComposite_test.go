@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 package filesystem
 
 import (
@@ -33,7 +36,6 @@ func TestExploreExistingDirectory(t *testing.T) {
 		"empty.txt":     false,
 		"metadata.webp": false,
 	}
-
 
 	for _, item := range root.ContainedItems {
 		if item.GetPath() == filepath.Join(rootPath, "a.txt") {

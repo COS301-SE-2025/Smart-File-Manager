@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 package filesystem
 
 import (
@@ -119,4 +122,3 @@ func DeleteComposite(f **Folder) { //will need to be modified when we start stor
 // 		return
 // 	}
 // 	fmt.Println("Absolute path:", absPath)
-

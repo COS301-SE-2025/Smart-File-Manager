@@ -6,23 +6,21 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-
-	"github.com/COS301-SE-2025/Smart-File-Manager/golang/filesystem"
 )
 
 func API() {
 	fmt.Println("Server started, awaiting requests")
-	filesystem.HandleRequests()
+	//filesystem.HandleRequests()
 }
 
 func main() {
 	API()
 
 	//print current composites
-	composites := filesystem.GetComposites()
-	for _, item := range composites {
-		item.Display(0)
-	}
+	// composites := filesystem.GetComposites()
+	// for _, item := range composites {
+	// item.Display(0)
+	// }
 
 	// const root string = "C:/Users/jackb"
 

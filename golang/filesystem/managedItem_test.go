@@ -1,134 +1,128 @@
 package filesystem
 
-//run test: go test -v ./filesystem
 import (
 	"testing"
+	"time"
 )
 
-func TestBasicFileTagMetadata(t *testing.T) {
-	file := &File{
-		Name: "doc.txt",
-		Path: "/docs/doc.txt",
-	}
+// helper to create a file
+func newFile(name, path string) *File {
+	return &File{Name: name, Path: path}
+}
 
-	file.Metadata = append(file.Metadata, &MetadataEntry{Key: "Author", Value: "Alice"})
-	file.Tags = append(file.Tags, &Tag{ID: "t1", Name: "Important"})
-
-	if len(file.Metadata) != 1 || file.Metadata[0].Key != "Author" {
-		t.Errorf("Metadata not correctly added to file")
-	}
-	if len(file.Tags) != 1 || file.Tags[0].Name != "Important" {
-		t.Errorf("Tag not correctly added to file")
-	}
+// helper to create a folder
+func newFolder(name, path string) *Folder {
+	return &Folder{Name: name, Path: path, CreationDate: time.Now()}
 }
 
 func TestAddAndGetFile(t *testing.T) {
-	root := &Folder{Name: "root", Path: "/"}
-	file := &File{Name: "report.pdf", Path: "/report.pdf"}
-	root.AddFile(file)
-
-	retrieved := root.GetFile("/report.pdf")
-	if retrieved == nil || retrieved.Name != "report.pdf" {
-		t.Errorf("Expected to retrieve 'report.pdf', got nil or wrong file")
+	r := newFolder("root", "/root")
+	f1 := newFile("file1.txt", "/root/file1.txt")
+	r.AddFile(f1)
+	got := r.GetFile("/root/file1.txt")
+	if got == nil {
+		t.Fatalf("expected to find file, got nil")
 	}
-}
-
-func TestRecursiveFileRetrieval(t *testing.T) {
-	root := &Folder{Name: "root", Path: "/"}
-	sub := &Folder{Name: "sub", Path: "/sub"}
-	file := &File{Name: "deep.txt", Path: "/sub/deep.txt"}
-
-	sub.AddFile(file)
-	root.AddSubfolder(sub)
-
-	found := root.GetFile("/sub/deep.txt")
-	if found == nil || found.Name != "deep.txt" {
-		t.Errorf("Expected to find 'deep.txt', got nil or wrong file")
-	}
-}
-
-func TestAddAndGetSubfolder(t *testing.T) {
-	root := &Folder{Name: "root", Path: "/"}
-	child := &Folder{Name: "child", Path: "/child"}
-	root.AddSubfolder(child)
-
-	got := root.GetSubfolder("/child")
-	if got == nil || got.Name != "child" {
-		t.Errorf("Expected to get subfolder '/child'")
-	}
-}
-
-func TestNestedSubfolderRetrieval(t *testing.T) {
-	root := &Folder{Name: "root", Path: "/"}
-	sub1 := &Folder{Name: "sub1", Path: "/sub1"}
-	sub2 := &Folder{Name: "sub2", Path: "/sub1/sub2"}
-
-	sub1.AddSubfolder(sub2)
-	root.AddSubfolder(sub1)
-
-	found := root.GetSubfolder("/sub1/sub2")
-	if found == nil || found.Name != "sub2" {
-		t.Errorf("Expected to retrieve '/sub1/sub2', got nil or wrong folder")
+	if got.Name != "file1.txt" {
+		t.Errorf("expected Name 'file1.txt', got '%s'", got.Name)
 	}
 }
 
 func TestRemoveFile(t *testing.T) {
-	root := &Folder{Name: "root", Path: "/"}
-	file := &File{Name: "delete.txt", Path: "/delete.txt"}
-	root.AddFile(file)
-
-	if !root.RemoveFile("/delete.txt") {
-		t.Error("Expected RemoveFile to succeed")
+	r := newFolder("root", "/")
+	f := newFile("a.txt", "/a.txt")
+	r.AddFile(f)
+	// remove existing
+	removed := r.RemoveFile("/a.txt")
+	if !removed {
+		t.Errorf("RemoveFile returned false for existing file")
 	}
-	if root.GetFile("/delete.txt") != nil {
-		t.Error("File was not removed properly")
+	// ensure it's gone
+	if r.GetFile("/a.txt") != nil {
+		t.Errorf("file still found after removal")
+	}
+	// remove non-existing
+	if r.RemoveFile("/nonexistent.txt") {
+		t.Errorf("RemoveFile returned true for non-existing file")
+	}
+}
+
+func TestAddAndGetSubfolder(t *testing.T) {
+	r := newFolder("root", "/")
+	sub := newFolder("sub", "/sub")
+	r.AddSubfolder(sub)
+	// direct get
+	if got := r.GetSubfolder("/sub"); got == nil || got.Name != "sub" {
+		t.Fatalf("expected to get sub folder, got %v", got)
+	}
+	// nested get
+	nested := newFolder("nested", "/sub/nested")
+	sub.AddSubfolder(nested)
+	if got := r.GetSubfolder("/sub/nested"); got == nil || got.Name != "nested" {
+		t.Errorf("expected nested folder, got %v", got)
 	}
 }
 
 func TestRemoveSubfolder(t *testing.T) {
-	root := &Folder{Name: "root", Path: "/"}
-	sub := &Folder{Name: "temp", Path: "/temp"}
-	root.AddSubfolder(sub)
-
-	if !root.RemoveSubfolder("/temp") {
-		t.Error("Expected RemoveSubfolder to succeed")
+	r := newFolder("root", "/")
+	sub := newFolder("x", "/x")
+	r.AddSubfolder(sub)
+	if !r.RemoveSubfolder("/x") {
+		t.Errorf("RemoveSubfolder failed on existing folder")
 	}
-	if root.GetSubfolder("/temp") != nil {
-		t.Error("Subfolder was not removed properly")
+	if r.GetSubfolder("/x") != nil {
+		t.Errorf("subfolder still found after removal")
 	}
-}
-
-func TestAddTagToFile(t *testing.T) {
-	root := &Folder{Name: "root", Path: "/"}
-	file := &File{Name: "task.txt", Path: "/task.txt"}
-	root.AddFile(file)
-
-	ok := root.AddTagToFile("/task.txt", "id42", "todo")
-	if !ok {
-		t.Error("AddTagToFile returned false")
-	}
-	if len(file.Tags) != 1 || file.Tags[0].Name != "todo" {
-		t.Error("Tag not correctly added to file")
+	// non existing
+	if r.RemoveSubfolder("/y") {
+		t.Errorf("RemoveSubfolder returned true for non-existing folder")
 	}
 }
 
-func TestAddTagToSelf(t *testing.T) {
-	f := &Folder{Name: "folder", Path: "/folder"}
-	f.AddTagToSelf("t2", "work")
+func TestTagging(t *testing.T) {
+	r := newFolder("root", "/")
+	f := newFile("file.txt", "/file.txt")
+	r.AddFile(f)
 
-	if len(f.Tags) != 1 || f.Tags[0].Name != "work" {
-		t.Error("Tag not correctly added to folder")
+	// tag file
+	if !r.AddTagToFile("/file.txt", "important") {
+		t.Fatalf("AddTagToFile returned false")
+	}
+	if len(f.Tags) != 1 || f.Tags[0] != "important" {
+		t.Errorf("expected tag 'important' on file, got %v", f.Tags)
+	}
+
+	// tag folder
+	r.AddTagToSelf("t1", "projects")
+	if len(r.Tags) != 1 || r.Tags[0] != "projects" {
+		t.Errorf("expected tag 'projects' on folder, got %v", r.Tags)
+	}
+
+	// tagging non-existent file
+	if r.AddTagToFile("/no.txt", "none") {
+		t.Errorf("AddTagToFile returned true for non-existent file")
 	}
 }
 
-func TestDisplayOutput(t *testing.T) {
-	root := &Folder{Name: "root", Path: "/", Tags: []*Tag{{ID: "root", Name: "main"}}}
-	file := &File{
-		Name:     "file.txt",
-		Path:     "/file.txt",
-		Tags:     []*Tag{{ID: "t1", Name: "tagged"}},
-		Metadata: []*MetadataEntry{{Key: "size", Value: "123KB"}},
+func TestRemoveTag(t *testing.T) {
+	r := newFolder("root", "/")
+	f := newFile("f.txt", "/f.txt")
+	r.AddFile(f)
+	r.AddTagToFile("/f.txt", "temp")
+	f.Tags = append(f.Tags, "extra")
+
+	success := f.RemoveTag("temp")
+	if !success || len(f.Tags) != 1 || f.Tags[0] != "extra" {
+		t.Errorf("expected only 'extra' tag left, got %v", f.Tags)
 	}
-	root.AddFile(file)
-	root.Display(0)
+
+	success = r.RemoveTag("projects") // not present
+	if success {
+		t.Errorf("expected false removing nonexistent folder tag")
+	}
+	r.AddTagToSelf("", "cleanup")
+	success = r.RemoveTag("cleanup")
+	if !success || len(r.Tags) != 0 {
+		t.Errorf("expected no folder tags remaining, got %v", r.Tags)
+	}
 }
