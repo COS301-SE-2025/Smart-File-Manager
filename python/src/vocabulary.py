@@ -9,7 +9,6 @@ class Vocabulary:
         self.seen = set()
         self.vocab = []
         for keywords in allKeywords:
-            # print(f"\n== FILE: {filename} ==")
             for kw, score in keywords:
                 if kw not in self.seen:
                     self.seen.add(kw)

@@ -51,7 +51,7 @@ class FullVector:
         df = pd.DataFrame(filetypes, columns=["file_extension"])
         encoder = OneHotEncoder(sparse_output=False)
         one_hot_encoded = encoder.fit_transform(df[["file_extension"]])
-            # Get the index of the filetype in the original list
+        # Get the index of the filetype in the original list
         try:
             index = df[df["file_extension"] == filetype].index[0]
         except IndexError:
@@ -63,8 +63,6 @@ class FullVector:
         sizes = []
         filetypes = set()
         keywords = []
-#        sizes = [file["size_bytes"] for file in files]
-#        filetypes = sorted(set(file["filetype"] for file in files))
 
         for file in files:
             sizes.append(file["size_bytes"])
@@ -72,11 +70,6 @@ class FullVector:
             keywords.append(file["keywords"])
 
         vocabKW = self.vocab.createVocab(keywords)
-
-        #print(vocabKW, "\n")
-        # pdf, doc, txt
-        # [0,0]
-        # [0,0,1]
         
         return sorted(filetypes), sizes, vocabKW
 
