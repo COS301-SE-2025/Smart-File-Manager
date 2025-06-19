@@ -1,9 +1,8 @@
 import time
 import docx
-import math
 from yake import KeywordExtractor
 from pypdf import PdfReader
-
+from src.message_structure_pb2 import File
 
 # Keyword extractor class
 # Given a file as input extracts the top 10 keywords along with their value from file
