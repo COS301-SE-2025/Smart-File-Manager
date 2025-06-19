@@ -4,12 +4,7 @@ from metadata_scraper import MetaDataScraper
 from message_structure_pb2 import DirectoryRequest, Directory, File, Tag, MetadataEntry
 from kw_extractor import KWExtractor
 from full_vector import FullVector
-from vocabulary import Vocabulary
-from k_means import KMeansCluster
 import os
-
-#temp
-import numpy as np
 
 # Master class
 # Allows submission of gRPC requests. 
@@ -20,7 +15,6 @@ class Master():
         self.slaves = ThreadPoolExecutor(maxSlaves)
         self.scraper = MetaDataScraper()
         self.kw_extractor = KWExtractor()
-        self.vocab = Vocabulary()
         self.full_vec = FullVector()        
 
     # Takes gRPC request's root and sends it to be processed by a slave
