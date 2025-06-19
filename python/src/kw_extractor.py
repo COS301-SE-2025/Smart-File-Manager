@@ -2,7 +2,7 @@ import time
 import docx
 from yake import KeywordExtractor
 from pypdf import PdfReader
-from src.message_structure_pb2 import File
+from message_structure_pb2 import File
 
 # Keyword extractor class
 # Given a file as input extracts the top 10 keywords along with their value from file
@@ -24,10 +24,16 @@ class KWExtractor:
 
         # keywords for this file
         _, keywords = result[0]
-        sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)
+        sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)        
         # top_keywords = [kw for kw in sorted_keywords[:10]]
-        top_keywords = sorted_keywords[:10]
-        return top_keywords
+        top_keywords = sorted_keywords[:10]   
+    #    max_score = top_keywords[0][1] if top_keywords else 1  # Avoid division by zero
+        total_score = sum(score for _, score in top_keywords) or 1  # Avoid division by zero
+
+        normalized = [(kw, score / total_score) for kw, score in top_keywords]
+
+       # normalized = [(kw, score / max_score) for kw, score in top_keywords]
+        return normalized
 
 
     #open a file (check which type and send to be opened in the correct way)

@@ -5,11 +5,12 @@ from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 from vocabulary import Vocabulary
 from message_structure_pb2 import File
+import datetime
 
 class FullVector:
     def __init__(self):
         self.vocab = Vocabulary()
-        
+        self.kw_clust = KWCluster()
 #File map [
 #     {
 #         "filename" : "name",
@@ -22,20 +23,31 @@ class FullVector:
 #     ...
 # ]
     def createFullVector(self, files : File) -> None:
-        filetypes, sizes, vocabKW = self.assignSizeFileTypeKeywords(files)
- 
-        scaler = MinMaxScaler()   
-        norm_sizes = scaler.fit_transform(np.array(sizes).reshape(-1,1)).tolist()
-        filetype_to_onehot = {ft:self.oneHotEncoding(ft,filetypes) for ft in filetypes}
+        types = ["size_bytes", "file_extension", "keywords", "created"]
+        metaDict, vocabKW = self.assignSizeFileTypeKeywords(files,types)
+        #print(metaDict["size_bytes"])
+        #print(metaDict["file_extension"])
+        #print(metaDict["keywords"])
+        #print(metaDict["created"])
+        #print(metaDict["modified"])
+        #print(vocabKW)
+        scaler = MinMaxScaler()           
+        norm_sizes = scaler.fit_transform(np.array(metaDict["size_bytes"]).reshape(-1,1)).tolist()
+        filetype_to_onehot = {ft:self.oneHotEncoding(ft,metaDict["file_extension"]) for ft in metaDict["file_extension"]}
+        unix_created = []
+        for created in metaDict["created"]:
+            unix_created.append(datetime.datetime.fromisoformat(created).timestamp())
+        created_encoded = scaler.fit_transform(np.array(unix_created).reshape(-1,1)).flatten().tolist()
+        #print(created_encoded)
         for idx, file in enumerate(files):
             tfidf_vec = self.assignTF_IDF(file["keywords"],vocabKW)    
             encoded_filetype = filetype_to_onehot[file["file_extension"]]
             normalized_size = norm_sizes[idx]
+            normalized_created = created_encoded[idx]
             if isinstance(tfidf_vec,np.ndarray):
                 tfidf_vec = tfidf_vec.flatten().tolist()
 
-            file["full_vector"] = [tfidf_vec,encoded_filetype,normalized_size]            
-
+            file["full_vector"] = (tfidf_vec + [normalized_created])#+ normalized_size)#+ encoded_filetype    )        
 
 
     #helper function
@@ -45,7 +57,6 @@ class FullVector:
 
         return kwclust.createCluster(result,vocabKW)    
 
-    
 
     def oneHotEncoding(self, filetype, filetypes):
         df = pd.DataFrame(filetypes, columns=["file_extension"])
@@ -59,19 +70,26 @@ class FullVector:
         
         return one_hot_encoded[index].tolist()
 
-    def assignSizeFileTypeKeywords(self, files):
-        sizes = []
-        filetypes = set()
-        keywords = []
+    def assignSizeFileTypeKeywords(self, files, types):
+        metaDict = {
+            "size_bytes": [],
+            "file_extension": [],
+            "keywords": [],
+            "created": [],
+            "modified": []
+        }
 
         for file in files:
-            sizes.append(file["size_bytes"])
-            filetypes.add(file["file_extension"])
-            keywords.append(file["keywords"])
+            for type in types:
+                metaDict[type] += [file[type]]
+            # sizes.append(file["size_bytes"])
+            # filetypes.add(file["file_extension"])
+            # keywords.append(file["keywords"])
+                
 
-        vocabKW = self.vocab.createVocab(keywords)
+        vocabKW = self.vocab.createVocab(metaDict["keywords"])
         
-        return sorted(filetypes), sizes, vocabKW
+        return metaDict, vocabKW
 
 
 if __name__ == "__main__":

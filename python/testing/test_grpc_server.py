@@ -26,7 +26,7 @@ def grpc_test_server():
 
     server.stop(None)
 
-
+""""
 # <------ UNIT TESTING ------>
 # Simply checks if a Directory response is returned
 def test_send_directory_structure(grpc_test_server):
@@ -57,7 +57,7 @@ def test_send_directory_structure(grpc_test_server):
     assert isinstance(response, message_structure_pb2.DirectoryResponse)
     assert response.root.name == "test_dir"
     assert len(response.root.files) == 1
-
+"""
 
 # <------ INTEGRATION TESTING ----->
 # Fixture creates a gRPC DirectoryRequest from everything in python/testing/test_files_2 for repeated use

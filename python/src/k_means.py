@@ -8,10 +8,10 @@ class KMeansCluster:
     def __init__(self, numClusters):
         self.kmeans = KMeans(
             n_clusters=numClusters,
-            random_state=0,
-            n_init="auto"
+            random_state=42,
+            n_init="auto",            
             )
-
+        self.kmeans.n_iter_ = 12334
     def cluster(self,files):
         self.kmeans.fit(files)
         return self.kmeans.labels_
