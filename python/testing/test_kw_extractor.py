@@ -1,6 +1,7 @@
 import sys
 import unittest
 from unittest.mock import patch, MagicMock
+from types import SimpleNamespace
 import pytest
 import os
 import tempfile
@@ -216,27 +217,31 @@ def test_open_file():
     assert result_unknown_fail == []
 
 #kw_extract txt
+
 def test_extract_kw():
     from src.kw_extractor import KWExtractor
+
     extractor = KWExtractor()
 
+    # Create mock input object with required properties
     mock_input = MagicMock()
-    mock_file = MagicMock()
-    mock_file.original_path = "mock/path/file1.txt"
-    mock_file.metadata = [
-        MagicMock(key="mime_type", value="text/plain")
+    mock_input.original_path = "mock/path/file1.txt"
+    mock_input.metadata = [
+        SimpleNamespace(key="mime_type", value="text/plain")
     ]
-    mock_input.files = [mock_file]
 
-    extractor.open_file = MagicMock(return_value=[("mock/path/file1.txt", ["kw1", "kw2"])])
-    extractor.list_to_map = MagicMock(return_value={"mock/path/file1.txt": ["kw1", "kw2"]})
+    # Mock the dependent methods
+    extractor.open_file = MagicMock(return_value=[
+        ("mock/path/file1.txt", [("kw1", 0.9), ("kw2", 0.8)])
+    ])
 
+    # Call the method under test
     result = extractor.extract_kw(mock_input)
 
     # Assertions
-    extractor.open_file.assert_called_once_with("mock/path/file1.txt", "text/plain",1)
-    extractor.list_to_map.assert_called_once_with([("mock/path/file1.txt", ["kw1", "kw2"])], 10)
-    assert result == {"mock/path/file1.txt": ["kw1", "kw2"]}
+    extractor.open_file.assert_called_once_with("mock/path/file1.txt", "text/plain", 1)
+    assert result == [("kw1", 0.9), ("kw2", 0.8)]
+
 
 #all file types
 @pytest.mark.parametrize("mime_type", [
@@ -251,28 +256,25 @@ def test_extract_kw_all_types(mime_type):
     extractor = KWExtractor()
 
     mock_input = MagicMock()
-    mock_file = MagicMock()
-    mock_file.original_path = "mock/path/file.ext"
-    mock_file.metadata = [MagicMock(key="mime_type", value=mime_type)]
-    mock_input.files = [mock_file]
+    mock_input.original_path = "mock/path/file.ext"
+    mock_input.metadata = [
+        SimpleNamespace(key="mime_type", value=mime_type)
+    ]
 
     # Mock open_file and list_to_map
-    mock_keywords = [("mock/path/file.ext", ["kw1", "kw2"])]
+    mock_keywords = [("mock/path/file.ext", [("kw1", 0.9), ("kw2", 0.8)])]
     extractor.open_file = MagicMock(return_value=mock_keywords)
-    extractor.list_to_map = MagicMock(return_value={"mock/path/file.ext": ["kw1", "kw2"]})
 
     result = extractor.extract_kw(mock_input)
 
     extractor.open_file.assert_called_once_with("mock/path/file.ext", mime_type,1)
-    extractor.list_to_map.assert_called_once_with(mock_keywords, 10)
-    assert result == {"mock/path/file.ext": ["kw1", "kw2"]}
+    assert result == [("kw1", 0.9), ("kw2", 0.8)]
 
 
 
 # < ------ INTEGRATION TESTING ------ >
 #Tests the files as if they are passed through a single directory
 def test_real_data_all_files():
-    from src import message_structure_pb2, message_structure_pb2_grpc
     from src.message_structure_pb2 import Directory, File, Tag, MetadataEntry, DirectoryRequest
     from src.kw_extractor import KWExtractor
     tag1 = Tag(name="ImFixed")
@@ -307,16 +309,7 @@ def test_real_data_all_files():
         metadata=[meta1, meta3]
     )
 
-    dir1 = Directory(
-        name="useless_files",
-        path="/usr/trash",
-        files=[file1, file2, file3],
-        directories=[]
-    )
-    req = DirectoryRequest(root=dir1)
-
     kw_extractor = KWExtractor()
-    result = kw_extractor.extract_kw(req.root)
 
     expected_pdf = {"project", "management", "proposal", "folders", "manager", "capstone", "southern", "cross"}
     expected_txt = {"assignment", "debugged", "midterms", "email", "alarm", "laptops", "evacuating", "java"}
@@ -332,9 +325,9 @@ def test_real_data_all_files():
             flattened.add(kw.lower().strip())
         return flattened
 
-    pdf_result = flatten_keywords(result[file1_path])
-    txt_result = flatten_keywords(result[file2_path])
-    docx_result = flatten_keywords(result[file3_path])
+    pdf_result = flatten_keywords(kw_extractor.extract_kw(file1))
+    txt_result = flatten_keywords(kw_extractor.extract_kw(file2))
+    docx_result = flatten_keywords(kw_extractor.extract_kw(file3))
 
     def normalize(kw):
         return kw.lower().replace("-", "").strip(".")
@@ -357,7 +350,6 @@ def test_real_data_all_files():
     ("myWordDoc.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", {"docker", "class", "diagram", "uml", "rest", "architecture", "deployment", "frontend"}),
 ])
 def test_extract_kw_per_file_type(filename, mime_type, expected_keywords):
-    from src import message_structure_pb2
     from src.message_structure_pb2 import File, Tag, MetadataEntry, Directory, DirectoryRequest
     from src.kw_extractor import KWExtractor
 
@@ -373,19 +365,11 @@ def test_extract_kw_per_file_type(filename, mime_type, expected_keywords):
         metadata=[meta]
     )
 
-    directory = Directory(
-        name="testdir",
-        path="/usr/fake/path",
-        files=[file],
-        directories=[]
-    )
-    req = DirectoryRequest(root=directory)
 
     kw_extractor = KWExtractor()
-    result = kw_extractor.extract_kw(req.root)
+    result = kw_extractor.extract_kw(file)
 
-    assert path in result
-    extracted_keywords = set(result[path])
+    extracted_keywords = set(kw for kw, _ in result)
 
     def normalize(s): return s.lower().replace("-", "").strip(".")
     def check_majority(expected_keywords, result_keywords, threshold=0):
