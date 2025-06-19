@@ -1,8 +1,9 @@
 import time
 import docx
+import math
 from yake import KeywordExtractor
 from pypdf import PdfReader
-from message_structure_pb2 import Directory, DirectoryRequest, File, MetadataEntry, Tag
+
 
 # Keyword extractor class
 # Given a file as input extracts the top 10 keywords along with their value from file
@@ -11,7 +12,7 @@ from message_structure_pb2 import Directory, DirectoryRequest, File, MetadataEnt
 class KWExtractor:
     #Yake instance
     def __init__(self):
-        self.yake_extractor = KeywordExtractor()
+        self.yake_extractor = KeywordExtractor(lan="en", n=1)
 
     #Main extractor function
     def extract_kw(self, input: File) -> list[tuple]:
@@ -128,20 +129,5 @@ class KWExtractor:
         keyword = self.yake_extractor.extract_keywords(sentence)        
         return keyword
     
-   
-
-# if __name__ == "__main__":
-#     kw_extractor = KWExtractor()
-#     result = kw_extractor.extract_kw(req.root)
-
-
-#     for filename, keywords in result.items():
-#         print(f"\n== FILE: {filename} ==")
-#         for kw in keywords:
-#             print(kw)
-    
-
-        
-
 
 
