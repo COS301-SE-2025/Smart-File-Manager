@@ -40,6 +40,9 @@ go_grpc_client:
 go_test:
 	cd golang/filesystem && go test -v
 
+go_api:
+	cd golang && \
+	go run .
 
 python:
 	python3 python/src/main.py

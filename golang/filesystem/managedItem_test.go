@@ -1,156 +1,128 @@
 package filesystem
 
-//run test: go test -v ./filesystem
 import (
-	"fmt"
 	"testing"
 	"time"
 )
 
-func createTestStructure() *Folder {
-	root := &Folder{managedItem: managedItem{
-		ItemPath: "/root", ItemName: "root",
-	}}
+// helper to create a file
+func newFile(name, path string) *File {
+	return &File{Name: name, Path: path}
+}
 
-	sub := &Folder{managedItem: managedItem{
-		ItemPath: "/root/sub", ItemName: "sub",
-	}}
+// helper to create a folder
+func newFolder(name, path string) *Folder {
+	return &Folder{Name: name, Path: path, CreationDate: time.Now()}
+}
 
-	file := &File{managedItem: managedItem{
-		ItemPath:     "/root/sub/file.txt",
-		ItemName:     "file.txt",
-		CreationDate: time.Now(),
-	}}
-
-	err := sub.AddItem(file)
-	if err != nil {
-		fmt.Println(err)
+func TestAddAndGetFile(t *testing.T) {
+	r := newFolder("root", "/root")
+	f1 := newFile("file1.txt", "/root/file1.txt")
+	r.AddFile(f1)
+	got := r.GetFile("/root/file1.txt")
+	if got == nil {
+		t.Fatalf("expected to find file, got nil")
 	}
-	err1 := root.AddItem(sub)
-	if err1 != nil {
-		fmt.Println(err1)
+	if got.Name != "file1.txt" {
+		t.Errorf("expected Name 'file1.txt', got '%s'", got.Name)
 	}
-
-	return root
 }
 
 func TestRemoveFile(t *testing.T) {
-	root := createTestStructure()
-
-	removed := root.RemoveItem("/root/sub/file.txt")
+	r := newFolder("root", "/")
+	f := newFile("a.txt", "/a.txt")
+	r.AddFile(f)
+	// remove existing
+	removed := r.RemoveFile("/a.txt")
 	if !removed {
-		t.Errorf("Expected file to be removed, but it was not")
+		t.Errorf("RemoveFile returned false for existing file")
+	}
+	// ensure it's gone
+	if r.GetFile("/a.txt") != nil {
+		t.Errorf("file still found after removal")
+	}
+	// remove non-existing
+	if r.RemoveFile("/nonexistent.txt") {
+		t.Errorf("RemoveFile returned true for non-existing file")
 	}
 }
 
-func TestRemoveNonExistentFile(t *testing.T) {
-	root := createTestStructure()
-
-	removed := root.RemoveItem("/root/nope.txt")
-	if removed {
-		t.Errorf("Expected removal to fail for non-existent file")
+func TestAddAndGetSubfolder(t *testing.T) {
+	r := newFolder("root", "/")
+	sub := newFolder("sub", "/sub")
+	r.AddSubfolder(sub)
+	// direct get
+	if got := r.GetSubfolder("/sub"); got == nil || got.Name != "sub" {
+		t.Fatalf("expected to get sub folder, got %v", got)
+	}
+	// nested get
+	nested := newFolder("nested", "/sub/nested")
+	sub.AddSubfolder(nested)
+	if got := r.GetSubfolder("/sub/nested"); got == nil || got.Name != "nested" {
+		t.Errorf("expected nested folder, got %v", got)
 	}
 }
 
-func TestSubfolderStillExistsAfterFileRemoval(t *testing.T) {
-	root := createTestStructure()
-	root.RemoveItem("/root/sub/file.txt")
-
-	// Check if subfolder still exists
-	found := false
-	for _, item := range root.ContainedItems {
-		if item.GetPath() == "/root/sub" {
-			found = true
-		}
+func TestRemoveSubfolder(t *testing.T) {
+	r := newFolder("root", "/")
+	sub := newFolder("x", "/x")
+	r.AddSubfolder(sub)
+	if !r.RemoveSubfolder("/x") {
+		t.Errorf("RemoveSubfolder failed on existing folder")
 	}
-	if !found {
-		t.Errorf("Expected subfolder to still exist after file removal")
+	if r.GetSubfolder("/x") != nil {
+		t.Errorf("subfolder still found after removal")
 	}
-}
-
-func TestRecursiveRemoval(t *testing.T) {
-	root := createTestStructure()
-	sub := root.ContainedItems[0].(*Folder)
-
-	if len(sub.ContainedItems) != 1 {
-		t.Fatalf("Expected 1 item in subfolder, got %d", len(sub.ContainedItems))
-	}
-
-	root.RemoveItem("/root/sub/file.txt")
-
-	if len(sub.ContainedItems) != 0 {
-		t.Errorf("Expected subfolder to be empty after file removal")
-	}
-}
-func TestGetItem(t *testing.T) {
-	root := createTestStructure()
-
-	item := root.GetItem("/root/sub/file.txt")
-	if item == nil {
-		t.Fatalf("Expected to find item at /root/sub/file.txt, got nil")
-	}
-	if item.GetPath() != "/root/sub/file.txt" {
-		t.Errorf("Expected path '/root/sub/file.txt', got '%s'", item.GetPath())
+	// non existing
+	if r.RemoveSubfolder("/y") {
+		t.Errorf("RemoveSubfolder returned true for non-existing folder")
 	}
 }
 
-func TestAddTagToItem(t *testing.T) {
-	root := createTestStructure()
+func TestTagging(t *testing.T) {
+	r := newFolder("root", "/")
+	f := newFile("file.txt", "/file.txt")
+	r.AddFile(f)
 
-	success := root.AddTagToItem("/root/sub/file.txt", "t1", "Important")
-	if !success {
-		t.Fatalf("Expected AddTag to succeed, but it failed")
+	// tag file
+	if !r.AddTagToFile("/file.txt", "important") {
+		t.Fatalf("AddTagToFile returned false")
+	}
+	if len(f.Tags) != 1 || f.Tags[0] != "important" {
+		t.Errorf("expected tag 'important' on file, got %v", f.Tags)
 	}
 
-	item := root.GetItem("/root/sub/file.txt")
-	if item == nil {
-		t.Fatalf("Expected to find item after tagging, got nil")
+	// tag folder
+	r.AddTagToSelf("t1", "projects")
+	if len(r.Tags) != 1 || r.Tags[0] != "projects" {
+		t.Errorf("expected tag 'projects' on folder, got %v", r.Tags)
 	}
 
-	file, ok := item.(*File)
-	if !ok {
-		t.Fatalf("Expected item to be of type *File")
-	}
-
-	if len(file.ItemTags) != 1 {
-		t.Errorf("Expected 1 tag, found %d", len(file.ItemTags))
-	} else if file.ItemTags[0].tagID != "t1" || file.ItemTags[0].tagName != "Important" {
-		t.Errorf("Expected tag (t1, Important), got (%s, %s)", file.ItemTags[0].tagID, file.ItemTags[0].tagName)
+	// tagging non-existent file
+	if r.AddTagToFile("/no.txt", "none") {
+		t.Errorf("AddTagToFile returned true for non-existent file")
 	}
 }
-func TestAddTagToNonExistentItem(t *testing.T) {
-	root := createTestStructure()
 
-	success := root.AddTagToItem("/root/sub/ghost.txt", "t1", "GhostTag")
+func TestRemoveTag(t *testing.T) {
+	r := newFolder("root", "/")
+	f := newFile("f.txt", "/f.txt")
+	r.AddFile(f)
+	r.AddTagToFile("/f.txt", "temp")
+	f.Tags = append(f.Tags, "extra")
+
+	success := f.RemoveTag("temp")
+	if !success || len(f.Tags) != 1 || f.Tags[0] != "extra" {
+		t.Errorf("expected only 'extra' tag left, got %v", f.Tags)
+	}
+
+	success = r.RemoveTag("projects") // not present
 	if success {
-		t.Errorf("Expected AddTag to fail for non-existent item, but it succeeded")
+		t.Errorf("expected false removing nonexistent folder tag")
 	}
-}
-
-func TestAddTagToFolder(t *testing.T) {
-	root := createTestStructure()
-
-	success := root.AddTagToItem("/root/sub", "t2", "ProjectDocs")
-	if !success {
-		t.Errorf("Expected to successfully add tag to folder")
-	}
-
-	// Check if the tag was actually added
-	sub := root.GetItem("/root/sub")
-	if sub == nil {
-		t.Fatalf("Subfolder not found")
-	}
-
-	found := false
-	if folder, ok := sub.(*Folder); ok {
-		for _, tag := range folder.ItemTags {
-			if tag.tagID == "t2" && tag.tagName == "ProjectDocs" {
-				found = true
-			}
-		}
-	}
-
-	if !found {
-		t.Errorf("Expected tag 'ProjectDocs' with ID 't2' to be present in subfolder")
+	r.AddTagToSelf("", "cleanup")
+	success = r.RemoveTag("cleanup")
+	if !success || len(r.Tags) != 0 {
+		t.Errorf("expected no folder tags remaining, got %v", r.Tags)
 	}
 }

@@ -5,38 +5,30 @@ from yake import KeywordExtractor
 from pypdf import PdfReader
 
 
-# Receive data as D
+# Keyword extractor class
+# Given a file as input extracts the top 10 keywords along with their value from file
+# Supports extraction for: text/plain, pdf, docx 
+
 class KWExtractor:
     #Yake instance
     def __init__(self):
         self.yake_extractor = KeywordExtractor(lan="en", n=1)
 
     #Main extractor function
-    def extract_kw(self, input):
-        result = []
-        for file in input.files:    
-            file_name = f"{file.original_path}"
-            mime_type = next((entry.value for entry in file.metadata if entry.key == "mime_type"), None)
-            result += self.open_file(file_name,mime_type, 1) #Seconds based time limit
-        return self.list_to_map(result, 100)   
-    
-    #Make the result into a sorted map with max keywords
-    def list_to_map(self, result, max_keywords):
-        return_map = {}
+    def extract_kw(self, input: File) -> list[tuple]:
+        file_name = input.original_path
+        mime_type = next((entry.value for entry in input.metadata if entry.key == "mime_type"), None)
 
-        for file_name, keywords in result:
-            #descending order
-            sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)
-            top_keywords = sorted_keywords[:max_keywords]
-            # Extract scores and normalize them (L2 norm)
-            scores = [score for _, score in top_keywords]
-            norm = math.sqrt(sum(s**2 for s in scores)) or 1  # avoid div by zero
+        result = self.open_file(file_name, mime_type, 1)  # List of (filename, keywords)
+        if not result:
+            return []
 
-            normalized_keywords = [(kw, score / norm) for kw, score in top_keywords]
-
-            return_map[file_name] = normalized_keywords
-
-        return return_map
+        # keywords for this file
+        _, keywords = result[0]
+        sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)
+        # top_keywords = [kw for kw in sorted_keywords[:10]]
+        top_keywords = sorted_keywords[:10]
+        return top_keywords
 
 
     #open a file (check which type and send to be opened in the correct way)
