@@ -5,10 +5,10 @@ class Vocabulary:
         self.vocab = []
         self.seen = set()
 
-    def createVocab(self, keywords):
+    def createVocab(self, allKeywords):
         self.seen = set()
         self.vocab = []
-        for filename, keywords in keywords.items():
+        for keywords in allKeywords:
             # print(f"\n== FILE: {filename} ==")
             for kw, score in keywords:
                 if kw not in self.seen:
@@ -17,11 +17,11 @@ class Vocabulary:
         return self.vocab
     
     def addToVocab(self, keywords):
-        vocab = []
+        nvocab = []
         for filename, kw_list in keywords.items():
             for kw, score in kw_list:
                 if kw not in self.seen:
                     self.seen.add(kw)
-                    vocab.append(kw)
-        self.vocab.append(vocab)
+                    nvocab.append(kw)
+        self.vocab.append(nvocab)
         return self.vocab
