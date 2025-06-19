@@ -34,14 +34,24 @@ GET /loadTreeData?name={name}
       "path": "c:://",
       "isFolder": false,
       "tags": ["work", "important"],
-      "metadata" : [],
+      "metadata" : {
+        "size": "12KB",
+        "dateCreated": "2023-11-08T14:20:00Z",
+        "owner": "Tiaan",
+        "lastModified": "2024-02-20T10:10:00Z"
+      },
     },
     {
       "name": "file2.docx",
       "path": "c:://",
       "isFolder": false,
       "tags": ["document"],
-      "metadata" : [],
+      "metadata" : {
+        "size": "12KB",
+        "dateCreated": "2023-11-08T14:20:00Z",
+        "owner": "Tiaan",
+        "lastModified": "2024-02-20T10:10:00Z"
+      },
     },
     {
       "name": "Documents",
@@ -52,7 +62,12 @@ GET /loadTreeData?name={name}
           "path": "c:://",
           "isFolder": false,
           "tags": ["personal", "career"],
-          "metadata" : [],
+          "metadata" : {
+            "size": "12KB",
+            "dateCreated": "2023-11-08T14:20:00Z",
+            "owner": "Tiaan",
+            "lastModified": "2024-02-20T10:10:00Z"
+          },
         },
         {
           "name": "Reports",
@@ -63,14 +78,24 @@ GET /loadTreeData?name={name}
               "path": "c:://",
               "isFolder": false,
               "tags": ["report", "finance"],
-              "metadata" : [],
+              "metadata" : {
+                "size": "12KB",
+                "dateCreated": "2023-11-08T14:20:00Z",
+                "owner": "Tiaan",
+                "lastModified": "2024-02-20T10:10:00Z"
+              },
             },
             {
               "name": "q1_summary.docx",
               "path": "c:://",
               "isFolder": false,
               "tags": ["summary", "q1"],
-              "metadata" : [],
+              "metadata" : {
+                "size": "12KB",
+                "dateCreated": "2023-11-08T14:20:00Z",
+                "owner": "Tiaan",
+                "lastModified": "2024-02-20T10:10:00Z"
+              },
             }
           ]
         }
