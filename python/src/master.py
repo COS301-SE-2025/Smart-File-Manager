@@ -25,10 +25,12 @@ class Master():
         # Contains list of objects which stores metadata, keywords etc...
         files = []
 
-        # Modifies directory request by adding metadata
+        # Modifies directory request by adding metadata and creates map of files with metadata and keywords
         self.getFileInfo(request.root, files)
         response_directory = request.root
         print(files)
+
+        # Metadata Request ==> Return Directory with metadata attached
         response = DirectoryResponse(root=response_directory)
         return response
     
@@ -44,7 +46,7 @@ class Master():
                 continue
 
             # Extract metadata
-            self.scraper.get_metadata()
+            self.scraper.get_standard_metadata()
             extracted_metadata = self.scraper.metadata
 
             # Add to curFile.metadata
@@ -54,6 +56,7 @@ class Master():
             # Build output entry
             file_entry = {}
             file_entry.update(extracted_metadata)
+
             # Extract keywords
             keywords = self.kw_extractor.extract_kw(curFile)
             file_entry["keywords"] = keywords

@@ -4,13 +4,17 @@ from yake import KeywordExtractor
 from pypdf import PdfReader
 from message_structure_pb2 import Directory, DirectoryRequest, File, MetadataEntry, Tag
 
+# Keyword extractor class
+# Given a file as input extracts the top 10 keywords along with their value from file
+# Supports extraction for: text/plain, pdf, docx 
+
 class KWExtractor:
     #Yake instance
     def __init__(self):
         self.yake_extractor = KeywordExtractor()
 
     #Main extractor function
-    def extract_kw(self, input: File) -> list[str]:
+    def extract_kw(self, input: File) -> list[tuple]:
         file_name = input.original_path
         mime_type = next((entry.value for entry in input.metadata if entry.key == "mime_type"), None)
 
