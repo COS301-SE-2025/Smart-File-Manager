@@ -74,7 +74,7 @@ func addTagHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // struct for json return type for 200 reqs
-type directoryTreeJson struct {
+type DirectoryTreeJson struct {
 	Name     string     `json:"name"`
 	IsFolder bool       `json:"isFolder"`
 	Children []FileNode `json:"children"`
@@ -98,60 +98,68 @@ type Metadata struct {
 }
 
 func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
-	name := r.URL.Query().Get("name")
+	w.Header().Set("Content-Type", "application/json")
 
-	var found bool = false
+	name := r.URL.Query().Get("name")
+	mu.Lock()
+	defer mu.Unlock()
 
 	for _, c := range composites {
-		fmt.Println(c.Name)
 		if c.Name == name {
-			found = true
-			structureChildren := createDirectoryJsonStructure(c)
-			root := directoryTreeJson{
+			// build the nested []FileNode
+			children := createDirectoryJSONStructure(c)
+
+			root := DirectoryTreeJson{
 				Name:     c.Name,
 				IsFolder: true,
-				Children: structureChildren,
+				Children: children,
 			}
 
 			if err := json.NewEncoder(w).Encode(root); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			}
-			break
+			return
 		}
 	}
-	if !found {
-		//400 code
-		http.Error(w, "No smart manager with that name", http.StatusBadRequest)
-	}
+
+	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
 }
 
-func createDirectoryJsonStructure(root *Folder) []FileNode {
-	fmt.Print("exploring " + root.Name)
-	FileNodeStructure := FileNode{}
+func createDirectoryJSONStructure(folder *Folder) []FileNode {
+	var nodes []FileNode
 
-	for _, file := range root.Files {
-		curr := FileNode{
+	for _, file := range folder.Files {
+
+		md := Metadata{}
+		tags := file.Tags
+		if len(tags) == 0 {
+			tags = []string{"none"}
+		}
+
+		nodes = append(nodes, FileNode{
 			Name:     file.Name,
 			Path:     file.Path,
 			IsFolder: false,
-			Tags:     file.Tags,
-			Metadata: &Metadata{},
-		}
-		FileNodeStructure.Children = append(FileNodeStructure.Children, curr)
+			Tags:     tags,
+			Metadata: &md,
+		})
 	}
-	for _, folder := range root.Subfolders {
-		curr := FileNode{
-			Name:     folder.Name,
-			Path:     folder.Path,
-			IsFolder: false,
-			Tags:     folder.Tags,
-			Metadata: &Metadata{},
-		}
-		FileNodeStructure.Children = append(FileNodeStructure.Children, curr)
-		createDirectoryJsonStructure(folder)
-	}
-	return FileNodeStructure.Children
 
+	for _, sub := range folder.Subfolders {
+		// recurse first
+		childNodes := createDirectoryJSONStructure(sub)
+
+		nodes = append(nodes, FileNode{
+			Name:     sub.Name,
+			Path:     sub.Path,
+			IsFolder: true,
+			Tags:     sub.Tags,
+			Metadata: &Metadata{},
+			Children: childNodes,
+		})
+	}
+
+	return nodes
 }
 
 func HandleRequests() {
