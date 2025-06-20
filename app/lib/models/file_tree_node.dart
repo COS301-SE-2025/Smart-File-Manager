@@ -4,7 +4,7 @@ class FileTreeNode {
   final List<FileTreeNode>? children;
   final List<String>? tags;
   final String? path;
-  final List<String>? metadata;
+  final Map<String, String>? metadata;
 
   FileTreeNode({
     required this.name,
@@ -28,7 +28,9 @@ class FileTreeNode {
               : null,
       tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
       metadata:
-          json['metadata'] != null ? List<String>.from(json['metadata']) : [],
+          json['metadata'] != null
+              ? Map<String, String>.from(json['metadata'])
+              : {},
     );
   }
 

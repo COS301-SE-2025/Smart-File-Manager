@@ -63,7 +63,10 @@ class _ShellState extends State<Shell> {
   //find the active page and return its widget
   Widget _getCurrentPage() {
     if (_selectedManager != null) {
-      return ManagerPage(name: _selectedManager!);
+      return ManagerPage(
+        key: ValueKey(_selectedManager),
+        name: _selectedManager!,
+      );
     } else if (_selectedIndex >= 0 && _selectedIndex < _pages.length) {
       return _pages[_selectedIndex];
     } else {

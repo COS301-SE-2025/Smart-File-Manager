@@ -11,6 +11,7 @@ class Api {
       final response = await http.get(
         Uri.parse("$uri/loadTreeData?name=$name"),
       );
+      print(response.body);
 
       if (response.statusCode == 200) {
         return FileTreeNode.fromJson(

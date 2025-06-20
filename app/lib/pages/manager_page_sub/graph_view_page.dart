@@ -5,6 +5,8 @@ import 'package:app/models/file_tree_node.dart';
 import 'package:app/constants.dart';
 import 'dart:math' as math;
 import 'package:app/custom_widgets/breadcrumb_widget.dart';
+import 'package:open_file/open_file.dart';
+import 'dart:io';
 
 class GraphViewPage extends StatefulWidget {
   final FileTreeNode treeData;
@@ -71,7 +73,6 @@ class _GraphViewPageState extends State<GraphViewPage> {
     // Clear existing graph
     _initializeController();
     nodeDepths.clear();
-    print('hello');
     // current root based on currentPath
     currentRootNode = _getCurrentRoot();
 
@@ -187,7 +188,7 @@ class _GraphViewPageState extends State<GraphViewPage> {
       List<String> pathToNode = _getPathToNode(node);
       widget.onNavigate(pathToNode);
     } else {
-      print("open file");
+      openDocument(node.path ?? '');
     }
   }
 
@@ -489,4 +490,29 @@ Color _getIconColor(
     return levelColor;
   }
   return isFolder ? levelColor : Colors.white70;
+}
+
+String convertWSLPath(String wslPath) {
+  if (Platform.isWindows) {
+    final match = RegExp(r"^/mnt/([a-zA-Z])/").firstMatch(wslPath);
+    if (match != null) {
+      final driveLetter = match.group(1)!.toUpperCase();
+      final windowsPath = wslPath
+          .replaceFirst(RegExp(r"^/mnt/[a-zA-Z]/"), "$driveLetter:/")
+          .replaceAll('/', r'\');
+      return windowsPath;
+    }
+    return wslPath;
+  } else {
+    return wslPath;
+  }
+}
+
+void openDocument(String originalWSLPath) async {
+  final nativePath = convertWSLPath(originalWSLPath);
+
+  final file = File(nativePath);
+  if (await file.exists()) {
+    OpenFile.open(nativePath);
+  }
 }

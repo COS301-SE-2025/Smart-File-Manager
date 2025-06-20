@@ -28,9 +28,7 @@ class _ManagerPageState extends State<ManagerPage> {
   }
 
   Future<void> getTree() async {
-    FileTreeNode response = await Api.loadTreeDataTemp(
-      'https://run.mocky.io/v3/b3097f03-5576-4e45-ab9e-54e12fa12d87',
-    );
+    FileTreeNode response = await Api.loadTreeData(widget.name);
 
     setState(() {
       _treeData = response;
