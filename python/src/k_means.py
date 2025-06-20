@@ -30,7 +30,8 @@ class KMeansCluster:
     def dirCluster(self,full_vecs,files):
         builder = DirectoryCreator("Root",files)
         root_dir = self.recDirCluster(full_vecs, files, 0, "Directory", builder)
-        self.printDirectoryTree(root_dir)
+        #print(root_dir)
+        #self.printMetaData(root_dir)
         return root_dir
         
     def recDirCluster(self,full_vecs,files, depth, dir_prefix, builder):
@@ -65,10 +66,6 @@ class KMeansCluster:
         label_to_entries = {}
         for i, label in enumerate(labels):
             label_to_entries.setdefault(label, []).append(files[i])
-
-        # idk lost in the sauce
-        # if any(len(entries) <= self.minSize for entries in label_to_entries.values()):
-        #     return builder.buildDirectory(dir_name, files, [])
  
 
         subdirs = []
@@ -106,3 +103,4 @@ class KMeansCluster:
             print(f"{indent}  - {file.name}")
         for subdir in directory.directories:
             self.printDirectoryTree(subdir, indent + "  ")
+
