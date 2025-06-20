@@ -7,6 +7,7 @@ from collections import defaultdict
 TEST_DIR = os.path.dirname(__file__)
 
 class DirectoryCreator:
+    # construct the map of map of list of file
     def __init__(self, directoryName, fileMap):
         self.directory_name_idx = 0 
         self.directory_name = "Directory"
@@ -19,26 +20,7 @@ class DirectoryCreator:
     def get_path(self, name):
         return os.path.join(self.FILE_DIR, name)
 
-    # Recursive function
-    # Create directory for each pass
-    # Create directory within passes
-    # Create files at end of map
-    # label map is a map of maps
-    # map
-    # [
-    # clusterpassone [0,1,2]
-    # -> 0: file1, file2, ...
-    # -> 1: ...
-    # -> 2: ...
-    # clusterpasstwo [0,1,2,3]
-    # -> 0: file1, file2, ...
-    # -> 1: ...
-    # -> 2: ...
-    # -> 3: ...
-    # ...
-    #]
-
-
+    
     def buildDirectory(self, name, files, children):
         dir_path = self.get_path(name)
         file_objs = [self.createFile(f["filename"], name) for f in files]
