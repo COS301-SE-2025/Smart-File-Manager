@@ -28,7 +28,6 @@ def grpc_test_server():
 
 
 # <------ INTEGRATION TESTING ----->
-# Fixture creates a gRPC DirectoryRequest from everything in python/testing/test_files_2 for repeated use
 @pytest.fixture(scope="module")
 def createDirectoryRequest():
     TEST_DIR = os.path.dirname(__file__)
@@ -37,6 +36,7 @@ def createDirectoryRequest():
     def get_path(name):
         return os.path.join(TEST_FILE_DIR, name)
 
+    # gRPC objects for files we want to test
     files1 =   [
         File(name="Apr8TODO.txt", original_path=get_path("Apr8TODO.txt")),
         File(name="Apr18 meeting.txt", original_path=get_path("Apr18 meeting.txt")),
@@ -65,6 +65,13 @@ def createDirectoryRequest():
         File(name="UseCase.png", original_path=get_path("UseCase.png")),
         File(name="init.py", original_path=get_path("init.py"))
     ]
+
+    # Some tags for the files
+    tag_1 = Tag(name="COS122")
+    tag_2 = Tag(name="COS122")
+
+    files1[3].tags.append(tag_1)
+    files1[12].tags.append(tag_2)
 
     root_dir = Directory(
         name = "test_files_3",

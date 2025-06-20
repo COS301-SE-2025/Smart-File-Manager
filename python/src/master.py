@@ -33,13 +33,13 @@ class Master():
         # Modifies directory request by adding metadata and creates map of files with metadata and keywords
         self.getFileInfo(request.root, files)
         response_directory = request.root
-        #print(files)
 
+        # Encode all vectors 
         self.full_vec.create_full_vector(files)
         full_vecs = []
         for file in files:
-            print(file["full_vector"])
-            print(file["filename"])
+            # print(file["full_vector"])
+            # print(file["filename"])
             full_vecs.append(file["full_vector"])
 
         
@@ -94,6 +94,10 @@ class Master():
             # Extract keywords
             keywords = self.kw_extractor.extract_kw(curFile)
             file_entry["keywords"] = keywords
+
+            # Extract tags
+            extracted_tags = [tag.name.strip().lower() for tag in curFile.tags if tag.name]
+            file_entry["tags"] = extracted_tags
 
             files.append(file_entry)
 
