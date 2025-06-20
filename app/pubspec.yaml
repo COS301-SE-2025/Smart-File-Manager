@@ -41,6 +41,7 @@ dependencies:
   flutter_force_directed_graph: ^1.0.7
   http: ^1.4.0
   flutter_launcher_icons: ^0.14.4
+  url_launcher: ^6.3.1
 
 flutter_launcher_icons:
   windows:
