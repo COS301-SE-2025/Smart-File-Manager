@@ -27,24 +27,6 @@ class Api {
     }
   }
 
-  static Future<FileTreeNode> loadTreeDataTemp(String name) async {
-    try {
-      final response = await http.get(Uri.parse(name));
-
-      if (response.statusCode == 200) {
-        return FileTreeNode.fromJson(
-          jsonDecode(response.body) as Map<String, dynamic>,
-        );
-      } else {
-        throw Exception('Failed to load data: HTTP ${response.statusCode}');
-      }
-    } catch (e, stackTrace) {
-      print('Error loading tree data from loadTreeData: $e');
-      print(stackTrace);
-      rethrow;
-    }
-  }
-
   //Call to add Mangager to backend
   static Future<bool> addSmartManager(String name, String path) async {
     try {
