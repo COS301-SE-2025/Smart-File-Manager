@@ -11,26 +11,24 @@ class FullVector:
     def __init__(self):
         self.vocab = Vocabulary()
         self.kw_clust = KWCluster()
-#File map [
-#     {
-#         "filename" : "name",
-#         "keywords" : [],
-#         "size_kb" : int,
-#         "filetype" : "type",
-#         # ADD
-#         "full_vector": [["keywords"], ["filetype"], "size"]
-#     },
-#     ...
-# ]
+
+    """
+    File map input looks like:
+    [
+         {
+             "filename" : "name",
+             "keywords" : [],
+             "size_kb" : int,
+             "filetype" : "type",
+             # Class adds the following
+             "full_vector": [["keywords"], ["filetype"], "size"]
+         },
+         ...
+    ]
+    """
     def createFullVector(self, files : File) -> None:
         types = ["size_bytes", "file_extension", "keywords", "created"]
         metaDict, vocabKW = self.assignSizeFileTypeKeywords(files,types)
-        #print(metaDict["size_bytes"])
-        #print(metaDict["file_extension"])
-        #print(metaDict["keywords"])
-        #print(metaDict["created"])
-        #print(metaDict["modified"])
-        #print(vocabKW)
         scaler = MinMaxScaler()           
         norm_sizes = scaler.fit_transform(np.array(metaDict["size_bytes"]).reshape(-1,1)).tolist()
         filetype_to_onehot = {ft:self.oneHotEncoding(ft,metaDict["file_extension"]) for ft in metaDict["file_extension"]}
