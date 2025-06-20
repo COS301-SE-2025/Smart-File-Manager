@@ -14,6 +14,7 @@ class KMeansCluster:
             n_init="auto",            
             )
         self.n_clusters = numClusters
+        self.minSize = 2 # hardcoded for now
 
 
     def cluster(self,files):
@@ -27,24 +28,26 @@ class KMeansCluster:
         return predictions, centers_rounded
     
     def dirCluster(self,full_vecs,files):
-        # labels = self.recDirCluster(full_vecs,files,self.n_clusters)   
-        # #print(labels)    
-        # self.printDirectoryTree(labels)    
-        # return labels
         builder = DirectoryCreator("Root",files)
         root_dir = self.recDirCluster(full_vecs, files, self.n_clusters, "Directory", builder)
         self.printDirectoryTree(root_dir)
         return root_dir
         
     def recDirCluster(self,full_vecs,files, depth, dir_prefix, builder):
+        # Assign directory name
         dir_name = f"{dir_prefix}_{depth}"
 
-          
-        if len(full_vecs) <= depth:
+        # Quit if not enough folders
+        if len(full_vecs) <= self.minSize:
             return builder.buildDirectory(dir_name, files, []) 
+        
+        if self.n_clusters <= self.minSize:
+            self.n_clusters = self.minSize
+        else:
+            self.n_clusters -= 1
 
         self.kmeans = KMeans(
-            n_clusters=depth,
+            n_clusters=self.n_clusters,
             random_state=42,
             n_init="auto",
         )
@@ -71,34 +74,13 @@ class KMeansCluster:
                 retained_files.extend(entries)
 
         return builder.buildDirectory(dir_name, retained_files, subdirs)
- 
-
-    def labelToFileName(self, labels, files):
-        label_to_filenames = defaultdict(list)
-        for index, file in enumerate(files):
-            label = labels[index]
-            filename = file["filename"]
-            fv = file["full_vector"]
-            label_to_filenames[label].append((filename,fv))
-        
-     
-        return label_to_filenames        
+   
 
 
-    def printTree(self,tree, prefix=""):
-        if "files" in tree:
-            for file_entry in tree["files"]:
-                if isinstance(file_entry, dict):
-                    print(f"{prefix}  - {file_entry['filename']}")
-                else:
-                    print(f"{prefix}  - INVALID FILE ENTRY: {file_entry}")
-        for child in tree.get("children", []):
-            print(f"{prefix}{child['label']}:")
-            self.printTree(child, prefix + "  ")
 
     def printDirectoryTree(self, directory, indent=""):
         print(f"{indent}{directory.name}/")
         for file in directory.files:
-            print(f"{indent}  - {file.new_path}")
+            print(f"{indent}  - {file.name}")
         for subdir in directory.directories:
             self.printDirectoryTree(subdir, indent + "  ")
