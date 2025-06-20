@@ -33,7 +33,7 @@ class _GraphViewPageState extends State<GraphViewPage> {
   Set<FileTreeNode> highlightedNodes = {};
 
   //max depth
-  static const int maxDepth = 3;
+  static const int maxDepth = 2;
   FileTreeNode? currentRootNode;
 
   static const List<Color> levelColors = [
