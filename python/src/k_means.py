@@ -14,7 +14,7 @@ class KMeansCluster:
             n_init="auto",            
             )
         self.n_clusters = numClusters
-        self.minSize = max(2, numClusters/6) # hardcoded for now
+        self.minSize = 2 # hardcoded for now # even numbers are good
 
 
     def cluster(self,files):
@@ -29,7 +29,7 @@ class KMeansCluster:
     
     def dirCluster(self,full_vecs,files):
         builder = DirectoryCreator("Root",files)
-        root_dir = self.recDirCluster(full_vecs, files, self.n_clusters, "Directory", builder)
+        root_dir = self.recDirCluster(full_vecs, files, 0, "Directory", builder)
         self.printDirectoryTree(root_dir)
         return root_dir
         
@@ -86,8 +86,8 @@ class KMeansCluster:
                 # subdirs.append(sub_dir)
                 # Flavour 2 (More files per dir)
                 return builder.buildDirectory(dir_name, files, [])                
-            # Good number of entries, can create atleast 2 directories from this
-            elif len(entries) > self.minSize*2:                  
+            # Good number of entries, atleast minsize so recursively check (if exactly minsize it will make a dir of these two folders)
+            elif len(entries) >= self.minSize:                  
                 sub_vecs = [e["full_vector"] for e in entries]
                 sub_dir = self.recDirCluster(sub_vecs,entries,depth+1,f"{dir_name}_{label}", builder)
                 subdirs.append(sub_dir)
