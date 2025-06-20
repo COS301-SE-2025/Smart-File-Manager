@@ -1,7 +1,5 @@
-from message_structure_pb2 import DirectoryResponse, Directory
-from message_structure_pb2 import DirectoryRequest, Directory, File, Tag, MetadataEntry
+from message_structure_pb2 import Directory, File, Tag, MetadataEntry
 import os
-#temp
 from collections import defaultdict
 
 TEST_DIR = os.path.dirname(__file__)
@@ -20,7 +18,7 @@ class DirectoryCreator:
     def get_path(self, name):
         return os.path.join(self.FILE_DIR, name)
 
-    
+
     def buildDirectory(self, name, files, children):
         dir_path = self.get_path(name)
         file_objs = [self.createFile(f["filename"], name) for f in files]
