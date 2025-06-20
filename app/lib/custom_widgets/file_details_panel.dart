@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import '../models/file_tree_node.dart';
+import 'package:app/constants.dart';
+import 'package:app/api.dart';
 
 class FileDetailsPanel extends StatefulWidget {
+  final String? managerName;
   final FileTreeNode? selectedFile;
   final bool isVisible;
   final VoidCallback onClose;
 
   const FileDetailsPanel({
+    required this.managerName,
     required this.selectedFile,
     required this.isVisible,
     required this.onClose,
@@ -256,8 +261,8 @@ class _FileDetailsPanelState extends State<FileDetailsPanel>
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: const Color(0xff374151),
-            title: const Text('Add Tag', style: TextStyle(color: Colors.white)),
+            backgroundColor: kScaffoldColor,
+            title: const Text('Add Tag', style: kTitle1),
             content: TextField(
               controller: _tagController,
               style: const TextStyle(color: Colors.white),
@@ -298,15 +303,31 @@ class _FileDetailsPanelState extends State<FileDetailsPanel>
     );
   }
 
-  void _addTag(String tag) {
+  void _addTag(String tag) async {
+    bool response = await Api.addTagToFile(
+      widget.managerName ?? '',
+      widget.selectedFile!.path ?? '',
+      tag,
+    );
+
     setState(() {
-      widget.selectedFile!.tags?.add(tag);
+      if (response) {
+        widget.selectedFile!.tags?.add(tag);
+      }
     });
   }
 
-  void _removeTag(String tag) {
+  void _removeTag(String tag) async {
+    bool response = await Api.deleteTagFromFile(
+      widget.managerName ?? '',
+      widget.selectedFile!.path ?? '',
+      tag,
+    );
+
     setState(() {
-      widget.selectedFile!.tags?.remove(tag);
+      if (response) {
+        widget.selectedFile!.tags?.remove(tag);
+      }
     });
   }
 }
