@@ -14,7 +14,7 @@ class KMeansCluster:
             n_init="auto",            
             )
         self.n_clusters = numClusters
-        self.minSize = 2 # hardcoded for now
+        self.minSize = max(2, numClusters/6) # hardcoded for now
 
 
     def cluster(self,files):
@@ -38,38 +38,60 @@ class KMeansCluster:
         dir_name = f"{dir_prefix}_{depth}"
 
         # Quit if not enough folders
-        if len(full_vecs) <= self.minSize:
+        if len(full_vecs) < self.minSize or depth > 30:
             return builder.buildDirectory(dir_name, files, []) 
         
+        # if there are too many clusters reduce it 
+        if len(full_vecs) < self.n_clusters:
+            self.n_clusters = len(full_vecs)
+
+        # Min clusters (x leaves, x dirs per level)
         if self.n_clusters <= self.minSize:
             self.n_clusters = self.minSize
         else:
             self.n_clusters -= 1
 
+        # create the clustering
         self.kmeans = KMeans(
             n_clusters=self.n_clusters,
             random_state=42,
             n_init="auto",
         )
 
-        
+        # cluster and get labels
         labels = self.cluster(full_vecs)
 
-        
+        # label -> files
         label_to_entries = {}
         for i, label in enumerate(labels):
             label_to_entries.setdefault(label, []).append(files[i])
 
+        # idk lost in the sauce
+        # if any(len(entries) <= self.minSize for entries in label_to_entries.values()):
+        #     return builder.buildDirectory(dir_name, files, [])
+ 
+
         subdirs = []
         retained_files = []
-   
+
 
         for label, entries in label_to_entries.items():
-            if len(entries) > 2:                  
+            # if a label has one entry then clustering is pretty good
+            # To avoid having files in leaves we return all of the files used in this clustering
+            # -> can defnitely backfire but lets hope the clustering is goated
+            if len(entries) <= 1:
+                # Flavour 1 (millions of dirs)
+                # sub_vecs = [e["full_vector"] for e in entries]
+                # sub_dir = self.recDirCluster(sub_vecs,entries,depth,f"{dir_name}_{label}", builder)
+                # subdirs.append(sub_dir)
+                # Flavour 2 (More files per dir)
+                return builder.buildDirectory(dir_name, files, [])                
+            # Good number of entries, can create atleast 2 directories from this
+            elif len(entries) > self.minSize*2:                  
                 sub_vecs = [e["full_vector"] for e in entries]
                 sub_dir = self.recDirCluster(sub_vecs,entries,depth+1,f"{dir_name}_{label}", builder)
                 subdirs.append(sub_dir)
-                
+            # Not quite enough files to recluster so keep them together   
             else:
                 retained_files.extend(entries)
 
