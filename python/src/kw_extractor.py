@@ -39,7 +39,16 @@ class KWExtractor:
     #open a file (check which type and send to be opened in the correct way)
     def open_file(self, file_name, file_type, max_duration_seconds=1):
         result = []
-        if file_type == "application/pdf":
+        if "image" in file_type:
+            #print("Image reading")
+            pass
+        elif "audio" in file_type:
+            #print("Audio reading")
+            pass
+        elif "video" in file_type:
+            #print("Video reading")
+            pass
+        elif file_type == "application/pdf":
             keywords = self.pdf_extraction(file_name, '.', max_duration_seconds)
             result.append((file_name, keywords))
         elif file_type in ["application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:

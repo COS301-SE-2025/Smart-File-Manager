@@ -63,7 +63,8 @@ def createDirectoryRequest():
         File(name="TODO mar30 Meeting.txt", original_path=get_path("TODO mar30 Meeting.txt")),
         File(name="Tututorial_2.pdf", original_path=get_path("Tututorial_2.pdf")),
         File(name="UseCase.png", original_path=get_path("UseCase.png")),
-        File(name="init.py", original_path=get_path("init.py"))
+        File(name="init.py", original_path=get_path("init.py")),
+        File(name="flamegraph.svg", original_path=get_path("flamegraph.svg"))
     ]
 
     root_dir = Directory(
