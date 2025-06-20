@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import '../models/file_tree_node.dart';
 import 'package:app/constants.dart';
 import 'package:app/api.dart';
