@@ -373,6 +373,7 @@ class _ManagerPageState extends State<ManagerPage> {
 
   Widget _buildDetailsPanel() {
     return FileDetailsPanel(
+      managerName: widget.name,
       selectedFile: _selectedFile,
       isVisible: _isDetailsVisible,
       onClose: _handleDetailPanelClose,
