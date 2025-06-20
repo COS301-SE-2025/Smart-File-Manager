@@ -5,7 +5,8 @@ from message_structure_pb2 import DirectoryRequest, Directory, File, Tag, Metada
 from kw_extractor import KWExtractor
 from full_vector import FullVector
 import os
-from k_means import KMeansCluster
+from k_means import KMeansCluster 
+from hdb_cluster import HDBSCANCluster
 #temp
 from collections import defaultdict
 # Master class
@@ -34,18 +35,19 @@ class Master():
         response_directory = request.root
         #print(files)
 
-        self.full_vec.createFullVector(files)
+        self.full_vec.create_full_vector(files)
         full_vecs = []
         for file in files:
-            #print(file["full_vector"])
-            #print(file["file_extension"])
+            print(file["full_vector"])
             print(file["filename"])
             full_vecs.append(file["full_vector"])
 
-
+        
         kmeans = KMeansCluster(6)
         labels = kmeans.cluster(full_vecs)
         print(labels)
+        # hdbscan_cluster = HDBSCANCluster(min_cluster_size=3)
+        # labels = hdbscan_cluster.cluster(full_vecs)
 
         
         label_to_filenames = defaultdict(list)
@@ -99,13 +101,6 @@ class Master():
             self.getFileInfo(curDir, files)
 
 
-# [np.float64(0.1761190379942198), np.float64(0.1761190379942198), np.float64(0.1761190379942198), np.float64(0.1761190379942198), np.float64(0.1761190379942198), np.float64(0.1761190379942198), np.float64(0.1761190379942198), np.float64(0.1761190379942198), np.float64(0.1761190379942198), np.float64(0.1761190379942198), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-# [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.12721378280709897]
-# [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, np.float64(0.14985554132463938), np.float64(0.14985554132463938), np.float64(0.1453011207686066), np.float64(0.13775170326151098), np.float64(0.13588457081573124), np.float64(0.132439301673504), np.float64(0.12174767379894379), np.float64(0.12051367106078721), np.float64(0.11645295367216063), np.float64(0.09314785652067586), 0.0, 0.0, 1.0, 0.0, 0.0, 0.9924333268750425]
-# [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.7575546001939815]
-# [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.02837284236359479]
-# [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
-
 import numpy as np
 if __name__ == "__main__":
 #    master = Master(1)
@@ -130,3 +125,4 @@ if __name__ == "__main__":
 #todo(docx),thumb(webp) -> closest in size
 #myimg, holiday -> same types
 #mypdf, myvid -> closest in size?
+
