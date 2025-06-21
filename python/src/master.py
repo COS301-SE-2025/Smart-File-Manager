@@ -34,7 +34,7 @@ class Master():
         response_directory = request.root
 
         # Creates list of full vectors to cluster with initially
-        self.full_vec.createFullVector(files)
+        self.full_vec.create_full_vector(files)
         full_vecs = []
         for file in files:
             full_vecs.append(file["full_vector"])
@@ -42,7 +42,7 @@ class Master():
         # Recursively cluster and return a directory
         kmeans = KMeansCluster(int(len(full_vecs)*(1/6)))
         response_directory = kmeans.dirCluster(full_vecs,files)
-       
+        kmeans.printDirectoryTree(response_directory) 
         response = DirectoryResponse(root=response_directory)
         return response
     

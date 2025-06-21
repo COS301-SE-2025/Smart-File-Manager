@@ -82,7 +82,6 @@ def createDirectoryRequest():
         File(name="Week 3_Tutorial_2024_with Answers", original_path=get_path("Week 3_Tutorial_2024_with Answers.pdf")),
         File(name="Week 4_Tutorial_with answers", original_path=get_path("Week 4_Tutorial_with answers.pdf")),
         File(name="Week 5_Tutorial_2024_with answers", original_path=get_path("Week 5_Tutorial_2024_with answers.pdf"))
-        File(name="flamegraph.svg", original_path=get_path("flamegraph.svg"))
     ]
 
     # Some tags for the files
