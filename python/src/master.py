@@ -17,7 +17,7 @@ class Master():
         self.slaves = ThreadPoolExecutor(maxSlaves)
         self.scraper = MetaDataScraper()
         self.kw_extractor = KWExtractor()
-        self.full_vec = FullVector()        
+        self.full_vec = FullVector()  
 
     # Takes gRPC request's root and sends it to be processed by a slave
     def submitTask(self, request : DirectoryRequest):
@@ -33,32 +33,16 @@ class Master():
         self.getFileInfo(request.root, files)
         response_directory = request.root
 
-        # Encode all vectors 
-        self.full_vec.create_full_vector(files)
+        # Creates list of full vectors to cluster with initially
+        self.full_vec.createFullVector(files)
         full_vecs = []
         for file in files:
-            # print(file["full_vector"])
-            # print(file["filename"])
             full_vecs.append(file["full_vector"])
 
-        
-        kmeans = KMeansCluster(6)
-        labels = kmeans.cluster(full_vecs)
-        label_to_filenames = defaultdict(list)
-
-        for index, file in enumerate(files):
-            label = labels[index]
-            filename = file["filename"]
-            label_to_filenames[label].append(filename)
-
-        # Optional: print the grouped result
-        for label in sorted(label_to_filenames):
-            print(f"Label {label}:")
-            for filename in label_to_filenames[label]:
-                print(f"  - {filename}")
-
-
-        # Metadata Request ==> Return Directory with metadata attached
+        # Recursively cluster and return a directory
+        kmeans = KMeansCluster(int(len(full_vecs)*(1/6)))
+        response_directory = kmeans.dirCluster(full_vecs,files)
+       
         response = DirectoryResponse(root=response_directory)
         return response
     
@@ -97,4 +81,5 @@ class Master():
 
         for curDir in currentDirectory.directories:
             self.getFileInfo(curDir, files)
+
 

@@ -39,6 +39,7 @@ class KWExtractor:
     #Open a file (check which type and send to be opened in the correct way)
     def open_file(self, file_name, file_type, max_duration_seconds=1):
         result = []
+
         handler = self.mime_handlers.get(file_type, self.def_extraction)
         
         try:
