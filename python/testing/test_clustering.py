@@ -28,7 +28,6 @@ def grpc_test_server():
 
 
 # <------ INTEGRATION TESTING ----->
-# Fixture creates a gRPC DirectoryRequest from everything in python/testing/test_files_2 for repeated use
 @pytest.fixture(scope="module")
 def createDirectoryRequest():
     TEST_DIR = os.path.dirname(__file__)
@@ -37,6 +36,7 @@ def createDirectoryRequest():
     def get_path(name):
         return os.path.join(TEST_FILE_DIR, name)
 
+    # gRPC objects for files we want to test
     files1 =   [
         File(name="Apr8TODO.txt", original_path=get_path("Apr8TODO.txt")),
         File(name="Apr18 meeting.txt", original_path=get_path("Apr18 meeting.txt")),
@@ -64,8 +64,32 @@ def createDirectoryRequest():
         File(name="Tututorial_2.pdf", original_path=get_path("Tututorial_2.pdf")),
         File(name="UseCase.png", original_path=get_path("UseCase.png")),
         File(name="init.py", original_path=get_path("init.py")),
+        File(name="~$ecutive summary", original_path=get_path("~$ecutive summary.docx")),
+        File(name="~WRL0005.tmp", original_path=get_path("~WRL0005.tmp")),
+        File(name="~WRL1847.tmp", original_path=get_path("~WRL1847.tmp")),
+        File(name="3.6.4 Survey data to be analysed and visualised", original_path=get_path("3.6.4 Survey data to be analysed and visualised.xlsx")),
+        File(name="Document[1]", original_path=get_path("Document[1].pdf")),
+        File(name="ENjoyment", original_path=get_path("ENjoyment.png")),
+        File(name="Gantt chart", original_path=get_path("Gantt chart.png")),
+        File(name="Gauteng", original_path=get_path("Gauteng.png")),
+        File(name="most challanging", original_path=get_path("most challanging.png")),
+        File(name="Most rewarding", original_path=get_path("Most rewarding.png")),
+        File(name="Picture1", original_path=get_path("Picture1.png")),
+        File(name="Picture2", original_path=get_path("Picture2.png")),
+        File(name="Presentation speech", original_path=get_path("Presentation speech.docx")),
+        File(name="Project Budget Form 2024", original_path=get_path("Project Budget Form 2024.pdf")),
+        File(name="Taiichi ohno", original_path=get_path("Taiichi ohno.jpeg")),
+        File(name="Week 3_Tutorial_2024_with Answers", original_path=get_path("Week 3_Tutorial_2024_with Answers.pdf")),
+        File(name="Week 4_Tutorial_with answers", original_path=get_path("Week 4_Tutorial_with answers.pdf")),
+        File(name="Week 5_Tutorial_2024_with answers", original_path=get_path("Week 5_Tutorial_2024_with answers.pdf"))
         File(name="flamegraph.svg", original_path=get_path("flamegraph.svg"))
     ]
+
+    # Some tags for the files
+    tag_1 = Tag(name="COS122")
+    tag_2 = Tag(name="COS122")
+    files1[3].tags.append(tag_1)
+    files1[12].tags.append(tag_2)
 
     root_dir = Directory(
         name = "test_files_3",

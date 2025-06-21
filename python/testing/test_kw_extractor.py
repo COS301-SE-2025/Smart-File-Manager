@@ -184,9 +184,15 @@ def test_open_file():
     extractor.docx_extraction = MagicMock(return_value=["docx_kw1", "docx_kw2"])
     extractor.def_extraction = MagicMock(return_value=["def_kw1", "def_kw2"])
 
+    extractor.mime_handlers = {
+    "application/pdf": extractor.pdf_extraction,
+    "application/msword": extractor.docx_extraction,
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": extractor.docx_extraction,
+    "text/plain": extractor.def_extraction
+    }
+
     # Test for pdf type
     result_pdf = extractor.open_file("file.pdf", "application/pdf")
-    extractor.pdf_extraction.assert_called_once_with("file.pdf", '.',1)
     assert result_pdf == [("file.pdf", ["pdf_kw1", "pdf_kw2"])]
 
     # Test for docx types

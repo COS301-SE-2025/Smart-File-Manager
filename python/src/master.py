@@ -5,7 +5,9 @@ from message_structure_pb2 import DirectoryRequest, Directory, File, Tag, Metada
 from kw_extractor import KWExtractor
 from full_vector import FullVector
 import os
-from k_means import KMeansCluster
+from k_means import KMeansCluster 
+from collections import defaultdict
+
 # Master class
 # Allows submission of gRPC requests. 
 # Takes submitted gRPC requests and assigns them to a slave for processing before returning the response
@@ -40,8 +42,7 @@ class Master():
         # Recursively cluster and return a directory
         kmeans = KMeansCluster(int(len(full_vecs)*(1/6)))
         response_directory = kmeans.dirCluster(full_vecs,files)
-        
-        
+       
         response = DirectoryResponse(root=response_directory)
         return response
     
@@ -71,6 +72,10 @@ class Master():
             # Extract keywords
             keywords = self.kw_extractor.extract_kw(curFile)
             file_entry["keywords"] = keywords
+
+            # Extract tags
+            extracted_tags = [tag.name.strip().lower() for tag in curFile.tags if tag.name]
+            file_entry["tags"] = extracted_tags
 
             files.append(file_entry)
 
