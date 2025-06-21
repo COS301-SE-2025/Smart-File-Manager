@@ -32,7 +32,7 @@ class KWExtractor:
         # keywords for this file
         _, keywords = result[0]
         sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)        
-        top_keywords = sorted_keywords[:10]   
+        top_keywords = sorted_keywords[:50]   
         return top_keywords
 
 
