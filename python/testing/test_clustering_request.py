@@ -63,11 +63,10 @@ def createDirectoryRequest():
         File(name="TODO mar30 Meeting.txt", original_path=get_path("TODO mar30 Meeting.txt")),
         File(name="Tututorial_2.pdf", original_path=get_path("Tututorial_2.pdf")),
         File(name="UseCase.png", original_path=get_path("UseCase.png")),
-        File(name="init.py", original_path=get_path("init.py")),
         File(name="~$ecutive summary", original_path=get_path("~$ecutive summary.docx")),
         File(name="~WRL0005.tmp", original_path=get_path("~WRL0005.tmp")),
         File(name="~WRL1847.tmp", original_path=get_path("~WRL1847.tmp")),
-        File(name="3.6.4 Survey data to be analysed and visualised", original_path=get_path("3.6.4 Survey data to be analysed and visualised.xlsx")),
+        File(name="3.6.4 Survey data to be analysed and visualised", original_path=get_path("3.6.4 Survey data to be analysed and visualised for project report mine.xlsx")),
         File(name="Document[1]", original_path=get_path("Document[1].pdf")),
         File(name="ENjoyment", original_path=get_path("ENjoyment.png")),
         File(name="Gantt chart", original_path=get_path("Gantt chart.png")),
@@ -96,11 +95,30 @@ def createDirectoryRequest():
         files = files1
     )    
 
-    req = DirectoryRequest(root=root_dir)
+    req = DirectoryRequest(root=root_dir, requestType="CLUSTERING")
     yield req
 
+
+
+def responseSizeChecker(curDir : Directory) -> int:
+
+    count = len(curDir.files)
+
+
+    # Recurisve call
+    for subdir in curDir.directories:
+        count += responseSizeChecker(subdir)
+
+    return count
 
 # Sends an actual directory and checks if metadata was correctly attached to files
 def test_send_real_dir(grpc_test_server, createDirectoryRequest):
     req = createDirectoryRequest  # Accessing req from the fixture
     response = grpc_test_server.SendDirectoryStructure(req)
+
+    # Check if response contains all files
+    assert responseSizeChecker(response.root) == 43
+
+    # Check if response is well formed
+    assert response.response_code == 200
+    assert response.response_msg != "No file could be opened"

@@ -10,8 +10,10 @@ class KMeansCluster:
     def __init__(self, numClusters):
         self.kmeans = KMeans(
             n_clusters=numClusters,
-            random_state=42,
-            n_init="auto",            
+            n_init=50, 
+            init="k-means++",
+            max_iter=500,
+            tol=1e-5           
             )
         self.n_clusters = numClusters
         self.minSize = 2 # hardcoded for now # even numbers are good
@@ -37,6 +39,23 @@ class KMeansCluster:
     def recDirCluster(self,full_vecs,files, depth, dir_prefix, builder):
         # Assign directory name
         dir_name = f"{dir_prefix}_{depth}"
+
+
+        # Added some code here for the directory names but its not good
+        """
+        all_top_keywords = []
+        for file in files:
+            if len(file["keywords"]) > 0:
+                all_top_keywords.append(file["keywords"][0])
+
+        all_top_keywords = sorted(all_top_keywords, key=lambda x : x[1], reverse=True)
+        if len(all_top_keywords) > 0:
+            dir_name = all_top_keywords[0][0]
+        else:
+            dir_name = "Images"
+        """
+
+            
 
         # Quit if not enough folders
         if len(full_vecs) < self.minSize or depth > 30:

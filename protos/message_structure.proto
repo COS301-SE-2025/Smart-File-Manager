@@ -19,6 +19,7 @@ message File {
   string new_path = 3;
   repeated Tag tags = 4;
   repeated MetadataEntry metadata = 5;
+  bool is_locked=6;
 }
 
 message Directory {
@@ -26,17 +27,21 @@ message Directory {
   string path = 2;
   repeated File files = 3;
   repeated Directory directories = 4;
+  bool is_locked=5;
 }
 
 // For request/response messages
 // Go to python 
 message DirectoryRequest {
   Directory root = 1;
+  string requestType = 2;
 }
 
 // Python to go
 message DirectoryResponse {
   Directory root = 1;
+  int32 response_code = 2;
+  string response_msg = 3;
 }
 
 service DirectoryService {

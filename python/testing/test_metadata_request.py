@@ -117,7 +117,7 @@ def createDirectoryRequest():
         directories= [uni_dir, pers_dir]
     )    
 
-    req = DirectoryRequest(root=root_dir)
+    req = DirectoryRequest(root=root_dir, requestType="METADATA")
     yield req
 
 
@@ -133,11 +133,16 @@ def recHelper(curDir : Directory):
             for dir in curDir.directories:
                 recHelper(dir)
 
-# Sends an actual directory and checks if metadata was correctly attached to files
+# Sends an actual directory and checks if metadata was correctly attached to filejjs
 def test_send_real_dir(grpc_test_server, createDirectoryRequest):
     req = createDirectoryRequest  # Accessing req from the fixture
     response = grpc_test_server.SendDirectoryStructure(req)
+
     # Check if enough metadata was extracted
     recHelper(response.root)
+
+    # Check if response is well formed
+    assert response.response_code == 200
+    assert response.response_msg != "No file could be opened"
 
 
