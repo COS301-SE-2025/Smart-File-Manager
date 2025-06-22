@@ -125,9 +125,7 @@ class _FolderViewPageState extends State<FolderViewPage> {
   }
 
   void _handleItemTap(FileTreeNode item) {
-    if (item.isFolder) {
-      widget.onNavigate([...widget.currentPath, item.name]);
-    } else {
+    if (!item.isFolder) {
       widget.onFileSelected(item);
     }
   }
@@ -135,6 +133,8 @@ class _FolderViewPageState extends State<FolderViewPage> {
   void _handleNodeDoubleTap(FileTreeNode item) {
     if (!item.isFolder) {
       _openDocument(item.path ?? '');
+    } else {
+      widget.onNavigate([...widget.currentPath, item.name]);
     }
   }
 
