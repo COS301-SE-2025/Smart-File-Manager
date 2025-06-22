@@ -1,8 +1,10 @@
 import time
+from typing import List, Tuple
 import docx
 from yake import KeywordExtractor
 from pypdf import PdfReader
 from message_structure_pb2 import File
+import spacy
 
 # Keyword extractor class
 # Given a file as input extracts the top 10 keywords along with their value from file
@@ -11,16 +13,17 @@ from message_structure_pb2 import File
 class KWExtractor:
     #Yake instance
     def __init__(self):
-        self.yake_extractor = KeywordExtractor(lan="en", n=1)
+        self.yake_extractor = KeywordExtractor(lan="en", n=3)
         self.mime_handlers = {
         "application/pdf": self.pdf_extraction,
         "application/msword": self.docx_extraction,
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document": self.docx_extraction,
         "text/plain": self.def_extraction
         }
+        self.confidence_threshold = 0.085
 
     #Main extractor function
-    def extract_kw(self, input: File) -> list[tuple]:
+    def extract_kw(self, input: File) -> List[Tuple[str, float]]:
 
         file_name = input.original_path
         mime_type = next((entry.value for entry in input.metadata if entry.key == "mime_type"), None)
@@ -29,12 +32,13 @@ class KWExtractor:
         if not result:
             return []
 
-        # keywords for this file
+        # Extract kw. Take all that meets threshold. If we barely get kw, take random 3. 
         _, keywords = result[0]
-        sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)        
-        top_keywords = sorted_keywords[:50]   
-        return top_keywords
-
+        filtered = [(kw, score) for kw, score in keywords if score < self.confidence_threshold]
+        if len(filtered) < 3:  
+            filtered = keywords[:3]
+        return filtered
+    
 
     #Open a file (check which type and send to be opened in the correct way)
     def open_file(self, file_name, file_type, max_duration_seconds=1):
@@ -46,7 +50,7 @@ class KWExtractor:
             keywords = handler(file_name, '.', max_duration_seconds)
             result.append((file_name, keywords))
         except Exception as e:
-            print(f"Error occurred while extracting keywords from {file_name}: {e}")
+            print(f"Could not extract keywords from {file_name}")
         
         return result
 
