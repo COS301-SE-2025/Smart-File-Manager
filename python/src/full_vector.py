@@ -1,6 +1,5 @@
 import datetime
 import numpy as np
-import pandas as pd
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from typing import List, Dict, Optional, Tuple
 from sentence_transformers import SentenceTransformer
