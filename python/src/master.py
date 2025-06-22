@@ -73,7 +73,7 @@ class Master():
 
     def handleMetadatRequest(self, request : DirectoryRequest) -> DirectoryResponse:
         
-        if self.extract_metadata(request.root, files=[], metadata_fn=self.scraper.get_metadata, build_file_entry=False):
+        if self.extract_metadata(request.root, files=[], metadata_fn=self.scraper.get_standard_metadata, build_file_entry=False):
             response = DirectoryResponse(root=request.root, response_code=200, response_msg="Successfully extracted at least some metadata")
             return response
         else:
