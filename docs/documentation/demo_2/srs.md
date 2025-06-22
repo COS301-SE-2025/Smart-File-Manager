@@ -356,26 +356,170 @@ The following constraints has been highlighted by our team:
 ## Technology Requirements
 This sections acts as a brief overview of the various technologies used in our stack and why they were chosen.
 
-![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)  
-Our application will be packaged as a flutter app. Flutter was chosen due to its ability to create natively compiled applications for mobile, web and desktop from a single codebase. While our application is primarily aimed at being a desktop app this choice allows for expansion in the possible future. 
-**Benefits:**
-- Cross platform 
-- Beautiful material design UIs
-- High Performance
-
-![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)  
-Our application uses python for its rich data-science applications. It is used for our clustering algorithms, metadata extractions and keyword extraction. The vibrant python ecosystem allows us to make use of packages that performs these algorithms more efficiently than we could have implemented ourselves.  
-**Benefits:**  
-- Ideal for data science and AI applications
-- Fast efficient development
-- High portability
-
+![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 ![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white)   
-Golang was chosen to provide the integration between our Python services and Flutter frontend. Go excels at producing high quality safe code. It has a generous learning curve and allows us to easily leverage conucurrency via its goroutines. We attempt to take advantage of Go's high performance to outweigh Python's slower relative performance.  
-**Benefits:**
-- High performance and strong concurrency support
-- Well suited for implemented the endpoints needed by the frontend
 
-### gRPC
-For communication between Go and Python we made use of gRPC. For a detailed explanation of why we used gRPC please refer to our documentation on gRPC [here](/Documentation/grpc.md). 
+<table border="1" cellspacing="0" cellpadding="8">
+  <thead>
+    <tr>
+      <th>Technology</th>
+      <th>Options</th>
+      <th>Benefits</th>
+      <th>Drawbacks</th>
+      <th>Final Choice Reasoning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="4"><strong>Frontend Framework</strong></td>
+      <td><strong>Flutter</strong></td>
+      <td>
+        Cross-platform (Both Desktop and Mobile)<br>
+        Native performance<br>
+        Material UI widgets
+      </td>
+      <td>
+        Larger binary size<br>
+      </td>
+      <td><strong>Chosen</strong> For its ability to create cross platform desktop apps. </td>
+    </tr>
+    <tr>
+      <td>Electron</td>
+      <td>
+        Easy integration with web<br>
+      </td>
+      <td>
+        Heavy memory usage<br>
+        Does not directly support mobile (Needs Capacitor or Cordova)
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>React Native</td>
+      <td>
+        Cross-platform mobile/web<br>
+      </td>
+      <td>
+        Weak desktop support<br>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+    </tr>
+    <tr>
+      <td rowspan="4"><strong>AI Capabilities</strong></td>
+      <td><strong>Python</strong></td>
+      <td>
+        Well supported for AI purposes (We use SciKit) <br>
+        Fast development
+      </td>
+      <td>
+        Slower runtime performance<br>
+        Weak multithreading support
+      </td>
+      <td><strong>Chosen</strong> For its out of the box AI functionality and portability</td>
+    </tr>
+    <tr>
+      <td>Java</td>
+      <td>
+        High performance<br>
+        Strong threading and ecosystem
+      </td>
+      <td>
+        Slower dev speed for AI
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+    </tr>
+    <tr>
+      <td>C++</td>
+      <td>
+        High performance<br>
+        Fine-grained control
+      </td>
+      <td>
+        Unreliable due to no memory safety <br>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td rowspan="4"><strong>Filesystem management & Bridge</strong></td>
+      <td><strong>Go</strong></td>
+      <td>
+        Easy concurrency with goroutines<br>
+        Fast compilation<br>
+        Simple learning curve 
+      </td>
+      <td>
+        Less dynamic than scripting languages<br>
+      </td>
+      <td><strong>Chosen</strong> For powerful concurrency features to balance out python bottleneck & Easy web development for endpoints required by frontend </td>
+    </tr>
+    <tr>
+      <td>Rust</td>
+      <td>
+        High performance<br>
+        Memory Safety 
+      </td>
+      <td>
+        Extreme learning curve<br>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+    </tr>
+    <tr>
+      <td>Java</td>
+      <td>
+        Portable due to JVM
+      </td>
+      <td>
+        Verbose and heavyweight for lightweight APIs
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td rowspan="4"><strong>API</strong></td>
+      <td><strong>gRPC</strong></td>
+      <td>
+        Very fast due to binary serialization<br>
+        Code generation support<br>
+        Strong typing
+      </td>
+      <td>
+        Requires more setup than REST
+      </td>
+      <td><strong>Chosen</strong> For efficiency between Go and Python. See grpc.md</td>
+    </tr>
+    <tr>
+      <td><strong>REST</strong></td>
+      <td>
+        Simple and well-understood<br>
+        Easy testing and debugging
+      </td>
+      <td>
+        No built-in type safety <br>
+        Not ideal for dynamic recursive structures like Directories
+      </td>
+      <td><strong>Chosen</strong> For easy to use and test endpoints between Go and Frontend</td>
+    </tr>
+    <tr>
+      <td>GraphQL</td>
+      <td>
+        Flexible queries<br>
+        Efficient data fetching
+      </td>
+      <td>
+        Overkill for simple RPCs<br>
+        More complex tooling
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+    </tr>
+  </tbody>
+</table>
+
 
