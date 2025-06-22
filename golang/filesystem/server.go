@@ -1,7 +1,7 @@
 package filesystem
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	"fmt"
 	"net/http"
 	"slices"
@@ -71,95 +71,6 @@ func addTagHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("Item not found for path:", convertedPath)
 	w.Write([]byte("false"))
-}
-
-// struct for json return type for 200 reqs
-type DirectoryTreeJson struct {
-	Name     string     `json:"name"`
-	IsFolder bool       `json:"isFolder"`
-	Children []FileNode `json:"children"`
-}
-
-// file or folder
-type FileNode struct {
-	Name     string     `json:"name"`
-	Path     string     `json:"path,omitempty"`
-	IsFolder bool       `json:"isFolder"`
-	Tags     []string   `json:"tags,omitempty"`
-	Metadata *Metadata  `json:"metadata,omitempty"`
-	Children []FileNode `json:"children,omitempty"`
-}
-
-type Metadata struct {
-	Size         string `json:"size"`
-	DateCreated  string `json:"dateCreated"`
-	Owner        string `json:"owner"`
-	LastModified string `json:"lastModified"`
-}
-
-func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	name := r.URL.Query().Get("name")
-	mu.Lock()
-	defer mu.Unlock()
-
-	for _, c := range composites {
-		if c.Name == name {
-			// build the nested []FileNode
-			children := createDirectoryJSONStructure(c)
-
-			root := DirectoryTreeJson{
-				Name:     c.Name,
-				IsFolder: true,
-				Children: children,
-			}
-
-			if err := json.NewEncoder(w).Encode(root); err != nil {
-				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-			}
-			return
-		}
-	}
-
-	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
-}
-
-func createDirectoryJSONStructure(folder *Folder) []FileNode {
-	var nodes []FileNode
-
-	for _, file := range folder.Files {
-
-		md := Metadata{}
-		tags := file.Tags
-		if len(tags) == 0 {
-			tags = []string{"none"}
-		}
-
-		nodes = append(nodes, FileNode{
-			Name:     file.Name,
-			Path:     file.Path,
-			IsFolder: false,
-			Tags:     tags,
-			Metadata: &md,
-		})
-	}
-
-	for _, sub := range folder.Subfolders {
-		// recurse first
-		childNodes := createDirectoryJSONStructure(sub)
-
-		nodes = append(nodes, FileNode{
-			Name:     sub.Name,
-			Path:     sub.Path,
-			IsFolder: true,
-			Tags:     sub.Tags,
-			Metadata: &Metadata{},
-			Children: childNodes,
-		})
-	}
-
-	return nodes
 }
 
 func HandleRequests() {
