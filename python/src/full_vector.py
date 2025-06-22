@@ -1,82 +1,90 @@
-from create_kw_cluster import KWCluster
-from sklearn.preprocessing import OneHotEncoder
-import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+import datetime
 import numpy as np
-from vocabulary import Vocabulary
-from message_structure_pb2 import File
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler
+from typing import List, Dict, Optional, Tuple
+from sentence_transformers import SentenceTransformer
+from sklearn.preprocessing import MultiLabelBinarizer
 
 class FullVector:
     def __init__(self):
-        self.vocab = Vocabulary()
-        
-#File map [
-#     {
-#         "filename" : "name",
-#         "keywords" : [],
-#         "size_kb" : int,
-#         "filetype" : "type",
-#         # ADD
-#         "full_vector": [["keywords"], ["filetype"], "size"]
-#     },
-#     ...
-# ]
-    def createFullVector(self, files : File) -> None:
-        filetypes, sizes, vocabKW = self.assignSizeFileTypeKeywords(files)
- 
-        scaler = MinMaxScaler()   
-        norm_sizes = scaler.fit_transform(np.array(sizes).reshape(-1,1)).tolist()
-        filetype_to_onehot = {ft:self.oneHotEncoding(ft,filetypes) for ft in filetypes}
+        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+
+
+    def create_full_vector(self, files: List[Dict]) -> None:
+
+        # List of features we want to extract 
+        features = ["size_bytes", "keywords", "created", "tags"]
+
+        # Get a dict of feature => list of all those features across every file (i.e. collect features)
+        feature_data = self._gather_feature_data(files, features)
+
+        # Normalize numerical data
+        normalized_sizes = self._normalize_feature(feature_data["size_bytes"]) #
+        normalized_created = self._normalize_feature([
+            self._to_unix_time(ts) for ts in feature_data["created"]
+        ])
+
+        # Normalize categorical data
+        tag_vectors = self._encode_multi_tags(feature_data["tags"])
+
+        # Build final vector per file
         for idx, file in enumerate(files):
-            tfidf_vec = self.assignTF_IDF(file["keywords"],vocabKW)    
-            encoded_filetype = filetype_to_onehot[file["file_extension"]]
-            normalized_size = norm_sizes[idx]
-            if isinstance(tfidf_vec,np.ndarray):
-                tfidf_vec = tfidf_vec.flatten().tolist()
 
-            file["full_vector"] = [tfidf_vec,encoded_filetype,normalized_size]            
+            # Sentence Transformer for keywords
+            kw_text = " ".join([kw for kw, _ in file["keywords"]])
+            embedding = self.model.encode(kw_text).tolist()
+
+            # Tags must carry significant weight
+            weighted_tags = [x * 3 for x in tag_vectors[idx]]
+
+            # Sizes must carry less weight
+            weighted_sizes = normalized_sizes[idx] * 0.2
+
+            full_vector = (
+                embedding +
+                [normalized_created[idx]] +
+                [weighted_sizes] +
+                weighted_tags
+            )
+            file["full_vector"] = full_vector
 
 
+    # Normalization methods and preprocessing
+    def _gather_feature_data(self, files: List[Dict], features: List[str]) -> Dict[str, List]:
+        result = {key: [] for key in features}
+        for file in files:
+            for feat in features:
+                result[feat].append(file[feat])
+        return result
 
-    #helper function
-    def assignTF_IDF(self, result : list[tuple], vocabKW : list[str]) -> list[float]:
+    # Normalize numerical data via MinMaxScaling
+    def _normalize_feature(self, values: List) -> List[float]:
+        if not values:
+            return []
+        arr = np.array(values).reshape(-1, 1)
+        return MinMaxScaler().fit_transform(arr).flatten().tolist()
 
-        kwclust = KWCluster()       
+    # Normalize categorical data via LabelEncoding
+    def _encode_label(self, data: List[Optional[str]]) -> List[float]:
+        
+        # Empty tags
+        clean_data = [(d if d else "__unknown__") for d in data]
+    
+        encoder = LabelEncoder()
+        labels = encoder.fit_transform(clean_data)
+        num_classes = len(set(labels))
+    
+        # Normalize in range [0, 1]
+        return [label / (num_classes - 1) if num_classes > 1 else 0.0 for label in labels]
 
-        return kwclust.createCluster(result,vocabKW)    
 
+    def _encode_multi_tags(self, tag_lists: List[List[str]]) -> List[List[float]]:
+        mlb = MultiLabelBinarizer()
+        one_hot = mlb.fit_transform(tag_lists)
+        return one_hot.tolist()
+
+    def _to_unix_time(self, iso_ts: str) -> float:
+        return datetime.datetime.fromisoformat(iso_ts).timestamp()
     
 
-    def oneHotEncoding(self, filetype, filetypes):
-        df = pd.DataFrame(filetypes, columns=["file_extension"])
-        encoder = OneHotEncoder(sparse_output=False)
-        one_hot_encoded = encoder.fit_transform(df[["file_extension"]])
-        # Get the index of the filetype in the original list
-        try:
-            index = df[df["file_extension"] == filetype].index[0]
-        except IndexError:
-            raise ValueError(f"Filetype '{filetype}' not found in the list.")
-        
-        return one_hot_encoded[index].tolist()
-
-    def assignSizeFileTypeKeywords(self, files):
-        sizes = []
-        filetypes = set()
-        keywords = []
-
-        for file in files:
-            sizes.append(file["size_bytes"])
-            filetypes.add(file["file_extension"])
-            keywords.append(file["keywords"])
-
-        vocabKW = self.vocab.createVocab(keywords)
-        
-        return sorted(filetypes), sizes, vocabKW
-
-
-if __name__ == "__main__":
-    files = [{'filename': 'todo.docx', 'absolute_path': '/mnt/c/Users/Phili/OneDrive/PhilippDup/University/Year_3/COS301/CapstoneSFM/Code/Smart-File-Manager/python/testing/test_files_2/UserFiles/todo.docx', 'file_extension': '.docx', 'size_bytes': 16581, 'created': '2025-06-19T08:39:48.704454', 'modified': '2025-05-26T11:13:50.652646', 'mime_type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'accessed': '2025-06-19T08:39:48.704454', 'owner_uid': 1000, 'owner_gid': 1000, 'mode': '0o100777', 'inode': 25332747904318331, 'keywords': [('to-do', 0.1761190379942198), ('list', 0.1761190379942198), ('groceries.Call', 0.1761190379942198), ('Dad.Have', 0.1761190379942198), ('meeting', 0.1761190379942198), ('boss.Finish', 0.1761190379942198), ('assignments.Blah', 0.1761190379942198), ('blah', 0.1761190379942198), ('blah.Things', 0.1761190379942198), ('forgot', 0.1761190379942198)]}, {'filename': 'myImg.jpg', 'absolute_path': '/mnt/c/Users/Phili/OneDrive/PhilippDup/University/Year_3/COS301/CapstoneSFM/Code/Smart-File-Manager/python/testing/test_files_2/UserFiles/UniFiles/myImg.jpg', 'file_extension': '.jpg', 'size_bytes': 235226, 'created': '2025-06-19T08:39:48.636931', 'modified': '2025-05-26T11:13:50.428722', 'mime_type': 'image/jpeg', 'accessed': '2025-06-19T08:39:48.636931', 'owner_uid': 1000, 'owner_gid': 1000, 'mode': '0o100777', 'inode': 17169973579585759, 'keywords': []}, {'filename': 'myPdf.pdf', 'absolute_path': '/mnt/c/Users/Phili/OneDrive/PhilippDup/University/Year_3/COS301/CapstoneSFM/Code/Smart-File-Manager/python/testing/test_files_2/UserFiles/UniFiles/myPdf.pdf', 'file_extension': '.pdf', 'size_bytes': 1722297, 'created': '2025-06-19T08:39:48.652774', 'modified': '2025-05-26T11:13:50.630410', 'mime_type': 'application/pdf', 'accessed': '2025-06-19T08:39:48.652774', 'owner_uid': 1000, 'owner_gid': 1000, 'mode': '0o100777', 'inode': 7036874418003109, 'keywords': [('Advanced', 0.14985554132463938), ('Real-time', 0.14985554132463938), ('Dropbox', 0.1453011207686066), ('search', 0.13775170326151098), ('customization', 0.13588457081573124), ('system', 0.132439301673504), ('Manager', 0.12174767379894379), ('AI-powered', 0.12051367106078721), ('user', 0.11645295367216063), ('folders', 0.09314785652067586)]}, {'filename': 'myVideo.webm', 'absolute_path': '/mnt/c/Users/Phili/OneDrive/PhilippDup/University/Year_3/COS301/CapstoneSFM/Code/Smart-File-Manager/python/testing/test_files_2/UserFiles/PersonalFiles/myVideo.webm', 'file_extension': '.webm', 'size_bytes': 1318606, 'created': '2025-06-19T08:39:48.581326', 'modified': '2025-05-26T11:13:50.320314', 'mime_type': 'video/webm', 'accessed': '2025-06-19T08:39:48.581326', 'owner_uid': 1000, 'owner_gid': 1000, 'mode': '0o100777', 'inode': 4503599627604377, 'keywords': []}, {'filename': 'thumbbig-708440.webp', 'absolute_path': '/mnt/c/Users/Phili/OneDrive/PhilippDup/University/Year_3/COS301/CapstoneSFM/Code/Smart-File-Manager/python/testing/test_files_2/UserFiles/PersonalFiles/thumbbig-708440.webp', 'file_extension': '.webp', 'size_bytes': 65346, 'created': '2025-06-19T08:39:48.621100', 'modified': '2025-05-26T11:13:50.365673', 'mime_type': 'image/webp', 'accessed': '2025-06-19T08:39:48.621100', 'owner_uid': 1000, 'owner_gid': 1000, 'mode': '0o100777', 'inode': 10133099161817879, 'keywords': []}, {'filename': 'holiday.JPG', 'absolute_path': '/mnt/c/Users/Phili/OneDrive/PhilippDup/University/Year_3/COS301/CapstoneSFM/Code/Smart-File-Manager/python/testing/test_files_2/UserFiles/PersonalFiles/holiday.JPG', 'file_extension': '.jpg', 'size_bytes': 1735302, 'created': '2025-06-19T08:39:48.527258', 'modified': '2025-05-26T11:13:50.148073', 'mime_type': 'image/jpeg', 'accessed': '2025-06-19T08:39:48.527258', 'owner_uid': 1000, 'owner_gid': 1000, 'mode': '0o100777', 'inode': 3940649674183008, 'keywords': []}]
-    fv = FullVector()
-    fv.createFullVector(files)
-    for f in files:
-        print(f, "\n")

@@ -1,0 +1,74 @@
+Daemon
+- JSON based storage Y
+- nested JSON object arrays Y?
+-Databases, Collections, Documents Y
+- CRUD operations
+	-SELECT (Test user with no db) Y
+	-INSERT (Sometimes not making collection - when making a database, changing it's name) Y
+	-UPDATE Y
+	-DELETE (Deleting collection doesnt delete file and entries, deleting databases doesnt update page) Y
+- Query language support
+	-Equality/Inequality comparisons Y
+	-Logical operator Y
+	-Regular expression matching Y
+	-Sorting and pagination Y? (No sorting feature on UI, filter needs cursor in text box)
+
+CLI - untested
+-Databases, Collections, Documents
+- CRUD operations
+	-SELECT
+	-INSERT
+	-UPDATE
+	-DELETE
+- Query language support
+	-Equality/Inequality comparisons
+	-Logical operator
+	-Regular expression matching
+	-Sorting and pagination
+	
+RESTful API
+-does the stuff Y
+JS Client
+-does the stuff Y?
+UI
+-Landing page Y
+-Dashboard No stats, migration
+-Data Y
+-Query ?
+-Users
+	-Add users (Doesnt update page instantly, can add duplicate person on same db) Y
+	-Remove users Y
+	-Update users (doesnt select correct collection, update to guest no matter what) Y
+UI Overview:
+	Clusters: Y
+	Migration: N
+	Back-up: N
+	Database Access: Y
+	RealTime update: N
+	Settings: N
+	Help: N
+	login/logout: Y
+	** After login the user profile dropdown shows incorrect info
+	** Save info saves email and puts into username slot when logging in
+
+Security
+ 50/50 done
+ 
+ Architecture
+ 	50/50 correct
+ 	
+Testing
+WIP:
+	Unit, Integration, Secuirty, Performance, UI & Acceptance
+	
+Documentation
+WIP
+
+Docker
+WIP
+
+
+Version Control
+Project Management
+CI/CD
+

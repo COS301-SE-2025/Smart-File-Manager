@@ -1,0 +1,23 @@
+Apr18 meeting:
+
+
+Apr 19:
+Finalize daemon and integrate into integration-UI -> Dewald and Lonwabo
+Integrate CLI into integration-UI -> Zainab and Herrie
+-> Run a quick test of what works and what doesn't ->Dewald and Lonwabo
+-> Do final fixes -> Dewald and Lonwabo
+Finish Docker -> Nigel
+
+Apr 20-23:
+Testing -> Anyone can start
+Unit tests -> Anyone can start
+Integration tests etc. -> Anyone can start
+All docs -> Anyone can start
+CI/CD -> Lonwabo
+README.md cleanup -> anyone can start
+
+if you haven't finished your other projects then let us know so someone else does your part
+
+it is vital to tell people what you are doing in which branch/folders,
+which issue you are working on etc. so that no one wastes time on the same thing or with merge conflicts
+

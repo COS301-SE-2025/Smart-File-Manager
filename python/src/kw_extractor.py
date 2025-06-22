@@ -2,7 +2,7 @@ import time
 import docx
 from yake import KeywordExtractor
 from pypdf import PdfReader
-from src.message_structure_pb2 import File
+from message_structure_pb2 import File
 
 # Keyword extractor class
 # Given a file as input extracts the top 10 keywords along with their value from file
@@ -12,9 +12,16 @@ class KWExtractor:
     #Yake instance
     def __init__(self):
         self.yake_extractor = KeywordExtractor(lan="en", n=1)
+        self.mime_handlers = {
+        "application/pdf": self.pdf_extraction,
+        "application/msword": self.docx_extraction,
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": self.docx_extraction,
+        "text/plain": self.def_extraction
+        }
 
     #Main extractor function
     def extract_kw(self, input: File) -> list[tuple]:
+
         file_name = input.original_path
         mime_type = next((entry.value for entry in input.metadata if entry.key == "mime_type"), None)
 
@@ -24,32 +31,25 @@ class KWExtractor:
 
         # keywords for this file
         _, keywords = result[0]
-        sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)
-        # top_keywords = [kw for kw in sorted_keywords[:10]]
-        top_keywords = sorted_keywords[:10]
+        sorted_keywords = sorted(keywords, key=lambda x: x[1], reverse=True)        
+        top_keywords = sorted_keywords[:50]   
         return top_keywords
 
 
-    #open a file (check which type and send to be opened in the correct way)
+    #Open a file (check which type and send to be opened in the correct way)
     def open_file(self, file_name, file_type, max_duration_seconds=1):
         result = []
-        if file_type == "application/pdf":
-            keywords = self.pdf_extraction(file_name, '.', max_duration_seconds)
+
+        handler = self.mime_handlers.get(file_type, self.def_extraction)
+        
+        try:
+            keywords = handler(file_name, '.', max_duration_seconds)
             result.append((file_name, keywords))
-        elif file_type in ["application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
-            keywords = self.docx_extraction(file_name, '.', max_duration_seconds)
-            result.append((file_name, keywords))
-        elif file_type == "text/plain":      
-            keywords = self.def_extraction(file_name, '.', max_duration_seconds)    
-            result.append((file_name, keywords))
-        else:
-            print("Unkown type, attempting extract...")
-            try:
-                keywords = self.def_extraction(file_name, '.', max_duration_seconds)
-                result.append((file_name, keywords))
-            except:
-                print("Error occured trying to read unkown type")
+        except Exception as e:
+            print(f"Error occurred while extracting keywords from {file_name}: {e}")
+        
         return result
+
     
     #open a file with no mime_type (txt) or "text/plain"
     def def_extraction(self, file_name, delimiter, max_duration_seconds=1):
@@ -128,5 +128,3 @@ class KWExtractor:
         keyword = self.yake_extractor.extract_keywords(sentence)        
         return keyword
     
-
-

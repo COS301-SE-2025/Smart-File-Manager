@@ -1,0 +1,87 @@
+Deliverable:
+Daemon - Functions as expected, needs testing with multiple users and workloads
+	-Will need to add functions to dbm to manage user permissions (add users, remove, change permissions etc.)
+	
+API - Works as expected just needs automated testing
+
+JS Library - Completely unstarted
+
+Version control?
+CI/CD - no clue 
+
+
+CLI:
+	Not sure on current progress
+	
+UI:
+	Landing page (done)
+	Dashboard (mock data for stats)
+	Data view(Clusters done, Collections done, doc WIP, data filtering)
+	Query (Basically done except for CLI)
+	Users (Currently has own databases, need to add users and permissions)
+	
+Data encryption:
+	Passwords are hashed
+	
+Architecture: 
+	Event-Driven needs to be implemented properly
+	Event replay and system recovery optional
+	
+Unit testing:
+	Still needs basically full implementation
+		-Mocking, stubbing etc.
+
+Integration testing:
+	Partially complete for dbm
+	Partially complete for API -> server -> dbm
+	
+
+Performance testing:
+	Database performance tests around 50% completed (some functions still missing)
+	Still need more complex queries
+
+Security testing:
+	Penetration testing
+	Authentication and authorization
+	SQL and XSS attack simulations
+	
+User testing:
+	Involves testing from UI perspective
+	Should be automated
+	
+	
+Documentation:
+	Everything needs updating and adding to
+	Readme defnitely needs a revamp
+	
+Docker:
+	I think it is somewhat completed
+	
+	
+
+WOW factor -
+	
+	
+DUE April 25th
+	-Finish EVERYTHING by 22nd to prepare to demo
+	
+	Display docs on UI page - Apr 9
+	UI data filtering - Apr 10
+	Figure out something with javascript library - April 10/11
+	Test daemon workloads - April 11/12
+	Implement CLI - April 10/11
+	Update daemon to include user perms - April 12/13
+	Update CLI to conform to updated daemon - April 13/14
+	Test event driven architecture - April 13
+	Find a way to do stats in the UI - April 14
+	Finish the rest of the UI elements (overview tab and whatever is in there) - April 15
+	Security tests - April 15/16
+	Unit tests (daemon, api) - April 17
+	Integration tests (daemon, api, server) - April 18
+	User tests - April 18
+	Finalize docker - April 18
+	Documentation - April 19 (If a part is completed then start with it)
+	CI/CD - April 20
+	Demo draft - April 21
+	Demo final - April 22/23
+	DEMO - April 25

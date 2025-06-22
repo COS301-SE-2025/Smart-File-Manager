@@ -1,0 +1,18 @@
+MP Progress report
+
+1. I feel like the project is 80% complete, i haven't experienced much the cli yet so do take my words with a grain of salt. However, the frontend->api->Daemon link up is very much to my satisfaction at the moment, just a few fine tweaks needed here and there and some button functionality but overall happy with where we are on that front.
+
+2. UI 90% definitely 
+ Daemon 99.98% for sure, I    know Lonwabo is quickly altering something for documents but should be all good.
+CLI - idk all that much iwl haven't been able to run that just yet
+API - 90%. I just feel like error handling could be improved upon i have added better logging but no one has audited this work yet i feel like a second opinion would increase my confidence.
+Integration - 60% probably need to merge and get updates from other branches plus theres still like testing to be done
+Testing - 30% KTO and I are currently pushing this uh we only have a few unit tests so far. Not so well on the coverage.
+
+3. I am happy with how we collaborate. 7/10 satisfaction, feels like we sometimes fall out of touch with what the other teams are up to and dont know what to work on and who needs help etc...myself especially dunno if this is relevant to anyone else.
+
+4. I think contribution has been pretty uneven, I personally am not fully satisfied with mine tbh. 5/10 for me here. Feels like 2 or 3 members carried us but everyone has been willing to help and pitch in so that's nice.
+
+5. I think the different operating systems thing killed our momentum as a group at some point, imo.
+
+6. Yea i think we are on schedule especially with the willingness of the team so im quite pleased on that front.
