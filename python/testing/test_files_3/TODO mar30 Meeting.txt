@@ -1,0 +1,28 @@
+TODO mar30 Meeting
+
+*DONE*
+Daemon - API integration (The test UI can interact with api which makes a server request for daemon to process) 
+Added performance testing for the database manager
+Integration testing for the full database manager
+Integrated clusters display for UI
+
+*TODO*
+NBNBNBNNBNB**** UNIT TESTS UNIT TESTS UNIT TESTS
+Integrate UI with API 
+	-> Once UI can talk to API then ensure the responses are readable for UI to display needed data
+	-> Make everything run on one command
+NBNB** DOCKERIZE
+NBNBNBNBNB**** Integrate CLI with API
+CLI text box in UI
+Encrpyt databases (especially users)
+Finish Unit tests for dbm
+Integration tests for UI -> API -> server -> daemon
+Add security
+Refine dbm functions for efficiency
+
+
+
+*Nice to have*
+CLI should be optional install
+Move user storage to be handled by the daemon (Maybe it could be done using our database system) 
+UI must be refined (dark mode, scaling, etc.)
