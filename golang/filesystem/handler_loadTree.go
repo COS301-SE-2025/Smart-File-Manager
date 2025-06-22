@@ -35,7 +35,7 @@ type FileNode struct {
 type Metadata struct {
 	Size         string `json:"size"`
 	DateCreated  string `json:"dateCreated"`
-	Owner        string `json:"owner"`
+	MimeType     string `json:"mimeType"`
 	LastModified string `json:"lastModified"`
 }
 
@@ -52,7 +52,8 @@ func grpcFunc(c *Folder) {
 	defer cancel()
 
 	req := &pb.DirectoryRequest{
-		Root: convertFolderToProto(*c),
+		Root:        convertFolderToProto(*c),
+		RequestType: "METADATA",
 	}
 
 	resp, err := client.SendDirectoryStructure(ctx, req)
@@ -62,10 +63,30 @@ func grpcFunc(c *Folder) {
 
 	// fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
 	// printDirectory(resp.Root, 0)
-
+	convertProtoToFolder(resp.Root)
+	mergeProtoToFolder(resp.Root, c)
 	printDirectoryWithMetadata(resp.Root, 0)
 }
 
+func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
+	existing.Files = nil
+	existing.Subfolders = nil
+
+	for _, file := range dir.Files {
+		existing.Files = append(existing.Files, &File{
+			Name:     file.Name,
+			Path:     file.OriginalPath,
+			Metadata: metadataConverter(file.Metadata),
+		})
+	}
+	for _, sub := range dir.Directories {
+		f := &Folder{}
+		mergeProtoToFolder(sub, f)
+		existing.Subfolders = append(existing.Subfolders, f)
+	}
+}
+
+// converts the compositite structure to the correct structure grpc uses
 func convertFolderToProto(f Folder) *pb.Directory {
 	protoDir := &pb.Directory{
 		Name: f.Name, // make sure ItemName is exported
@@ -86,6 +107,68 @@ func convertFolderToProto(f Folder) *pb.Directory {
 
 	}
 	return protoDir
+}
+
+// takes in grpc's response and converts it back to composite
+func convertProtoToFolder(dir *pb.Directory) *Folder {
+	compositeResult := &Folder{
+		Name: dir.Name, // make sure ItemName is exported
+		Path: dir.Path,
+	}
+
+	for _, file := range dir.Files {
+		compositeResult.Files = append(compositeResult.Files, &File{
+			Name:     file.Name,
+			Path:     file.OriginalPath,
+			Metadata: metadataConverter(file.Metadata),
+		})
+		// case *fs.Folder:
+		// 	protoDir.Directories = append(protoDir.Directories, convertFolderToProto(v))
+
+	}
+	for _, subFolder := range dir.Directories {
+		compositeResult.Subfolders = append(compositeResult.Subfolders, convertProtoToFolder(subFolder))
+
+	}
+	return compositeResult
+}
+
+// pb.metadataentry[] to the filesystem metadataEntry[]
+func metadataConverter(metaDataArr []*pb.MetadataEntry) []*MetadataEntry {
+	// preallocate a slice of the correct length
+	res := make([]*MetadataEntry, len(metaDataArr))
+
+	// copy each protobuf entry into local type
+	for i, entry := range metaDataArr {
+		res[i] = &MetadataEntry{
+			Key:   entry.Key,
+			Value: entry.Value,
+		}
+	}
+
+	return res
+}
+
+// convert filesystem metadataEntry[] to Metadata struct for json response
+func extractMetadata(metaDataArr []*MetadataEntry) *Metadata {
+	// fmt.Println("extractMetadata called. metaDataArr len: " + strconv.Itoa(len(metaDataArr)))
+
+	md := &Metadata{}
+
+	fieldMap := map[string]*string{
+		"size_bytes": &md.Size,
+		"created":    &md.DateCreated,
+		"mime_type":  &md.MimeType,
+		"modified":   &md.LastModified,
+	}
+
+	for _, entry := range metaDataArr {
+		// fmt.Println(entry)
+		if ptr, ok := fieldMap[entry.Key]; ok {
+			*ptr = entry.Value
+		}
+	}
+	return md
 }
 
 func printDirectoryWithMetadata(dir *pb.Directory, num int) {
@@ -124,6 +207,7 @@ func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
 	for _, c := range composites {
 		if c.Name == name {
 			// build the nested []FileNode
+			grpcFunc(c)
 			children := createDirectoryJSONStructure(c)
 
 			root := DirectoryTreeJson{
@@ -135,7 +219,7 @@ func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
 			if err := json.NewEncoder(w).Encode(root); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			}
-			grpcFunc(c)
+
 			return
 		}
 	}
@@ -149,18 +233,18 @@ func createDirectoryJSONStructure(folder *Folder) []FileNode {
 
 	for _, file := range folder.Files {
 
-		md := Metadata{}
+		md := extractMetadata(file.Metadata)
 		tags := file.Tags
-		if len(tags) == 0 {
-			tags = []string{"none"}
-		}
+		// if len(tags) == 0 {
+		// 	tags = []string{"none"}
+		// }
 
 		nodes = append(nodes, FileNode{
 			Name:     file.Name,
 			Path:     file.Path,
 			IsFolder: false,
 			Tags:     tags,
-			Metadata: &md,
+			Metadata: md,
 		})
 	}
 
