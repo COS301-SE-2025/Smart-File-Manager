@@ -32,10 +32,7 @@ message Directory {
 // Go to python 
 message DirectoryRequest {
   Directory root = 1;
-  enum type{
-    CLUSTER = 0;
-    METADATA = 1; // Returns metadata for all files
-  }
+  string requestType = 2; // either CLUSTER or METADATA
 }
 
 // Python to go
