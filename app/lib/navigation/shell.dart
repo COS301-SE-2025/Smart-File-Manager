@@ -6,6 +6,7 @@ import '../pages/advanced_search_page.dart';
 import 'main_navigation.dart';
 import '../pages/manager_page.dart';
 import 'package:app/constants.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Shell extends StatefulWidget {
   const Shell({super.key});
@@ -17,6 +18,9 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   int _selectedIndex = 0; //index selected form the main menu (0 to 3)
   String? _selectedManager; //name of the Manager selected
+  final Uri _url = Uri.parse(
+    'https://cos301-se-2025.github.io/Smart-File-Manager/',
+  );
 
   //pages are stored in a Widget List to send the correct widget(content) given the selected Index
   final List<Widget> _pages = [
@@ -42,6 +46,12 @@ class _ShellState extends State<Shell> {
     });
   }
 
+  Future<void> _launchUrl() async {
+    if (!await launchUrl(_url, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $_url');
+    }
+  }
+
   //select the manager by passed in name and deselect main navigation if selected
   void _onManagerTap(String managerName) {
     setState(() {
@@ -53,7 +63,10 @@ class _ShellState extends State<Shell> {
   //find the active page and return its widget
   Widget _getCurrentPage() {
     if (_selectedManager != null) {
-      return ManagerPage(name: _selectedManager!);
+      return ManagerPage(
+        key: ValueKey(_selectedManager),
+        name: _selectedManager!,
+      );
     } else if (_selectedIndex >= 0 && _selectedIndex < _pages.length) {
       return _pages[_selectedIndex];
     } else {
@@ -79,14 +92,14 @@ class _ShellState extends State<Shell> {
           Padding(
             padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
             child: IconButton(
-              onPressed: () {},
+              onPressed: _launchUrl,
               icon: Icon(Icons.help_outline_rounded, color: kprimaryColor),
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
             child: FilledButton.icon(
-              onPressed: () {}, //TODO: need to add login functionality
+              onPressed: () {},
               label: const Text("Login"),
               style: FilledButton.styleFrom(backgroundColor: kScaffoldColor),
               icon: const Icon(Icons.account_circle),

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import '../models/file_tree_node.dart';
+import 'package:app/constants.dart';
+import 'package:app/api.dart';
 
 class FileDetailsPanel extends StatefulWidget {
+  final String? managerName;
   final FileTreeNode? selectedFile;
   final bool isVisible;
   final VoidCallback onClose;
 
   const FileDetailsPanel({
+    required this.managerName,
     required this.selectedFile,
     required this.isVisible,
     required this.onClose,
@@ -122,12 +126,6 @@ class _FileDetailsPanelState extends State<FileDetailsPanel>
         ),
 
         const SizedBox(height: 4),
-
-        // File type
-        Text(
-          'File Type',
-          style: const TextStyle(color: Color(0xff9CA3AF), fontSize: 12),
-        ),
       ],
     );
   }
@@ -152,9 +150,78 @@ class _FileDetailsPanelState extends State<FileDetailsPanel>
             'Items',
             '${widget.selectedFile!.children!.length}',
           ),
+          const SizedBox(height: 8),
+        ],
+
+        if (!widget.selectedFile!.isFolder &&
+            widget.selectedFile!.metadata != null) ...[
+          _buildPropertyRow(
+            'Size',
+            _formatFileSize(widget.selectedFile!.metadata!['size'].toString()),
+          ),
+
+          const SizedBox(height: 8),
+
+          _buildPropertyRow(
+            'Type',
+            widget.selectedFile!.metadata!['mimeType'].toString(),
+          ),
+
+          const SizedBox(height: 8),
+
+          _buildPropertyRow(
+            'Created',
+            _formatDate(
+              widget.selectedFile!.metadata!['dateCreated'].toString(),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          _buildPropertyRow(
+            'Modified',
+            _formatDate(
+              widget.selectedFile!.metadata!['lastModified'].toString(),
+            ),
+          ),
         ],
       ],
     );
+  }
+
+  // Helper method to format file size
+  String _formatFileSize(String sizeStr) {
+    try {
+      int sizeInBytes = int.parse(sizeStr);
+      if (sizeInBytes == 0) return '0 bytes';
+
+      const List<String> units = ['bytes', 'KB', 'MB', 'GB', 'TB'];
+      int unitIndex = 0;
+      double size = sizeInBytes.toDouble();
+
+      while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex++;
+      }
+
+      if (unitIndex == 0) {
+        return '${size.toInt()} ${units[unitIndex]}';
+      } else {
+        return '${size.toStringAsFixed(1)} ${units[unitIndex]}';
+      }
+    } catch (e) {
+      return sizeStr;
+    }
+  }
+
+  // Helper method to format dates
+  String _formatDate(String dateStr) {
+    try {
+      DateTime dateTime = DateTime.parse(dateStr);
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateStr;
+    }
   }
 
   Widget _buildPropertyRow(String label, String value) {
@@ -256,8 +323,8 @@ class _FileDetailsPanelState extends State<FileDetailsPanel>
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: const Color(0xff374151),
-            title: const Text('Add Tag', style: TextStyle(color: Colors.white)),
+            backgroundColor: kScaffoldColor,
+            title: const Text('Add Tag', style: kTitle1),
             content: TextField(
               controller: _tagController,
               style: const TextStyle(color: Colors.white),
@@ -298,15 +365,31 @@ class _FileDetailsPanelState extends State<FileDetailsPanel>
     );
   }
 
-  void _addTag(String tag) {
+  void _addTag(String tag) async {
+    bool response = await Api.addTagToFile(
+      widget.managerName ?? '',
+      widget.selectedFile!.path ?? '',
+      tag,
+    );
+
     setState(() {
-      widget.selectedFile!.tags?.add(tag);
+      if (response) {
+        widget.selectedFile!.tags?.add(tag);
+      }
     });
   }
 
-  void _removeTag(String tag) {
+  void _removeTag(String tag) async {
+    bool response = await Api.deleteTagFromFile(
+      widget.managerName ?? '',
+      widget.selectedFile!.path ?? '',
+      tag,
+    );
+
     setState(() {
-      widget.selectedFile!.tags?.remove(tag);
+      if (response) {
+        widget.selectedFile!.tags?.remove(tag);
+      }
     });
   }
 }

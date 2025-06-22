@@ -11,6 +11,7 @@ class Api {
       final response = await http.get(
         Uri.parse("$uri/loadTreeData?name=$name"),
       );
+      print(response.body);
 
       if (response.statusCode == 200) {
         return FileTreeNode.fromJson(
@@ -21,6 +22,26 @@ class Api {
       }
     } catch (e, stackTrace) {
       print('Error loading tree data from loadTreeData: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //Call To Sort Tree structure
+  static Future<FileTreeNode> sortManager(String name) async {
+    try {
+      final response = await http.get(Uri.parse("$uri/sortManager?name=$name"));
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        return FileTreeNode.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to load data: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error sorting tree structure from sortManager: $e');
       print(stackTrace);
       rethrow;
     }

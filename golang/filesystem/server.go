@@ -1,6 +1,7 @@
 package filesystem
 
 import (
+	// "encoding/json"
 	"fmt"
 	"net/http"
 	"slices"
@@ -8,6 +9,7 @@ import (
 )
 
 var (
+	//array of smartfile managers
 	composites []*Folder
 	mu         sync.Mutex
 )
@@ -72,11 +74,21 @@ func addTagHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleRequests() {
+
+	// path, _ := os.Getwd()
+	// fmt.Println("THE PATH: " + path)
+	// path = filepath.Dir(path)
+	// path = filepath.Join(path, "python/testing")
+	// fmt.Println("THE PATH: " + path)
+
 	http.HandleFunc("/addDirectory", getCompositeHandler)
 	http.HandleFunc("/removeDirectory", removeCompositeHandler)
 	http.HandleFunc("/addTag", addTagHandler)
+	http.HandleFunc("/loadTreeData", loadTreeDataHandler)
 	fmt.Println("Server started on port 51000")
-	http.ListenAndServe(":51000", nil)
+	// http.ListenAndServe(":51000", nil)
+	http.ListenAndServe("0.0.0.0:51000", nil)
+
 }
 
 // Getter for main.go

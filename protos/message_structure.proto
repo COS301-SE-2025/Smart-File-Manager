@@ -20,6 +20,7 @@ message File {
   repeated Tag tags = 4;
   repeated MetadataEntry metadata = 5;
   bool is_locked=6;
+
 }
 
 message Directory {
