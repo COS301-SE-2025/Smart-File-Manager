@@ -118,6 +118,7 @@ func HandleRequests() {
 	http.HandleFunc("/addTag", addTagHandler)
 	http.HandleFunc("/removeTag", removeTagHandler)
 	http.HandleFunc("/loadTreeData", loadTreeDataHandler)
+	http.HandleFunc("/sortTree", sortTreeHandler)
 	fmt.Println("Server started on port 51000")
 	// http.ListenAndServe(":51000", nil)
 	http.ListenAndServe("0.0.0.0:51000", nil)
