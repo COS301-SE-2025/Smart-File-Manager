@@ -12,6 +12,10 @@ function showPopup(platform) {
   alert(`${platform} version is not yet available for download.`);
 }
 
+function showTutorial(tutorial) {
+  alert(`The "${tutorial}" is not yet available.`);
+}
+
 // Help section navigation
 function showHelpSection(sectionId) {
   const sections = document.querySelectorAll(".help-section");
