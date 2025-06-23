@@ -41,36 +41,37 @@ The chosen architectural style from the software architecture patterns will be d
 
 The following quality requirements are prioritized from highest to lowest priority for the Smart File Manager system:
 
-### 1. **Security** (Highest Priority)
+## Architectural Quality Requirements for Smart File Manager (SFM)
 
-- **Specification:** Role-based access control with multi-factor authentication
-- **Testable Criteria:** 100% of user actions must require proper authentication, encryption at rest and in transit
-- **Rationale:** File management systems handle sensitive data requiring robust security measures
+### 1. **Reliability**
 
+- **Specification:** The system must maintain file integrity and recover gracefully from failures (e.g., crashes or power loss).  
+- **Testable Criteria:** No data corruption or loss during operations; system auto-recovers to last stable state after unexpected shutdowns.  
+- **Rationale:** Users must trust the system to manage personal or critical files safely and without risk of accidental loss.
+  
 ### 2. **Performance**
 
-- **Specification:** File operations must complete within acceptable time limits
-- **Testable Criteria:** File search results in <2 seconds, file transfers at >10MB/s for local operations
-- **Rationale:** User productivity depends on responsive file operations
+- **Specification:** File operations, such as sorting, tagging, and smart search, must execute within acceptable time limits on standard desktop hardware.  
+- **Testable Criteria:** Smart search results must appear in under 2 seconds; bulk operations (e.g., tagging or reclassifying 500 files) must complete within 5 seconds.  
+- **Rationale:** Responsiveness is key to a smooth user experience in a personal desktop application. Delays can disrupt workflow and reduce trust in automation.  
 
-### 3. **Reliability**
+### 3. **Scalability**
 
-- **Specification:** System availability and data integrity
-- **Testable Criteria:** 99.5% uptime, zero data loss during normal operations
-- **Rationale:** File management systems must be dependable for critical business operations
+- **Specification:** The system must handle increasing numbers of files, metadata, and tags without degradation in performance.  
+- **Testable Criteria:** Maintain acceptable performance (search in <2 seconds, classification in <5 seconds) when managing up to 1 million files or 1TB of data.  
+- **Rationale:** Personal file collections can grow substantially over time, so the system must remain efficient and responsive even at high volume.  
 
-### 4. **Scalability**
+### 4. **Usability**
 
-- **Specification:** Handle increasing file volumes and concurrent users
-- **Testable Criteria:** Support up to 50 concurrent users, manage repositories up to 1TB
-- **Rationale:** System must grow with organizational needs
+- **Specification:** The user interface must be intuitive, accessible, and require minimal onboarding or training.  
+- **Testable Criteria:** First-time users can complete core tasks (e.g., find a file, create a smart manager, apply a tag) within 5 minutes, with no external documentation.  
+- **Rationale:** The system targets general users with varying technical skill levels; high usability promotes adoption and continued use.  
 
-### 5. **Usability** (Lowest Priority)
+### 5. **Modifiability**
 
-- **Specification:** Intuitive user interface with minimal learning curve
-- **Testable Criteria:** New users can complete basic file operations within 5 minutes of first use
-- **Rationale:** User adoption depends on ease of use
-
+- **Specification:** Users must be able to define or update rules, filters, and semantic tags without developer intervention.  
+- **Testable Criteria:** 100% of common modifications can be made through a graphical user interface without restarting the application.  
+- **Rationale:** Enables users to customize the system to suit their unique workflows and evolving organizational habits.  
 ---
 
 ## 3.6.4 Architectural Design and Pattern
