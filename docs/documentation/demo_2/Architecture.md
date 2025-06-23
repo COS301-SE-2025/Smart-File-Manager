@@ -1,50 +1,266 @@
+# Architectural Requirements Document
+
 <p align="center">
   <img src="assets/spark_logo_dark_background.png" alt="Company Logo" width="300" height=100%/>
 </p>
 
-# Architectural Specifications
-
-**Version:** 1.0.0.0  
+**Version:** 2.0.0.0  
 **Prepared By:** Spark Industries  
 **Prepared For:** Southern Cross Solutions  
+**Document Type:** Architectural Requirements Document  
+**Demo:** Demo 2
 
+## Table of Contents
 
-## Content
-* [Overview](#overview)
-* [Architecture Style](#architecture-style)
-* [System Components](#system-components)
-    * [Website](#website)
-    * [Application](#application)
-* [Sub-architectural patterns](#sub-architectural-patterns)
+- [3.6.1 Architectural Design Strategy](#361-architectural-design-strategy)
+- [3.6.2 Architectural Strategies](#362-architectural-strategies)
+- [3.6.3 Architectural Quality Requirements](#363-architectural-quality-requirements)
+- [3.6.4 Architectural Design and Pattern](#364-architectural-design-and-pattern)
+- [3.6.5 Architectural Constraints](#365-architectural-constraints)
+- [3.6.6 Technology Choices](#366-technology-choices)
 
-## Overview
-<p>The smart file manager is designed with modular and scalable components for optimal performance and maintainability. This document outlines the architectural design, how components interact, and the system flow.</p>
+---
 
-![Website architecture](assets/websiteArchitecure.png)
-![Application architecture](assets/applicationArchitecture.png)
+## 3.6.1 Architectural Design Strategy
 
-## Architecture Style
-<p>Smart file manager makes use of Client-Server architecture for the website. The application uses a Modular Monolithic structure and a Master-Slave between the Request Handler and Task Processor.
-</p>
+_This section will be completed for Demo 3._
 
-1. Client server to allow users to communicate with the server and perform operations (downloading, profile edits etc.).
-2. Monolithic structure such that the entire application is deployed as a single unit. Within the single unit, concerns are separated into independant layers.
-3. The Request Handler will communicate with the Task Processor to manage multiple instances.
+The architectural design strategy selection and justification will be provided in the next demonstration phase.
 
-## System Components
-### Website
-1. An easy to use interface for downloading the application.
-2. Can be used to register an account.
-### Application
-1. Acts as file explorer.
-2. Sort folders/files according to tags, metadata etc.
-3. View structure graph.
-4. Search for folders/files.
-5. View and manage folders/files.
+---
 
-## Sub-Architectural Patterns
-### Layered Architecure (N-tier)
-1. Structures SFM into well-defined layers to separate concerns.
-    1. Presentation
-    2. Application
-    3. Data 
+## 3.6.2 Architectural Strategies
+
+_This section will be completed for Demo 3._
+
+The chosen architectural style from the software architecture patterns will be detailed and justified in Demo 3.
+
+---
+
+## 3.6.3 Architectural Quality Requirements
+
+The following quality requirements are prioritized from highest to lowest priority for the Smart File Manager system:
+
+### 1. **Security** (Highest Priority)
+
+- **Specification:** Role-based access control with multi-factor authentication
+- **Testable Criteria:** 100% of user actions must require proper authentication, encryption at rest and in transit
+- **Rationale:** File management systems handle sensitive data requiring robust security measures
+
+### 2. **Performance**
+
+- **Specification:** File operations must complete within acceptable time limits
+- **Testable Criteria:** File search results in <2 seconds, file transfers at >10MB/s for local operations
+- **Rationale:** User productivity depends on responsive file operations
+
+### 3. **Reliability**
+
+- **Specification:** System availability and data integrity
+- **Testable Criteria:** 99.5% uptime, zero data loss during normal operations
+- **Rationale:** File management systems must be dependable for critical business operations
+
+### 4. **Scalability**
+
+- **Specification:** Handle increasing file volumes and concurrent users
+- **Testable Criteria:** Support up to 50 concurrent users, manage repositories up to 1TB
+- **Rationale:** System must grow with organizational needs
+
+### 5. **Usability** (Lowest Priority)
+
+- **Specification:** Intuitive user interface with minimal learning curve
+- **Testable Criteria:** New users can complete basic file operations within 5 minutes of first use
+- **Rationale:** User adoption depends on ease of use
+
+---
+
+## 3.6.4 Architectural Design and Pattern
+
+_This section will be completed for Demo 3._
+
+The detailed architectural design overview, system diagrams, and design decision justifications will be provided in Demo 3.
+
+### Current Architecture Overview (From Demo 1)
+
+**Architecture Style:** The Smart File Manager employs a hybrid architectural approach:
+
+1. **Client-Server Architecture** for the website component
+
+   - Enables users to communicate with the server for operations (downloading, profile management)
+
+2. **Modular Monolithic Structure** for the application
+
+   - Entire application deployed as single unit with separated concerns into independent layers
+
+3. **Master-Slave Pattern** between Request Handler and Task Processor
+   - Request Handler manages multiple Task Processor instances
+
+### System Components
+
+#### Website Component
+
+- User-friendly interface for application download
+- Account registration and management functionality
+
+#### Application Component
+
+- File explorer functionality
+- File/folder sorting by tags and metadata
+- Structure graph visualization
+- Advanced search capabilities
+- File and folder management operations
+
+#### Sub-Architectural Patterns
+
+- **Layered Architecture (N-tier):** Separates concerns into Presentation, Application, and Data layers
+
+![Website Architecture](assets/websiteArchitecure.png)
+![Application Architecture](assets/applicationArchitecture.png)
+
+---
+
+## 3.6.5 Architectural Constraints
+
+The following constraints affect the architectural design of the Smart File Manager:
+
+### Client Requirements
+
+-
+
+### Deployment Limitations
+
+-
+
+### Technology Constraints
+
+-
+
+### Performance Constraints
+
+-
+
+### Security Constraints
+
+-
+
+---
+
+## 3.6.6 Technology Choices
+
+This section provides an overview of the various technologies used in our stack and the reasoning behind each choice.
+
+![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white)
+
+### Frontend Framework
+
+#### Technology Options Assessed:
+
+1. **Flutter**
+
+   - **Overview:** Google's UI toolkit for building natively compiled applications
+   - **Pros:** Cross-platform (Both Desktop and Mobile), Native performance, Material UI widgets
+   - **Cons:** Larger binary size
+
+2. **Electron**
+
+   - **Overview:** Framework for building desktop applications using web technologies
+   - **Pros:** Easy integration with web
+   - **Cons:** Heavy memory usage, Does not directly support mobile (Needs Capacitor or Cordova)
+
+3. **React Native**
+   - **Overview:** Framework for building mobile applications using React
+   - **Pros:** Cross-platform mobile/web
+   - **Cons:** Weak desktop support
+
+#### Final Choice: Flutter
+
+**Justification:** Chosen for its ability to create cross-platform desktop applications with native performance, aligning with our architectural requirement for both desktop and mobile support while maintaining consistency across platforms.
+
+---
+
+### AI Capabilities
+
+#### Technology Options Assessed:
+
+1. **Python**
+
+   - **Overview:** High-level programming language with extensive AI/ML libraries
+   - **Pros:** Well supported for AI purposes (We use SciKit), Fast development
+   - **Cons:** Slower runtime performance, Weak multithreading support
+
+2. **Java**
+
+   - **Overview:** Object-oriented programming language with strong ecosystem
+   - **Pros:** High performance, Strong threading and ecosystem
+   - **Cons:** Slower development speed for AI applications
+
+3. **C++**
+   - **Overview:** Low-level programming language with fine-grained control
+   - **Pros:** High performance, Fine-grained control
+   - **Cons:** Unreliable due to no memory safety
+
+#### Final Choice: Python
+
+**Justification:** Chosen for its out-of-the-box AI functionality and portability. The extensive library ecosystem (SciKit) provides rapid development capabilities essential for implementing intelligent file management features, despite performance trade-offs that are mitigated by our Go bridge component.
+
+---
+
+### Filesystem Management & Bridge
+
+#### Technology Options Assessed:
+
+1. **Go**
+
+   - **Overview:** Compiled programming language designed for system programming
+   - **Pros:** Easy concurrency with goroutines, Fast compilation, Simple learning curve
+   - **Cons:** Less dynamic than scripting languages
+
+2. **Rust**
+
+   - **Overview:** Systems programming language focused on safety and performance
+   - **Pros:** High performance, Memory Safety
+   - **Cons:** Extreme learning curve
+
+3. **Java**
+   - **Overview:** Platform-independent programming language running on JVM
+   - **Pros:** Portable due to JVM
+   - **Cons:** Verbose and heavyweight for lightweight APIs
+
+#### Final Choice: Go
+
+**Justification:** Chosen for its powerful concurrency features to balance out Python's performance bottleneck and easy web development for endpoints required by the frontend. The goroutine-based concurrency model is ideal for handling multiple file operations simultaneously while maintaining system responsiveness.
+
+---
+
+### API Communication
+
+#### Technology Options Assessed:
+
+1. **gRPC**
+
+   - **Overview:** High-performance RPC framework using Protocol Buffers
+   - **Pros:** Very fast due to binary serialization, Code generation support, Strong typing
+   - **Cons:** Requires more setup than REST
+
+2. **REST**
+
+   - **Overview:** Architectural style for distributed hypermedia systems
+   - **Pros:** Simple and well-understood, Easy testing and debugging
+   - **Cons:** No built-in type safety, Not ideal for dynamic recursive structures like Directories
+
+3. **GraphQL**
+   - **Overview:** Query language and runtime for APIs
+   - **Pros:** Flexible queries, Efficient data fetching
+   - **Cons:** Overkill for simple RPCs, More complex tooling
+
+#### Final Choice: Hybrid Approach (gRPC + REST)
+
+**Justification:**
+
+- **gRPC:** Chosen for efficiency between Go and Python components due to binary serialization and strong typing, essential for high-performance file operations
+- **REST:** Chosen for easy-to-use and testable endpoints between Go backend and Flutter frontend, providing simplicity for client-server communication
+
+This hybrid approach leverages the strengths of both technologies where they are most appropriate within our multi-language architecture.
+
+---
