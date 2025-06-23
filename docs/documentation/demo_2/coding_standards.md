@@ -11,6 +11,11 @@
 ## Content
 * [Introduction](#introduction)
 * [Naming Conventions](#naming-conventions)
+* [Indentation](#naming-conventions)
+* [File Layout](#file-layout)
+* [Exception Handling](#exception-handling)
+* [Commenting](#commenting)
+* [General](#general)
 * [Glossary](#glossary)
 
 ## Introduction 
