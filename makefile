@@ -72,5 +72,5 @@ python_client:
 	python3 python/src/greeter_client.py
 
 python_master_temp:
-	pytest -v -s --color=yes --tb=short python/testing/test_clustering.py
+	pytest -v -s --color=yes --tb=short python/testing/test_clustering_request.py
 
