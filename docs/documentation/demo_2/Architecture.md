@@ -45,33 +45,34 @@ The following quality requirements are prioritized from highest to lowest priori
 
 ### 1. **Reliability**
 
-- **Specification:** The system must maintain file integrity and recover gracefully from failures (e.g., crashes or power loss).  
-- **Testable Criteria:** No data corruption or loss during operations; system auto-recovers to last stable state after unexpected shutdowns.  
+- **Specification:** The system must maintain file integrity and recover gracefully from failures (e.g., crashes or power loss).
+- **Testable Criteria:** No data corruption or loss during operations; system auto-recovers to last stable state after unexpected shutdowns.
 - **Rationale:** Users must trust the system to manage personal or critical files safely and without risk of accidental loss.
-  
+
 ### 2. **Performance**
 
-- **Specification:** File operations, such as sorting, tagging, and smart search, must execute within acceptable time limits on standard desktop hardware.  
-- **Testable Criteria:** Smart search results must appear in under 2 seconds; bulk operations (e.g., tagging or reclassifying 500 files) must complete within 5 seconds.  
-- **Rationale:** Responsiveness is key to a smooth user experience in a personal desktop application. Delays can disrupt workflow and reduce trust in automation.  
+- **Specification:** File operations, such as sorting, tagging, and smart search, must execute within acceptable time limits on standard desktop hardware.
+- **Testable Criteria:** Smart search results must appear in under 2 seconds; bulk operations (e.g., tagging or reclassifying 500 files) must complete within 5 seconds.
+- **Rationale:** Responsiveness is key to a smooth user experience in a personal desktop application. Delays can disrupt workflow and reduce trust in automation.
 
 ### 3. **Scalability**
 
-- **Specification:** The system must handle increasing numbers of files, metadata, and tags without degradation in performance.  
-- **Testable Criteria:** Maintain acceptable performance (search in <2 seconds, classification in <5 seconds) when managing up to 1 million files or 1TB of data.  
-- **Rationale:** Personal file collections can grow substantially over time, so the system must remain efficient and responsive even at high volume.  
+- **Specification:** The system must handle increasing numbers of files, metadata, and tags without degradation in performance.
+- **Testable Criteria:** Maintain acceptable performance (search in <2 seconds, classification in <5 seconds) when managing up to 1 million files or 1TB of data.
+- **Rationale:** Personal file collections can grow substantially over time, so the system must remain efficient and responsive even at high volume.
 
 ### 4. **Usability**
 
-- **Specification:** The user interface must be intuitive, accessible, and require minimal onboarding or training.  
-- **Testable Criteria:** First-time users can complete core tasks (e.g., find a file, create a smart manager, apply a tag) within 5 minutes, with no external documentation.  
-- **Rationale:** The system targets general users with varying technical skill levels; high usability promotes adoption and continued use.  
+- **Specification:** The user interface must be intuitive, accessible, and require minimal onboarding or training.
+- **Testable Criteria:** First-time users can complete core tasks (e.g., find a file, create a smart manager, apply a tag) within 5 minutes, with no external documentation.
+- **Rationale:** The system targets general users with varying technical skill levels; high usability promotes adoption and continued use.
 
 ### 5. **Modifiability**
 
-- **Specification:** Users must be able to define or update rules, filters, and semantic tags without developer intervention.  
-- **Testable Criteria:** 100% of common modifications can be made through a graphical user interface without restarting the application.  
-- **Rationale:** Enables users to customize the system to suit their unique workflows and evolving organizational habits.  
+- **Specification:** Users must be able to define or update rules, filters, and semantic tags without developer intervention.
+- **Testable Criteria:** 100% of common modifications can be made through a graphical user interface without restarting the application.
+- **Rationale:** Enables users to customize the system to suit their unique workflows and evolving organizational habits.
+
 ---
 
 ## 3.6.4 Architectural Design and Pattern
@@ -123,25 +124,25 @@ The detailed architectural design overview, system diagrams, and design decision
 
 The following constraints affect the architectural design of the Smart File Manager:
 
-### Client Requirements
+### Data Constraints
 
--
-
-### Deployment Limitations
-
--
+- File system access - Which components can access which directories or file types on the system
+- Data persistance - Where can files be stored and naming conventions
+- File format - restrictions on file types and accessing metadata.
 
 ### Technology Constraints
 
--
+- Operating system compatibility - Must run on Windows, macOS, Linux platforms, thus need architecture that supports cross-platform.
 
 ### Performance Constraints
 
--
+- runtime bottleneck - Slower execution affects real-time file operations.
+- overhead in memory - higher memory usage for large file sorting operations.
 
-### Security Constraints
+### Deployment Constraints
 
--
+- The system must be deployable as a desktop app
+- Must run on Windows, Linux, and macOS with consistent functionality.
 
 ---
 
