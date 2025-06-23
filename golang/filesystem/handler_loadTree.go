@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -39,7 +40,12 @@ type Metadata struct {
 	LastModified string `json:"lastModified"`
 }
 
-func grpcFunc(c *Folder) {
+func grpcFunc(c *Folder, requestType string) error {
+
+	if requestType != "METADATA" && requestType != "CLUSTERING" {
+		return fmt.Errorf("invalid requestType: %s", requestType)
+	}
+
 	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("could not create new grpc go client")
@@ -53,7 +59,7 @@ func grpcFunc(c *Folder) {
 
 	req := &pb.DirectoryRequest{
 		Root:        convertFolderToProto(*c),
-		RequestType: "METADATA",
+		RequestType: requestType,
 	}
 
 	resp, err := client.SendDirectoryStructure(ctx, req)
@@ -63,12 +69,26 @@ func grpcFunc(c *Folder) {
 
 	// fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
 	// printDirectory(resp.Root, 0)
+	fmt.Println("========start of proto response======")
+	fmt.Println("res code: " + strconv.FormatInt(int64(resp.ResponseCode), 10))
+	fmt.Println("res message: " + resp.ResponseMsg)
+	printDirectoryWithMetadata(resp.Root, 0)
+	fmt.Println("========end of proto response======")
+
 	convertProtoToFolder(resp.Root)
 	mergeProtoToFolder(resp.Root, c)
-	printDirectoryWithMetadata(resp.Root, 0)
+
+	return nil
 }
 
 func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
+	if dir == nil || existing == nil {
+
+		fmt.Println("mergeProtoToFolder called with nil")
+		return
+	}
+	existing.Name = dir.Name
+	existing.Path = dir.Path
 	existing.Files = nil
 	existing.Subfolders = nil
 
@@ -79,10 +99,14 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 			Metadata: metadataConverter(file.Metadata),
 		})
 	}
+
 	for _, sub := range dir.Directories {
-		f := &Folder{}
-		mergeProtoToFolder(sub, f)
-		existing.Subfolders = append(existing.Subfolders, f)
+		child := &Folder{
+			Name: sub.Name,
+			Path: sub.Path,
+		}
+		mergeProtoToFolder(sub, child)
+		existing.Subfolders = append(existing.Subfolders, child)
 	}
 }
 
@@ -111,6 +135,18 @@ func convertFolderToProto(f Folder) *pb.Directory {
 
 // takes in grpc's response and converts it back to composite
 func convertProtoToFolder(dir *pb.Directory) *Folder {
+	if dir == nil {
+		fmt.Println("===di empty ====")
+		// return an empty Folder (or you could return nil here—but then
+		// callers need to nil‐check too)
+		return &Folder{
+			Name:       "",
+			Path:       "",
+			Files:      nil,
+			Subfolders: nil,
+		}
+	}
+
 	compositeResult := &Folder{
 		Name: dir.Name, // make sure ItemName is exported
 		Path: dir.Path,
@@ -127,6 +163,7 @@ func convertProtoToFolder(dir *pb.Directory) *Folder {
 
 	}
 	for _, subFolder := range dir.Directories {
+		fmt.Println(subFolder.Name)
 		compositeResult.Subfolders = append(compositeResult.Subfolders, convertProtoToFolder(subFolder))
 
 	}
@@ -207,7 +244,11 @@ func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
 	for _, c := range composites {
 		if c.Name == name {
 			// build the nested []FileNode
-			grpcFunc(c)
+			err := grpcFunc(c, "METADATA")
+			if err != nil {
+				log.Fatalf("grpcFunc failed: %v", err)
+				http.Error(w, "internal server error, GRPC CALLED WRONG", http.StatusInternalServerError)
+			}
 			children := createDirectoryJSONStructure(c)
 
 			root := DirectoryTreeJson{
