@@ -40,8 +40,50 @@ type Metadata struct {
 	LastModified string `json:"lastModified"`
 }
 
-func grpcFunc(c *Folder, requestType string) error {
+func printFolderDetails(folder *Folder, indent int) {
+	if folder == nil {
+		return
+	}
 
+	prefix := strings.Repeat("  ", indent)
+
+	fmt.Printf("%sFolder: %s\n", prefix, folder.Name)
+	fmt.Printf("%sPath: %s\n", prefix, folder.Path)
+	fmt.Printf("%sNewPath: %s\n", prefix, folder.newPath)
+	fmt.Printf("%sCreationDate: %s\n", prefix, folder.CreationDate.Format(time.RFC3339))
+	fmt.Printf("%sLocked: %v\n", prefix, folder.Locked)
+	if len(folder.Tags) > 0 {
+		fmt.Printf("%sTags: %v\n", prefix, folder.Tags)
+	} else {
+		fmt.Println("NO TGS")
+	}
+	fmt.Println()
+
+	for _, file := range folder.Files {
+		fmt.Printf("%s  File: %s\n", prefix, file.Name)
+		fmt.Printf("%s  Path: %s\n", prefix, file.Path)
+		fmt.Printf("%s  NewPath: %s\n", prefix, file.newPath)
+		if len(file.Tags) > 0 {
+			fmt.Printf("%s  Tags: %v\n", prefix, file.Tags)
+		}
+		if len(file.Metadata) > 0 {
+			fmt.Printf("%s  Metadata:\n", prefix)
+			for _, md := range file.Metadata {
+				fmt.Printf("%s    %s: %s\n", prefix, md.Key, md.Value)
+			}
+		}
+		fmt.Println()
+	}
+
+	for _, sub := range folder.Subfolders {
+		printFolderDetails(sub, indent+1)
+	}
+}
+
+func grpcFunc(c *Folder, requestType string) error {
+	fmt.Println("+++++pretty print start+++++")
+	printFolderDetails(c, 0)
+	fmt.Println("+++++pretty print end+++++")
 	if requestType != "METADATA" && requestType != "CLUSTERING" {
 		return fmt.Errorf("invalid requestType: %s", requestType)
 	}
@@ -72,10 +114,10 @@ func grpcFunc(c *Folder, requestType string) error {
 	fmt.Println("========start of proto response======")
 	fmt.Println("res code: " + strconv.FormatInt(int64(resp.ResponseCode), 10))
 	fmt.Println("res message: " + resp.ResponseMsg)
-	printDirectoryWithMetadata(resp.Root, 0)
+	// printDirectoryWithMetadata(resp.Root, 0)
 	fmt.Println("========end of proto response======")
 
-	convertProtoToFolder(resp.Root)
+	// convertProtoToFolder(resp.Root)
 	mergeProtoToFolder(resp.Root, c)
 
 	return nil
@@ -89,6 +131,7 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 	}
 	existing.Name = dir.Name
 	existing.Path = dir.Path
+
 	existing.Files = nil
 	existing.Subfolders = nil
 
@@ -96,6 +139,7 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 		existing.Files = append(existing.Files, &File{
 			Name:     file.Name,
 			Path:     file.OriginalPath,
+			Tags:     tagsToStrings(file.Tags),
 			Metadata: metadataConverter(file.Metadata),
 		})
 	}
@@ -110,6 +154,30 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 	}
 }
 
+func tagsToStrings(tags []*pb.Tag) []string {
+	var tagStrings []string
+
+	for _, tag := range tags {
+		fmt.Println("TAG FOUND: " + tag.Name)
+		tagStrings = append(tagStrings, tag.Name)
+	}
+	return tagStrings
+}
+
+// converts string version of tags to *pb.Tag array
+func stringsToTags(stringTags []string) []*pb.Tag {
+	var tags []*pb.Tag
+
+	for _, tag := range stringTags {
+		fmt.Println("TAG FOUND: " + tag)
+		curr := &pb.Tag{
+			Name: tag,
+		}
+		tags = append(tags, curr)
+	}
+	return tags
+}
+
 // converts the compositite structure to the correct structure grpc uses
 func convertFolderToProto(f Folder) *pb.Directory {
 	protoDir := &pb.Directory{
@@ -121,6 +189,7 @@ func convertFolderToProto(f Folder) *pb.Directory {
 		protoDir.Files = append(protoDir.Files, &pb.File{
 			Name:         file.Name,
 			OriginalPath: file.Path,
+			Tags:         stringsToTags(file.Tags),
 		})
 		// case *fs.Folder:
 		// 	protoDir.Directories = append(protoDir.Directories, convertFolderToProto(v))
@@ -156,6 +225,7 @@ func convertProtoToFolder(dir *pb.Directory) *Folder {
 		compositeResult.Files = append(compositeResult.Files, &File{
 			Name:     file.Name,
 			Path:     file.OriginalPath,
+			Tags:     tagsToStrings(file.Tags),
 			Metadata: metadataConverter(file.Metadata),
 		})
 		// case *fs.Folder:
@@ -226,10 +296,10 @@ func printDirectoryWithMetadata(dir *pb.Directory, num int) {
 		fmt.Println("----")
 	}
 
-	for _, dir := range dir.Directories {
-		newNum := num + 1
-		printDirectoryWithMetadata(dir, newNum)
-	}
+	// for _, dir := range dir.Directories {
+	// 	newNum := num + 1
+	// 	printDirectoryWithMetadata(dir, newNum)
+	// }
 
 }
 
