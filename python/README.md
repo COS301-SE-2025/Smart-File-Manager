@@ -32,8 +32,11 @@ Once again ensure pytest is added to PATH
 * protoc gen:```go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest```
 * protoc buf: ```go install google.golang.org/protobuf/cmd/protoc-gen-go@latest```
 * yake: ```pip install yake```
+* pandas: ```pip install pandas```
+* sklearn: ```pip install scikit-learn```
+* sentence_transformers: ```pip sentence_transformers```
+  
 
-to install all the above mentioned: ```pip install python-magic mutagen pypdf python-docx Pillow pymediainfo grpcio grpcio-tools yake```
 
 ## Where to place your files
 * Add all code to the src directory

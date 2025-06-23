@@ -1,9 +1,7 @@
 # Imports
 import os
-import mimetypes
 import datetime
 from pathlib import Path
-
 import magic # Used for MIME-Type
 from PIL import Image # Used for images
 from PIL.ExifTags import TAGS, GPSTAGS

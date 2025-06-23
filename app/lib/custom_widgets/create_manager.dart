@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
-import 'package:app/api.dart';
 
 //class to get name and directory that user types in
 class SmartManagerInfo {
@@ -31,29 +30,11 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
   final TextEditingController _nameController = TextEditingController();
   String? _selectedDirectory;
   bool _isDirectorySelected = false;
-  bool _isCreating = false;
 
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
-  }
-
-  void _showApiError(String message) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text("Error"),
-            content: Text(message),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text("OK"),
-              ),
-            ],
-          ),
-    );
   }
 
   Future<void> _pickDirectory() async {
@@ -251,7 +232,6 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
             decoration: const InputDecoration(
               labelText: "Manager Name",
               labelStyle: TextStyle(color: Colors.white),
-
               hintText: "Enter a name for your manager",
               border: OutlineInputBorder(),
               focusedBorder: OutlineInputBorder(
@@ -267,17 +247,8 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
           ),
           const SizedBox(height: 16),
           Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Expanded(
-                child: Text(
-                  _isDirectorySelected
-                      ? "Directory: ${_selectedDirectory!.split('/').last}"
-                      : "No directory selected",
-                  style: TextStyle(
-                    color: _isDirectorySelected ? Colors.green : Colors.grey,
-                  ),
-                ),
-              ),
               ElevatedButton(
                 onPressed: _pickDirectory,
                 style: ElevatedButton.styleFrom(
@@ -294,64 +265,31 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
               _selectedDirectory!,
               style: const TextStyle(fontSize: 12, color: Colors.grey),
               overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ],
         ],
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: _isCreating ? null : () => Navigator.of(context).pop(null),
+          onPressed: () => Navigator.of(context).pop(null),
           style: TextButton.styleFrom(foregroundColor: Colors.grey),
           child: const Text("Cancel"),
         ),
-        if (_isCreating)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                color: Color(0xffFFB400),
-                strokeWidth: 2,
-              ),
-            ),
-          )
-        else
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: Colors.grey),
-            onPressed:
-                _canCreate()
-                    ? () async {
-                      setState(() {
-                        _isCreating = true;
-                      });
-
-                      final name = _nameController.text.trim();
-                      final directory = _selectedDirectory!;
-
-                      try {
-                        final success = await Api.addSmartManager(
-                          name,
-                          directory,
-                        );
-                        if (success) {
-                          Navigator.of(
-                            context,
-                          ).pop(SmartManagerInfo(name, directory));
-                        }
-                      } catch (e) {
-                        _showApiError("Error occurred: $e");
-                      } finally {
-                        if (mounted) {
-                          setState(() {
-                            _isCreating = false;
-                          });
-                        }
-                      }
-                    }
-                    : null,
-            child: const Text("Create"),
-          ),
+        TextButton(
+          style: TextButton.styleFrom(foregroundColor: Colors.grey),
+          onPressed:
+              _canCreate()
+                  ? () {
+                    final name = _nameController.text.trim();
+                    final directory = _selectedDirectory!;
+                    Navigator.of(
+                      context,
+                    ).pop(SmartManagerInfo(name, directory));
+                  }
+                  : null,
+          child: const Text("Create"),
+        ),
       ],
     );
   }
