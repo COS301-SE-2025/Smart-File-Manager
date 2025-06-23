@@ -166,14 +166,13 @@ Adds a tag to a specific file under a Smart Manager.
 
 **Parameters:**
 
-* `name`: Name of the Smart Manager.
 * `path`: Path to the file.
 * `tag`: Tag to assign.
 
 **Endpoint:**
 
 ```
-POST /addTag?name={name}&path={path}&tag={tag}
+POST /addTag?path={path}&tag={tag}
 ```
 
 **Returns:**
@@ -192,14 +191,13 @@ Removes a tag from a specific file.
 
 **Parameters:**
 
-* `name`: Name of the Smart Manager.
 * `path`: Path to the file.
 * `tag`: Tag to remove.
 
 **Endpoint:**
 
 ```
-POST /deleteTag?name={name}&path={path}&tag={tag}
+POST /removeTag?path={path}&tag={tag}
 ```
 
 **Returns:**
