@@ -30,7 +30,7 @@ class Api {
   //Call To Sort Tree structure
   static Future<FileTreeNode> sortManager(String name) async {
     try {
-      final response = await http.get(Uri.parse("$uri/sortManager?name=$name"));
+      final response = await http.get(Uri.parse("$uri/sortTree?name=$name"));
       print(response.body);
 
       if (response.statusCode == 200) {
@@ -116,7 +116,7 @@ class Api {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/deleteTag?name=$name&path=$path&tag=$tag"),
+        Uri.parse("$uri/removeTag?name=$name&path=$path&tag=$tag"),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
