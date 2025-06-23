@@ -149,7 +149,7 @@ func (f *Folder) RemoveTag(tag string) bool {
 // -------------------- File Methods --------------------
 func (f *File) Display(indent int) {
 	prefix := strings.Repeat("  ", indent)
-	fmt.Printf("%sFile: %s %s\n", prefix, f.Name, f.Path)
+	fmt.Printf("%sFile: %s\n", prefix, f.Name)
 
 	if len(f.Metadata) > 0 {
 		fmt.Printf("%s  Metadata:\n", prefix)
