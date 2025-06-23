@@ -4,7 +4,6 @@ import docx
 from yake import KeywordExtractor
 from pypdf import PdfReader
 from message_structure_pb2 import File
-import spacy
 
 # Keyword extractor class
 # Given a file as input extracts the top 10 keywords along with their value from file

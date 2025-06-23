@@ -34,16 +34,27 @@ class DirectoryCreator:
         original_file_path = file_info["absolute_path"]
         new_file_path = self.get_path(f"{dirName}/{filename}")
 
+        my_tags = self.createTags(file_info)
+
         return File(
             name=filename,
             original_path=original_file_path,
             new_path=new_file_path,
-            tags=self.createTags(),
+            tags=my_tags,  
             metadata=self.createMetaData(file_info)
         )
 
-    def createTags(self):
-        return []
+
+    def createTags(self, file_info):
+        if "tags" in file_info: 
+            tags = []
+            for tag in file_info["tags"]:
+               # print(tag)
+               tags.append(Tag(name=tag)) 
+            return tags
+        else:
+            return []
+
 
     def createMetaData(self, file_info):
         return [

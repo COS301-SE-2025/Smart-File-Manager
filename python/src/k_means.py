@@ -119,7 +119,7 @@ class KMeansCluster:
     def printDirectoryTree(self, directory, indent=""):
         print(f"{indent}{directory.name}/")
         for file in directory.files:
-            print(f"{indent}  - {file.name}")
+            print(f"{indent} - {file.name} ")
         for subdir in directory.directories:
             self.printDirectoryTree(subdir, indent + "  ")
 
