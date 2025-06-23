@@ -4,7 +4,7 @@
 
 # gRPC endpoint Documentation 
 
-**Version:** 1.0.0.0  
+**Version:** 2.0.0.0  
 **Prepared By:** Spark Industries  
 **Prepared For:** Southern Cross Solutions & Personal Development team use  
 
