@@ -1,4 +1,3 @@
-import 'package:app/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/pages/manager_page_sub/folder_view_page.dart';
