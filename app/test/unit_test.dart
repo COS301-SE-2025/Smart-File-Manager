@@ -8,6 +8,7 @@ import 'package:app/custom_widgets/create_manager.dart';
 import 'package:app/navigation/main_navigation.dart';
 
 //flutter packages pub run build_runner build
+// Added this comment cause I changed the file name and the commit does not work otherwise
 @GenerateMocks([http.Client])
 void main() {
   group('FileTreeNode Tests', () {
