@@ -58,6 +58,8 @@ jobs:
             Pillow \
             pymediainfo \
             yake \
+            scikit-learn \
+            sentence-transformers \
             grpcio \
             grpcio-tools
 
@@ -86,6 +88,18 @@ jobs:
       - name: Run Go tests
         working-directory: ./golang
         run: go test -v ./filesystem
+
+      - name: Install Flutter dependencies
+        working-directory: ./flutter
+        run: flutter pub get
+
+      - name: Generate Flutter code
+        working-directory: ./flutter
+        run: flutter packages pub run build_runner build --delete-conflicting-outputs
+
+      - name: Run Flutter tests
+        working-directory: ./flutter
+        run: flutter test --reporter=expanded
 
       - name: Build and start containers
         run: docker compose -f docker-compose.yml up --build -d

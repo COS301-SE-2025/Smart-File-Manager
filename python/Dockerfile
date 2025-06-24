@@ -33,6 +33,8 @@ RUN pip install --no-cache-dir \
     Pillow \
     pymediainfo \
     yake \
+    scikit-learn \
+    sentence-transformers \
     grpcio \
     grpcio-tools
 
