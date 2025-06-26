@@ -13,8 +13,8 @@
 ## Table of Contents
 
 - [3.6.1 Architectural Design Strategy](#361-architectural-design-strategy)
-- [3.6.2 Architectural Strategies](#362-architectural-strategies)
 - [3.6.3 Architectural Quality Requirements](#363-architectural-quality-requirements)
+- [3.6.2 Architectural Strategies](#362-architectural-strategies)
 - [3.6.4 Architectural Design and Pattern](#364-architectural-design-and-pattern)
 - [3.6.5 Architectural Constraints](#365-architectural-constraints)
 - [3.6.6 Technology Choices](#366-technology-choices)
@@ -26,14 +26,6 @@
 _This section will be completed for Demo 3._
 
 The architectural design strategy selection and justification will be provided in the next demonstration phase.
-
----
-
-## 3.6.2 Architectural Strategies
-
-_This section will be completed for Demo 3._
-
-The chosen architectural style from the software architecture patterns will be detailed and justified in Demo 3.
 
 ---
 
@@ -72,6 +64,53 @@ The following quality requirements are prioritized from highest to lowest priori
 - **Specification:** Users must be able to define or update rules, filters, and semantic tags without developer intervention.
 - **Testable Criteria:** 100% of common modifications can be made through a graphical user interface without restarting the application.
 - **Rationale:** Enables users to customize the system to suit their unique workflows and evolving organizational habits.
+
+---
+
+
+## 3.6.2 Architectural Strategies
+
+<table>
+  <thead>
+    <tr>
+      <th>Quality Attribute</th>
+      <th>Architectural Strategy</th>
+      <th>Implementation Details</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Reliability</td>
+      <td>Transactional File Operations</td>
+      <td>All operations on the user files should either work completely for the entire operation or not modify the user's files at all.</td>
+    </tr>
+    <tr>
+      <td>Performance</td>
+      <td>Concurrency</td>
+      <td>Leverage our master slave pattern to break slow requests into smaller operations which may be run concurrently. </td>
+    </tr>
+    <tr>
+      <td>Performance</td>
+      <td>I/O overhead</td>
+      <td>Minimize the number of times files need to be opened to reduce I/O overhead. </td>
+    <tr>
+      <td>Scalability</td>
+      <td>Horizontal Scaling</td>
+      <td>Create more instances of Python slaves to increase throughput for high demand. </td>
+    </tr>
+    <tr>
+      <td>Usability</td>
+      <td>User-centered design</td>
+      <td>Conduct usability tests, provide intuitive navigation, and minimize complexity. Provide accessible interfaces appropriate for users of varying skill level</td>
+    </tr>
+    <tr>
+      <td>Modifiability</td>
+      <td>Modular, loosely coupled architecture</td>
+      <td>Design the system such that all operations accept various parameters while still having default ones. Allow users to customize these parameters from the user-interface.</td>
+    </tr>
+  </tbody>
+</table>
+
 
 ---
 
