@@ -80,7 +80,7 @@ func printFolderDetails(folder *Folder, indent int) {
 	}
 }
 
-func grpcFunc(c *Folder, requestType string) error {
+var grpcFunc = func(c *Folder, requestType string) error {
 	fmt.Println("+++++pretty print start+++++")
 	printFolderDetails(c, 0)
 	fmt.Println("+++++pretty print end+++++")
