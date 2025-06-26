@@ -18,3 +18,7 @@ venv/
 message_structure.pb.go
 message_structure_grpc.pb.go
 
+# coveralls
+htmlcov/
+.coverage
+

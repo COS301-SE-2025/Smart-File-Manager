@@ -50,6 +50,11 @@ python:
 python_test:
 	pytest -v -s --color=yes --tb=short python/testing/
 
+python_coverage:
+	coverage run --source=python -m pytest python/testing/
+	coverage report -m
+	coverage html
+
 proto_gen:
 	python3 -m grpc_tools.protoc \
 		-Iprotos \
