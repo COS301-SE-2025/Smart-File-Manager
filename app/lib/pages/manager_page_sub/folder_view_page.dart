@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/custom_widgets/file_item_widget.dart';
+import 'package:app/custom_widgets/breadcrumb_widget.dart';
+import 'package:open_file/open_file.dart';
+import 'dart:io';
 
 class FolderViewPage extends StatefulWidget {
   final FileTreeNode treeData;
@@ -59,62 +62,14 @@ class _FolderViewPageState extends State<FolderViewPage> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _buildBreadcrumb(),
+        BreadcrumbWidget(
+          currentPath: widget.currentPath,
+          onNavigate: widget.onNavigate,
+        ),
         Expanded(
           child: _currentItems.isEmpty ? _buildEmptyState() : _buildFileGrid(),
         ),
       ],
-    );
-  }
-
-  Widget _buildBreadcrumb() {
-    return Center(
-      child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: const BoxDecoration(
-          color: Color(0xff242424),
-          border: Border(bottom: BorderSide(color: Color(0xff3D3D3D))),
-        ),
-        child: Row(
-          children: [
-            _buildBreadcrumbItem('Root', [], widget.currentPath.isEmpty),
-            ...widget.currentPath.asMap().entries.map((entry) {
-              final index = entry.key;
-              final pathSegment = entry.value;
-              final isLast = index == widget.currentPath.length - 1;
-              final pathToHere = widget.currentPath.sublist(0, index + 1);
-
-              return Row(
-                children: [
-                  const Text('/', style: TextStyle(color: Color(0xff6B7280))),
-                  _buildBreadcrumbItem(pathSegment, pathToHere, isLast),
-                ],
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBreadcrumbItem(String name, List<String> path, bool isActive) {
-    return GestureDetector(
-      onTap: () {
-        widget.onNavigate(path);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4)),
-        child: Text(
-          name,
-          style: TextStyle(
-            color: isActive ? Color(0xffFFB400) : const Color(0xff9CA3AF),
-            fontSize: 12,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ),
     );
   }
 
@@ -144,6 +99,7 @@ class _FolderViewPageState extends State<FolderViewPage> {
               return FileItemWidget(
                 item: _currentItems[index],
                 onTap: _handleItemTap,
+                onDoubleTap: _handleNodeDoubleTap,
               );
             },
           );
@@ -169,10 +125,50 @@ class _FolderViewPageState extends State<FolderViewPage> {
   }
 
   void _handleItemTap(FileTreeNode item) {
-    if (item.isFolder) {
-      widget.onNavigate([...widget.currentPath, item.name]);
-    } else {
+    if (!item.isFolder) {
       widget.onFileSelected(item);
+    }
+  }
+
+  void _handleNodeDoubleTap(FileTreeNode item) {
+    if (!item.isFolder) {
+      _openDocument(item.path ?? '');
+    } else {
+      widget.onNavigate([...widget.currentPath, item.name]);
+    }
+  }
+
+  String _convertWSLPath(String wslPath) {
+    if (Platform.isWindows) {
+      final match = RegExp(r"^/mnt/([a-zA-Z])/").firstMatch(wslPath);
+      if (match != null) {
+        final driveLetter = match.group(1)!.toUpperCase();
+        final windowsPath = wslPath
+            .replaceFirst(RegExp(r"^/mnt/[a-zA-Z]/"), "$driveLetter:/")
+            .replaceAll('/', r'\');
+        return windowsPath;
+      }
+      return wslPath;
+    } else {
+      return wslPath;
+    }
+  }
+
+  void _openDocument(String originalWSLPath) async {
+    final nativePath = _convertWSLPath(originalWSLPath);
+
+    final file = File(nativePath);
+    if (await file.exists()) {
+      await OpenFile.open(nativePath);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('File not found: $nativePath'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }

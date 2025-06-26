@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app/navigation/shell.dart';
 import 'package:window_manager/window_manager.dart';
+import 'constants.dart';
 
 void main() async {
   //Package used to set minimum screen size
@@ -30,8 +31,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Smart File Manager',
       theme: ThemeData(
-        primaryColor: const Color(0xffFFB400),
-        scaffoldBackgroundColor: const Color(0xff1E1E1E),
+        primaryColor: kprimaryColor,
+        scaffoldBackgroundColor: kScaffoldColor,
       ),
       home: const Shell(),
     );

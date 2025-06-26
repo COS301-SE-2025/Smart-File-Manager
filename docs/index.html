@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart File Manager - Your AI-Powered Digital Housekeeper</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" />
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav>
+      <div class="nav-container">
+        <div class="nav-name">
+          <img src="images/logo.png" alt="Logo" style="width: 50px" />
+          <div class="logo">Smart File Manager</div>
+        </div>
+        <ul class="nav-links">
+          <li><a href="#" onclick="showLanding()">Home</a></li>
+          <li><a href="#" onclick="showHelp()">Help</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Landing Page -->
+    <div class="landing-page" id="landing-page">
+      <!-- Hero Section -->
+      <section class="hero">
+        <div class="hero-content">
+          <h1>Meet Your New Digital Housekeeper</h1>
+          <p>
+            Say goodbye to cluttered desktops and folder mazes. Smart File
+            Manager uses Clustering Algorithms to automatically organize your
+            files by semantic meaning, making file management effortless and
+            intuitive.
+          </p>
+          <div class="cta-buttons">
+            <a href="#download" class="btn btn-primary">Download Now</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section class="features" id="features">
+        <div class="features-container">
+          <h2>Powerful Features</h2>
+          <div class="features-grid">
+            <div class="feature-card">
+              <div class="feature-icon">
+                <img
+                  src="images/code.png"
+                  alt="Code Icon"
+                  style="width: 50px"
+                />
+              </div>
+              <h3>Clustering Organization</h3>
+              <p>
+                Advanced clustering algorithms automatically sort your files by
+                semantic meaning, not just file types.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <img
+                  src="images/graph.png"
+                  alt="Graph Icon"
+                  style="width: 50px"
+                />
+              </div>
+              <h3>Interactive Graph View</h3>
+              <p>
+                Visualize your file structure with an interactive graph view,
+                easier than ever before.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <img
+                  src="images/search.png"
+                  alt="Search Icon"
+                  style="width: 50px"
+                />
+              </div>
+              <h3>Smart Search</h3>
+              <p>
+                Find files using natural language, tags, metadata, or contextual
+                relationships.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <img
+                  src="images/sort.png"
+                  alt="Sort Icon"
+                  style="width: 50px"
+                />
+              </div>
+              <h3>Auto-Sorting</h3>
+              <p>
+                Set schedules for automatic organization or trigger manual sorts
+                whenever you need.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <img src="images/tag.png" alt="Tag Icon" style="width: 50px" />
+              </div>
+              <h3>Custom Tagging</h3>
+              <p>
+                Add your own tags to files and folders to influence how the
+                Algorithm organizes your content.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <img
+                  src="images/lock.png"
+                  alt="Lock Icon"
+                  style="width: 50px"
+                />
+              </div>
+              <h3>File Locking</h3>
+              <p>
+                Protect important files and folders from being moved during
+                organization.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Download Section -->
+      <section class="download" id="download">
+        <div class="download-container">
+          <h2>Download Smart File Manager</h2>
+          <p>
+            Available for Windows, macOS, and Linux. Get started with your
+            digital housekeeper today!
+          </p>
+          <div class="platform-buttons">
+            <a href="#" class="platform-btn" onclick="showPopup('Windows')">
+              <span
+                ><img
+                  src="images/windows.png"
+                  alt="Windows Icon"
+                  style="width: 20px"
+              /></span>
+              <span>Windows</span>
+            </a>
+            <a href="#" class="platform-btn" onclick="showPopup('macOS')">
+              <span
+                ><img
+                  src="images/apple.png"
+                  alt="Apple Icon"
+                  style="width: 20px"
+              /></span>
+              <span>macOS</span>
+            </a>
+            <a href="#" class="platform-btn" onclick="showPopup('Linux')">
+              <span
+                ><img
+                  src="images/linux.png"
+                  alt="Linux Icon"
+                  style="width: 30px"
+              /></span>
+              <span>Linux</span>
+            </a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Help Page -->
+    <div class="help-page" id="help-page">
+      <div class="help-container">
+        <div class="help-header">
+          <h1>Help Center</h1>
+          <p>Everything you need to know about Smart File Manager</p>
+        </div>
+
+        <div class="help-nav">
+          <button
+            class="help-nav-btn active"
+            onclick="showHelpSection('getting-started')"
+          >
+            Getting Started
+          </button>
+          <button class="help-nav-btn" onclick="showHelpSection('tutorials')">
+            Tutorials
+          </button>
+          <button class="help-nav-btn" onclick="showHelpSection('faq')">
+            FAQ
+          </button>
+          <button class="help-nav-btn" onclick="showHelpSection('contact')">
+            Contact
+          </button>
+        </div>
+
+        <!-- Getting Started Section -->
+        <div class="help-section active" id="getting-started">
+          <h2>Getting Started</h2>
+          <div class="tutorial-grid">
+            <div class="tutorial-card">
+              <h3>1. Download & Install</h3>
+              <p>
+                Download the appropriate version for your operating system and
+                follow the installation wizard.
+              </p>
+            </div>
+            <div class="tutorial-card">
+              <h3>2. Create Account (Optional)</h3>
+              <p>
+                Register for an account on the app to sync preferences across
+                devices.
+              </p>
+            </div>
+            <div class="tutorial-card">
+              <h3>3. Create Smart Manager</h3>
+              <p>
+                Choose a folder to manage and let the AI analyze and organize
+                your files automatically.
+              </p>
+            </div>
+            <div class="tutorial-card">
+              <h3>4. Configure Preferences</h3>
+              <p>
+                Set sorting schedules, tagging rules, and organizational
+                preferences to match your workflow.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tutorials Section -->
+        <div class="help-section" id="tutorials">
+          <h2>Video Tutorials</h2>
+          <div class="tutorial-grid">
+            <div class="tutorial-card">
+              <h3>Creating Your First Smart Manager</h3>
+              <p>
+                Learn how to set up and configure a Smart Manager for automatic
+                file organization.
+              </p>
+              <a
+                href="https://drive.google.com/file/d/1yzEvcbH10DbX6s6w6hdjOafmPodSzGe6/view?usp=sharing"
+                class="btn btn-primary"
+                style="margin-top: 1rem"
+                >Watch Tutorial</a
+              >
+            </div>
+            <div class="tutorial-card">
+              <h3>Using Graph View</h3>
+              <p>
+                Discover how to navigate and interact with the mind-map
+                visualization of your files.
+              </p>
+              <a
+                href="https://drive.google.com/file/d/18LlzuI6bwrkZrqAdW9c-BR8i_vmEuY2w/view?usp=drive_link"
+                class="btn btn-primary"
+                style="margin-top: 1rem"
+                >Watch Tutorial</a
+              >
+            </div>
+            <div class="tutorial-card">
+              <h3>Advanced Search Techniques</h3>
+              <p>
+                Master the art of finding files using semantic search and
+                metadata filters.
+              </p>
+              <a
+                onclick="showTutorial('Advanced Search Techniques')"
+                class="btn btn-primary"
+                style="margin-top: 1rem"
+                >Watch Tutorial</a
+              >
+            </div>
+            <div class="tutorial-card">
+              <h3>Customizing Sort Behavior</h3>
+              <p>
+                Learn how to fine-tune the AI sorting algorithm to match your
+                specific needs.
+              </p>
+              <a
+                onclick="showTutorial('Customizing Sort Behavior')"
+                class="btn btn-primary"
+                style="margin-top: 1rem"
+                >Watch Tutorial</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="help-section" id="faq">
+          <h2>Frequently Asked Questions</h2>
+
+          <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              How does the AI file organization work?
+              <span>+</span>
+            </div>
+            <div class="faq-answer">
+              Smart File Manager uses advanced clustering algorithms and natural
+              language processing to analyze file content, metadata, and
+              relationships. It groups files by semantic meaning rather than
+              just file types, creating logical organizational structures.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              Is my data safe and private?
+              <span>+</span>
+            </div>
+            <div class="faq-answer">
+              Yes! All file processing happens locally on your machine. We never
+              store or transmit your file contents. The system only accesses
+              files you explicitly choose to manage.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              Can I undo organization changes?
+              <span>+</span>
+            </div>
+            <div class="faq-answer">
+              Absolutely! Every Smart Manager includes a rollback feature that
+              lets you restore your files to their previous locations with a
+              single click.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              What file types are supported?
+              <span>+</span>
+            </div>
+            <div class="faq-answer">
+              Smart File Manager works with all common file types including
+              documents, images, videos, audio files, code files, and more. The
+              AI adapts its organization strategy based on the file types in
+              your directories.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              How do I prevent certain files from being moved?
+              <span>+</span>
+            </div>
+            <div class="faq-answer">
+              Use the file locking feature to protect specific files or folders
+              from being reorganized. Locked items will be excluded from all
+              future sorting operations.
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Section -->
+        <div class="help-section" id="contact">
+          <div class="contact-info">
+            <h3>Need More Help?</h3>
+            <p>
+              Our support team is here to help you get the most out of Smart
+              File Manager.
+            </p>
+            <div style="margin-top: 2rem">
+              <p><strong>Email:</strong> sparkindustries301@gmail.com</p>
+            </div>
+            <div style="margin-top: 2rem">
+              <a href="sparkindustries301@gmail.com" class="btn btn-primary"
+                >Send Email</a
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script src="script.js"></script>
+</html>

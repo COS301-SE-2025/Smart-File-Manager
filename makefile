@@ -40,6 +40,9 @@ go_grpc_client:
 go_test:
 	cd golang/filesystem && go test -v
 
+go_api:
+	cd golang && \
+	go run .
 
 python:
 	python3 python/src/main.py
@@ -67,4 +70,7 @@ proto_gen:
 
 python_client:
 	python3 python/src/greeter_client.py
+
+python_master_temp:
+	pytest -v -s --color=yes --tb=short python/testing/test_clustering_request.py
 

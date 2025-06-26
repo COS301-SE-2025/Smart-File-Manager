@@ -1,11 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
-import 'package:app/pages/folder_view_page.dart';
-import 'package:app/pages/graph_view_page.dart';
+import 'package:app/pages/manager_page_sub/folder_view_page.dart';
+import 'package:app/pages/manager_page_sub/graph_view_page.dart';
 import 'package:app/custom_widgets/file_details_panel.dart';
-import 'package:http/http.dart' as http;
-import 'dart:math';
+import 'package:app/api.dart';
+import 'package:app/custom_widgets/hoverable_button.dart';
 
 class ManagerPage extends StatefulWidget {
   final String name;
@@ -22,34 +21,43 @@ class _ManagerPageState extends State<ManagerPage> {
   FileTreeNode? _selectedFile;
   bool _isDetailsVisible = false;
   bool _isLoading = true;
+  bool _isSorting = false;
 
   @override
   void initState() {
     super.initState();
-    _loadTreeData();
+    getTree();
   }
 
-  Future<void> _loadTreeData() async {
-    final response1 = await http.get(
-      Uri.parse('https://run.mocky.io/v3/b3097f03-5576-4e45-ab9e-54e12fa12d87'),
-    );
+  Future<void> getTree() async {
+    FileTreeNode response = await Api.loadTreeData(widget.name);
 
-    final response2 = await http.get(
-      Uri.parse('https://run.mocky.io/v3/a809ac12-e410-4a79-95b3-604837f22e59'),
-    );
+    setState(() {
+      _treeData = response;
+      _isLoading = false;
+    });
+  }
 
-    final randomChoice = Random().nextBool();
-    final selectedResponse = randomChoice ? response1 : response2;
+  Future<void> _handleSortManager() async {
+    setState(() {
+      _isLoading = true;
+      _isSorting = true;
+    });
 
-    if (selectedResponse.statusCode == 200) {
+    try {
+      FileTreeNode response = await Api.sortManager(widget.name);
+
       setState(() {
-        _treeData = FileTreeNode.fromJson(
-          jsonDecode(selectedResponse.body) as Map<String, dynamic>,
-        );
+        _treeData = response;
         _isLoading = false;
+        _isSorting = false;
       });
-    } else {
-      throw Exception('Failed to load data');
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _isSorting = false;
+      });
+      print('Error sorting manager: $e');
     }
   }
 
@@ -89,19 +97,55 @@ class _ManagerPageState extends State<ManagerPage> {
         children: [
           _buildSearchBar(),
           Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  flex: _isDetailsVisible ? 3 : 1,
-                  child: _buildMainContent(),
-                ),
-                if (_isDetailsVisible)
-                  SizedBox(width: 200, child: _buildDetailsPanel()),
-              ],
-            ),
+            child:
+                _currentView == 0
+                    ? _buildFolderViewLayout()
+                    : _buildGraphViewLayout(),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFolderViewLayout() {
+    return Row(
+      children: [
+        Expanded(flex: _isDetailsVisible ? 3 : 1, child: _buildMainContent()),
+        if (_isDetailsVisible)
+          SizedBox(width: 200, child: _buildDetailsPanel()),
+      ],
+    );
+  }
+
+  Widget _buildGraphViewLayout() {
+    return Stack(
+      children: [
+        _buildMainContent(),
+
+        if (_isDetailsVisible)
+          Positioned(
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: 200,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xff2E2E2E),
+                border: const Border(
+                  left: BorderSide(color: Color(0xff3D3D3D), width: 1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(-2, 0),
+                  ),
+                ],
+              ),
+              child: _buildDetailsPanel(),
+            ),
+          ),
+      ],
     );
   }
 
@@ -149,6 +193,7 @@ class _ManagerPageState extends State<ManagerPage> {
                             ),
                           ),
                         ),
+                        const SizedBox(width: 12),
                       ],
                     ),
                   ),
@@ -223,70 +268,86 @@ class _ManagerPageState extends State<ManagerPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Row(
           children: [
-            Container(
-              width: 250,
-              height: 32,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xff242424),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: const Color(0xff3D3D3D)),
-              ),
-              child: Center(
-                child: TextField(
-                  onChanged: null,
-                  cursorColor: const Color(0xffFFB400),
-                  style: const TextStyle(fontSize: 12, color: Colors.white),
-                  decoration: const InputDecoration(
-                    hintText: 'Search files and folders...',
-                    hintStyle: TextStyle(
-                      color: Color(0xff9CA3AF),
-                      fontSize: 12,
+            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    width: 250,
+                    height: 32,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff242424),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xff3D3D3D)),
                     ),
-                    border: InputBorder.none,
-                    isCollapsed: true,
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: Color(0xff9CA3AF),
-                      size: 16,
-                    ),
-                    prefixIconConstraints: BoxConstraints(
-                      minWidth: 20,
-                      minHeight: 16,
+                    child: Center(
+                      child: TextField(
+                        onChanged: null,
+                        cursorColor: const Color(0xffFFB400),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: 'Search files and folders...',
+                          hintStyle: TextStyle(
+                            color: Color(0xff9CA3AF),
+                            fontSize: 12,
+                          ),
+                          border: InputBorder.none,
+                          isCollapsed: true,
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: Color(0xff9CA3AF),
+                            size: 16,
+                          ),
+                          prefixIconConstraints: BoxConstraints(
+                            minWidth: 20,
+                            minHeight: 16,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Container(
+                    height: 32,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff242424),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xff3D3D3D)),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: null,
+                        hint: const Text(
+                          'Sort by',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xff9CA3AF),
+                          ),
+                        ),
+                        dropdownColor: const Color(0xff2E2E2E),
+                        iconEnabledColor: const Color(0xff9CA3AF),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xff9CA3AF),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'name', child: Text('Name')),
+                          DropdownMenuItem(value: 'size', child: Text('Size')),
+                        ],
+                        onChanged: null,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 12),
-            Container(
-              height: 32,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xff242424),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: const Color(0xff3D3D3D)),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: null,
-                  hint: const Text(
-                    'Sort by',
-                    style: TextStyle(fontSize: 12, color: Color(0xff9CA3AF)),
-                  ),
-                  dropdownColor: const Color(0xff2E2E2E),
-                  iconEnabledColor: const Color(0xff9CA3AF),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xff9CA3AF),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'name', child: Text('Name')),
-                    DropdownMenuItem(value: 'size', child: Text('Size')),
-                  ],
-                  onChanged: null,
-                ),
-              ),
+            HoverableButton(
+              onTap: _isSorting ? null : _handleSortManager,
+              name: _isSorting ? "Sorting..." : "Sort Manager",
             ),
           ],
         ),
@@ -296,15 +357,15 @@ class _ManagerPageState extends State<ManagerPage> {
 
   Widget _buildMainContent() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: Color(0xffFFB400)),
-            SizedBox(height: 16),
+            const CircularProgressIndicator(color: Color(0xffFFB400)),
+            const SizedBox(height: 16),
             Text(
-              'Loading files...',
-              style: TextStyle(color: Color(0xff9CA3AF)),
+              _isSorting ? 'Sorting files...' : 'Loading files...',
+              style: const TextStyle(color: Color(0xff9CA3AF)),
             ),
           ],
         ),
@@ -340,14 +401,20 @@ class _ManagerPageState extends State<ManagerPage> {
           onNavigate: _handleNavigation,
         );
       case 1:
-        return GraphViewPage();
+        return GraphViewPage(
+          treeData: _treeData!,
+          currentPath: _currentPath,
+          onFileSelected: _handleFileSelect,
+          onNavigate: _handleNavigation,
+        );
       default:
-        return Placeholder();
+        return const Placeholder();
     }
   }
 
   Widget _buildDetailsPanel() {
     return FileDetailsPanel(
+      managerName: widget.name,
       selectedFile: _selectedFile,
       isVisible: _isDetailsVisible,
       onClose: _handleDetailPanelClose,

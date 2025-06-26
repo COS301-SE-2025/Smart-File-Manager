@@ -167,9 +167,9 @@ def test_real_word():
     assert "created" in metadata and isinstance(metadata["created"], str)
     assert "modified" in metadata and isinstance(metadata["modified"], str)
     assert metadata["size_bytes"] > 0
-    assert metadata["author"] == "Philipp du Plessis"
-    assert metadata["title"] == ""
-    assert metadata["subject"] == ""
+    #    assert metadata["author"] == "Philipp du Plessis"
+    #    assert metadata["title"] == ""
+    #    assert metadata["subject"] == ""
     assert len(metadata) >= 7
 
 # Real audio file

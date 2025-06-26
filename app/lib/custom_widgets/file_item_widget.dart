@@ -4,8 +4,14 @@ import '../models/file_tree_node.dart';
 class FileItemWidget extends StatefulWidget {
   final FileTreeNode item;
   final Function(FileTreeNode) onTap;
+  final Function(FileTreeNode) onDoubleTap;
 
-  const FileItemWidget({required this.item, required this.onTap, super.key});
+  const FileItemWidget({
+    required this.item,
+    required this.onTap,
+    required this.onDoubleTap,
+    super.key,
+  });
 
   @override
   State<FileItemWidget> createState() => _FileItemWidgetState();
@@ -21,6 +27,7 @@ class _FileItemWidgetState extends State<FileItemWidget> {
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
         onTap: () => widget.onTap(widget.item),
+        onDoubleTap: () => widget.onDoubleTap(widget.item),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.all(12),

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Documentation/assets/readmeAssets/banner.png" alt="banner"/>
+  <img src="docs/documentation/demo_2/assets/readmeAssets/banner.png" alt="banner"/>
 </p>
 
 <p align="center">
@@ -29,19 +29,33 @@ Smart File Manager (SFM) is a digital housekeeper that uses metadata, natural la
 
 ## 🎥 Demo Videos
 
-
-* [Demo 1 Video](https://drive.google.com/file/d/13_amEyoW3bTHRSY3giBA2xw_4UlJE3Eq/view?usp=sharing)
-
+- [Demo 1 Video](https://drive.google.com/file/d/13_amEyoW3bTHRSY3giBA2xw_4UlJE3Eq/view?usp=sharing)
 
 ## 📑 Documentation
 
+<details>
+<summary><strong>📋 Demo 1 Documentation</strong></summary>
 
-🔗 [Functional Requirements Document (SRS)](Documentation/srs.md) <br>
-🔗 [Architectural Specifications](Documentation/Architecture.md) <br>
-🔗 [Wireframe Documentation](Documentation/wireframe.md) <br>
-🔗 [Research Document](Documentation/researchDoc.md)
+🔗 [Functional Requirements Document (SRS)](docs/documentation/demo_1/srs.md) <br>
+🔗 [Architectural Specifications](docs/documentation/demo_1/Architecture.md) <br>
+🔗 [Wireframe Documentation](docs/documentation/demo_1/wireframe.md) <br>
+🔗 [Research Document](docs/documentation/demo_1/researchDoc.md)<br>
+🔗 [Go API](docs/documentation/demo_1/api.md)
 
+</details>
 
+<details>
+<summary><strong>📋 Demo 2 Documentation</strong></summary>
+
+🔗 [Functional Requirements Document (SRS)](docs/documentation/demo_2/srs.md) <br>
+🔗 [Architectural Specifications](docs/documentation/demo_2/Architecture.md) <br>
+🔗 [Wireframe Documentation](docs/documentation/demo_2/wireframe.md) <br>
+🔗 [Research Document](docs/documentation/demo_2/researchDoc.md) <br>
+🔗 [Go API](docs/documentation/demo_2/api.md) <br>
+🔗 [User Manual](docs/documentation/demo_2/user_manual.md) <br>
+🔗 [Coding Standards](docs/documentation/demo_2/coding_standards.md)
+
+</details>
 
 ## 📊 Project Board
 
@@ -60,7 +74,7 @@ The GitHub Project boards are used to track current tasks allocated to each team
   <tr>
     <td width="30%">
       <strong>Jack Bawden</strong><br>
-      <img src="Documentation/assets/readmeAssets/Jack.jpg" width="100%" height="300">
+      <img src="docs/documentation/demo_2/assets/readmeAssets/Jack.jpg" width="100%" height="300">
     </td>
     <td width="20%">
       <code>Golang & Python</code><br>
@@ -75,7 +89,7 @@ The GitHub Project boards are used to track current tasks allocated to each team
   <tr>
     <td width="30%">
       <strong>Philipp du Plessis</strong><br>
-      <img src="Documentation/assets/readmeAssets/philipp.jpg" width="100%" height="300">
+      <img src="docs/documentation/demo_2/assets/readmeAssets/philipp.jpg" width="100%" height="300">
     </td>
     <td width="20%">
       <code>Golang & Python</code><br>
@@ -90,7 +104,7 @@ The GitHub Project boards are used to track current tasks allocated to each team
   <tr>
     <td width="30%">
       <strong>Tiaan Bosman</strong><br>
-      <img src="Documentation/assets/readmeAssets/tiaan.jpeg" width="100%" height="300">
+      <img src="docs/documentation/demo_2/assets/readmeAssets/tiaan.jpeg" width="100%" height="300">
     </td>
     <td width="20%">
       <code>UX & UI Developer</code><br>
@@ -106,7 +120,7 @@ The GitHub Project boards are used to track current tasks allocated to each team
   <tr>
     <td width="30%">
       <strong>Henco Pretorius</strong><br>
-      <img src="Documentation/assets/readmeAssets/Henco.jpg" width="100%" height="300">
+      <img src="docs/documentation/demo_2/assets/readmeAssets/Henco.jpg" width="100%" height="300">
     </td>
     <td width="20%">
       <code>Golang & Python</code><br>
@@ -121,7 +135,7 @@ The GitHub Project boards are used to track current tasks allocated to each team
   <tr>
     <td width="30%">
       <strong>Dewald Colesky</strong><br>
-      <img src="Documentation/assets/readmeAssets/dewald.JPG" width="100%" height="300">
+      <img src="docs/documentation/demo_2/assets/readmeAssets/dewald.JPG" width="100%" height="300">
     </td>
     <td width="20%">
       <code>Backend Legend</code><br>
@@ -139,6 +153,7 @@ The GitHub Project boards are used to track current tasks allocated to each team
 ## 📁 Git Structure
 
 Our repository follows a modular monorepo structure, where different components of the system are organized into separate directories:
+
 - **golang/** – Contains the core backend that handles communication with AI services and the frontend, while managing all file operations and system logic.
 - **python/** – Houses the AI clustering algorithms responsible for intelligent file system organization and sorting based on content analysis.
 - **protos/** – Defines the gRPC protocol buffer definitions that enable efficient inter-service communication across different system components.
@@ -155,9 +170,7 @@ We follow a structured GitFlow branching model to ensure efficient development a
   **Branching Workflow**
 - From **`dev`**, feature branches are created for new functionality or fixes. - Once a feature is completed, it is merged back into the `dev` branch after review.
 
-
 ## ✔️ Quality Badges
-
 
 [![Coverage Status](https://coveralls.io/repos/github/COS301-SE-2025/Smart-File-Manager/badge.svg?branch=main)](https://coveralls.io/github/COS301-SE-2025/Smart-File-Manager?branch=main)
 [![Dependencies](https://img.shields.io/librariesio/github/COS301-SE-2025/Smart-File-Manager?style=flat-square)](https://libraries.io/github/COS301-SE-2025/Smart-File-Manager)
@@ -168,4 +181,3 @@ We follow a structured GitFlow branching model to ensure efficient development a
 [![Last Commit](https://img.shields.io/github/last-commit/COS301-SE-2025/Smart-File-Manager?style=flat-square)](https://github.com/COS301-SE-2025/Smart-File-Manager/commits/main)
 [![Repository Size](https://img.shields.io/github/repo-size/COS301-SE-2025/Smart-File-Manager?style=flat-square)](https://github.com/COS301-SE-2025/Smart-File-Manager)
 [![CI/CD](https://github.com/COS301-SE-2025/Smart-File-Manager/actions/workflows/actions.yml/badge.svg)](https://github.com/COS301-SE-2025/Smart-File-Manager/actions/workflows/actions.yml)
-

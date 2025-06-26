@@ -232,7 +232,6 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
             decoration: const InputDecoration(
               labelText: "Manager Name",
               labelStyle: TextStyle(color: Colors.white),
-
               hintText: "Enter a name for your manager",
               border: OutlineInputBorder(),
               focusedBorder: OutlineInputBorder(
@@ -248,17 +247,8 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
           ),
           const SizedBox(height: 16),
           Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Expanded(
-                child: Text(
-                  _isDirectorySelected
-                      ? "Directory: ${_selectedDirectory!.split('/').last}"
-                      : "No directory selected",
-                  style: TextStyle(
-                    color: _isDirectorySelected ? Colors.green : Colors.grey,
-                  ),
-                ),
-              ),
               ElevatedButton(
                 onPressed: _pickDirectory,
                 style: ElevatedButton.styleFrom(
@@ -275,15 +265,14 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
               _selectedDirectory!,
               style: const TextStyle(fontSize: 12, color: Colors.grey),
               overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ],
         ],
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: () {
-            Navigator.of(context).pop(null);
-          },
+          onPressed: () => Navigator.of(context).pop(null),
           style: TextButton.styleFrom(foregroundColor: Colors.grey),
           child: const Text("Cancel"),
         ),
@@ -292,12 +281,11 @@ class _SmartManagerDialogState extends State<SmartManagerDialog> {
           onPressed:
               _canCreate()
                   ? () {
-                    Navigator.of(context).pop(
-                      SmartManagerInfo(
-                        _nameController.text.trim(),
-                        _selectedDirectory!,
-                      ),
-                    );
+                    final name = _nameController.text.trim();
+                    final directory = _selectedDirectory!;
+                    Navigator.of(
+                      context,
+                    ).pop(SmartManagerInfo(name, directory));
                   }
                   : null,
           child: const Text("Create"),
