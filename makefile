@@ -40,6 +40,14 @@ go_grpc_client:
 go_test:
 	cd golang/filesystem && go test -v
 
+go_coverage:
+	cd golang/filesystem && go test -cover
+	
+go_coverage_detailed:
+	cd golang/filesystem && go test -coverprofile=coverage.out && go tool cover -func=coverage.out
+
+
+
 go_api:
 	cd golang && \
 	go run .
