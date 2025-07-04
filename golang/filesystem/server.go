@@ -15,7 +15,7 @@ var (
 )
 
 func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
-	// fmt.Println("addDirectory called")
+	fmt.Println("addDirectory called")
 	managerName := r.URL.Query().Get("name")
 	filePath := r.URL.Query().Get("path")
 	// fmt.Println("PATH", filePath)
