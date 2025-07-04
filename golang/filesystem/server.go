@@ -14,10 +14,11 @@ var (
 	mu         sync.Mutex
 )
 
-func getCompositeHandler(w http.ResponseWriter, r *http.Request) {
+func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("addDirectory called")
 	managerName := r.URL.Query().Get("name")
 	filePath := r.URL.Query().Get("path")
-	fmt.Println("PATH", filePath)
+	// fmt.Println("PATH", filePath)
 	composite, err := ConvertToObject(managerName, filePath)
 	if err != nil || composite == nil {
 		w.Write([]byte("false"))
@@ -28,8 +29,8 @@ func getCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	composites = append(composites, composite)
 	mu.Unlock()
 
-	fmt.Println("Composite added:")
-	composite.Display(0)
+	// fmt.Println("Composite added:")
+	// composite.Display(0)
 	w.Write([]byte("true"))
 }
 
@@ -46,7 +47,7 @@ func removeCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	mu.Unlock()
 
-	fmt.Println("Composite removed:", convertedPath)
+	// fmt.Println("Composite removed:", convertedPath)
 	w.Write([]byte("true"))
 }
 
@@ -113,7 +114,7 @@ func HandleRequests() {
 	// path = filepath.Join(path, "python/testing")
 	// fmt.Println("THE PATH: " + path)
 
-	http.HandleFunc("/addDirectory", getCompositeHandler)
+	http.HandleFunc("/addDirectory", addCompositeHandler)
 	http.HandleFunc("/removeDirectory", removeCompositeHandler)
 	http.HandleFunc("/addTag", addTagHandler)
 	http.HandleFunc("/removeTag", removeTagHandler)

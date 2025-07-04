@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -75,15 +74,15 @@ func printFolderDetails(folder *Folder, indent int) {
 		fmt.Println()
 	}
 
-	for _, sub := range folder.Subfolders {
-		printFolderDetails(sub, indent+1)
-	}
+	// for _, sub := range folder.Subfolders {
+	// 	printFolderDetails(sub, indent+1)
+	// }
 }
 
 func grpcFunc(c *Folder, requestType string) error {
-	fmt.Println("+++++pretty print start+++++")
-	printFolderDetails(c, 0)
-	fmt.Println("+++++pretty print end+++++")
+	// fmt.Println("+++++pretty print start+++++")
+	// printFolderDetails(c, 0)
+	// fmt.Println("+++++pretty print end+++++")
 	if requestType != "METADATA" && requestType != "CLUSTERING" {
 		return fmt.Errorf("invalid requestType: %s", requestType)
 	}
@@ -111,11 +110,11 @@ func grpcFunc(c *Folder, requestType string) error {
 
 	// fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
 	// printDirectory(resp.Root, 0)
-	fmt.Println("========start of proto response======")
-	fmt.Println("res code: " + strconv.FormatInt(int64(resp.ResponseCode), 10))
-	fmt.Println("res message: " + resp.ResponseMsg)
-	// printDirectoryWithMetadata(resp.Root, 0)
-	fmt.Println("========end of proto response======")
+	// fmt.Println("========start of proto response======")
+	// fmt.Println("res code: " + strconv.FormatInt(int64(resp.ResponseCode), 10))
+	// fmt.Println("res message: " + resp.ResponseMsg)
+	// // printDirectoryWithMetadata(resp.Root, 0)
+	// fmt.Println("========end of proto response======")
 
 	// convertProtoToFolder(resp.Root)
 	mergeProtoToFolder(resp.Root, c)
@@ -233,7 +232,7 @@ func convertProtoToFolder(dir *pb.Directory) *Folder {
 
 	}
 	for _, subFolder := range dir.Directories {
-		fmt.Println(subFolder.Name)
+		// fmt.Println(subFolder.Name)
 		compositeResult.Subfolders = append(compositeResult.Subfolders, convertProtoToFolder(subFolder))
 
 	}
@@ -305,6 +304,7 @@ func printDirectoryWithMetadata(dir *pb.Directory, num int) {
 
 // actual api endpoint function
 func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("loadTree called")
 	w.Header().Set("Content-Type", "application/json")
 
 	name := r.URL.Query().Get("name")
