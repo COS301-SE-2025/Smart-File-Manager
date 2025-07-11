@@ -24,6 +24,8 @@ func ConvertToObject(managerName, folderPath string) (*Folder, error) {
 		return nil, fmt.Errorf("error exploring folder %q: %w", cleanPath, err)
 	}
 
+	autoLockHiddenFolders(root)
+
 	return root, nil
 }
 
@@ -62,6 +64,19 @@ func exploreDown(folder *Folder, path string) error {
 		}
 	}
 	return nil
+}
+
+func autoLockHiddenFolders(folder *Folder) {
+	for _, sub := range folder.Subfolders {
+		autoLockHiddenFolders(sub)
+
+		// Check if subfolder is hidden
+		if strings.HasPrefix(sub.Name, ".") {
+			folder.Locked = true
+			fmt.Printf("Auto-locked folder '%s' because it contains hidden folder '%s'\n", folder.Path, sub.Name)
+			break // No need to check further
+		}
+	}
 }
 
 func ConvertToWSLPath(winPath string) string {
