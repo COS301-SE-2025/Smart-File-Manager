@@ -6,17 +6,40 @@ import (
 )
 
 func TestAPI_AddAndRemoveDirectory(t *testing.T) {
-	req := httptest.NewRequest("GET", "/addDirectory?name=testdir&path=./testdata", nil)
+	req := httptest.NewRequest("GET", "/addDirectory?name=testdir&path=../../testRootFolder", nil)
 	w := httptest.NewRecorder()
 	addCompositeHandler(w, req)
 	if w.Body.String() != "true" {
 		t.Fatalf("expected true, got %s", w.Body.String())
 	}
 
-	req = httptest.NewRequest("GET", "/removeDirectory?path=./testdata", nil)
+	req = httptest.NewRequest("GET", "/removeDirectory?path=../../testRootFolder", nil)
 	w = httptest.NewRecorder()
 	removeCompositeHandler(w, req)
 	if w.Body.String() != "true" {
 		t.Fatalf("expected true, got %s", w.Body.String())
+	}
+}
+
+func TestAPI_AddAndRemoveTag(t *testing.T) {
+	// Add folder to operate on
+	req := httptest.NewRequest("GET", "/addDirectory?name=testdir&path=../../testRootFolder", nil)
+	w := httptest.NewRecorder()
+	addCompositeHandler(w, req)
+
+	// Tag a file inside the test folder
+	req = httptest.NewRequest("GET", "/addTag?path=../../testRootFolder/subdir/rb24.rs&tag=important", nil)
+	w = httptest.NewRecorder()
+	addTagHandler(w, req)
+	if w.Body.String() != "true" {
+		t.Fatalf("addTagHandler: expected true, got %s", w.Body.String())
+	}
+
+	// Remove the tag
+	req = httptest.NewRequest("GET", "/removeTag?path=../../testRootFolder/subdir/rb24.rs&tag=important", nil)
+	w = httptest.NewRecorder()
+	removeTagHandler(w, req)
+	if w.Body.String() != "true" {
+		t.Fatalf("removeTagHandler: expected true, got %s", w.Body.String())
 	}
 }
