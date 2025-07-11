@@ -18,6 +18,7 @@ type File struct {
 	newPath  string
 	Metadata []*MetadataEntry
 	Tags     []string
+	Locked   bool // Lock status for file
 }
 
 // Folder structure
@@ -26,7 +27,7 @@ type Folder struct {
 	Path         string
 	newPath      string
 	CreationDate time.Time
-	Locked       bool
+	Locked       bool // Lock status for folder
 	Files        []*File
 	Subfolders   []*Folder
 	Tags         []string
@@ -94,6 +95,64 @@ func (f *Folder) GetSubfolder(folderPath string) *Folder {
 	return nil
 }
 
+// LockByPath locks a folder or file by its path
+func (f *Folder) LockByPath(path string) {
+	if f.Path == path {
+		if !f.Locked {
+			f.Locked = true
+			fmt.Printf("Folder '%s' locked\n", f.Name)
+		}
+		for _, subfolder := range f.Subfolders {
+			subfolder.LockByPath(path)
+		}
+		for _, file := range f.Files {
+			file.LockByPath(path)
+		}
+	}
+	for _, subfolder := range f.Subfolders {
+		subfolder.LockByPath(path)
+	}
+}
+
+// UnlockByPath unlocks a folder or file by its path
+func (f *Folder) UnlockByPath(path string) {
+	if f.Path == path {
+		if f.Locked {
+			f.Locked = false
+			fmt.Printf("Folder '%s' unlocked\n", f.Name)
+		}
+		for _, subfolder := range f.Subfolders {
+			subfolder.UnlockByPath(path)
+		}
+		for _, file := range f.Files {
+			file.UnlockByPath(path)
+		}
+	}
+	for _, subfolder := range f.Subfolders {
+		subfolder.UnlockByPath(path)
+	}
+}
+
+// Lock locks the file
+func (f *File) LockByPath(path string) {
+	if f.Path == path {
+		if !f.Locked {
+			f.Locked = true
+			fmt.Printf("File '%s' locked\n", f.Name)
+		}
+	}
+}
+
+// Unlock unlocks the file
+func (f *File) UnlockByPath(path string) {
+	if f.Path == path {
+		if f.Locked {
+			f.Locked = false
+			fmt.Printf("File '%s' unlocked\n", f.Name)
+		}
+	}
+}
+
 func (f *Folder) AddTagToFile(filePath, tagName string) bool {
 	file := f.GetFile(filePath)
 	if file != nil {
@@ -109,7 +168,7 @@ func (f *Folder) AddTagToSelf(tagID, tagName string) {
 
 func (f *Folder) Display(indent int) {
 	prefix := strings.Repeat("  ", indent)
-	fmt.Printf("%sFolder: %s\n", prefix, f.Name)
+	fmt.Printf("%sFolder: %s, Locked= %s\n", prefix, f.Name, fmt.Sprintf("%t", f.Locked))
 
 	if len(f.Tags) > 0 {
 		fmt.Printf("%s  Tags:\n", prefix)
@@ -126,6 +185,8 @@ func (f *Folder) Display(indent int) {
 		file.Display(indent + 1)
 	}
 }
+
+// -------------------- File Methods --------------------
 func (f *File) RemoveTag(tag string) bool {
 	for i, t := range f.Tags {
 		if t == tag {
@@ -146,10 +207,10 @@ func (f *Folder) RemoveTag(tag string) bool {
 	return false
 }
 
-// -------------------- File Methods --------------------
+// Display method for files
 func (f *File) Display(indent int) {
 	prefix := strings.Repeat("  ", indent)
-	fmt.Printf("%sFile: %s\n", prefix, f.Name)
+	fmt.Printf("%sFile: %s, Locked= %s\n", prefix, f.Name, fmt.Sprintf("%t", f.Locked))
 
 	if len(f.Metadata) > 0 {
 		fmt.Printf("%s  Metadata:\n", prefix)
@@ -164,5 +225,4 @@ func (f *File) Display(indent int) {
 			fmt.Printf("%s    - %s\n", prefix, tag)
 		}
 	}
-
 }
