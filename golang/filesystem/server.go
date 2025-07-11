@@ -26,7 +26,8 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mu.Lock()
-	composites = append(composites, composite)
+	// composites = append(composites, composite)
+	//appendng happens in this:
 	AddManager(managerName, filePath)
 	mu.Unlock()
 
