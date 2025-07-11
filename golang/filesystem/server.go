@@ -119,6 +119,19 @@ func lockHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("true"))
 }
 
+// Unlocks a file or folder and its children
+func unlockHandler(w http.ResponseWriter, r *http.Request) {
+	path := ConvertToWSLPath(r.URL.Query().Get("path"))
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	for _, c := range composites {
+		c.UnlockByPath(path)
+	}
+	w.Write([]byte("true"))
+}
+
 func HandleRequests() {
 
 	// path, _ := os.Getwd()
@@ -134,6 +147,7 @@ func HandleRequests() {
 	http.HandleFunc("/loadTreeData", loadTreeDataHandler)
 	http.HandleFunc("/sortTree", sortTreeHandler)
 	http.HandleFunc("/lock", lockHandler)
+	http.HandleFunc("/unlock", unlockHandler)
 
 	fmt.Println("Server started on port 51000")
 	// http.ListenAndServe(":51000", nil)
