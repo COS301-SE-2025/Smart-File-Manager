@@ -1,5 +1,8 @@
 package filesystem
 
+// calling /startUp will return the managers that have been created already by the user
+// this means you wont have to create a new one each time you open the app. no parameters
+
 import (
 	"encoding/json"
 	"fmt"
