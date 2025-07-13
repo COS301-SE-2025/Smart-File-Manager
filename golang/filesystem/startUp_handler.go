@@ -1,6 +1,6 @@
 package filesystem
 
-// calling /startUp will return the managers that have been created already by the user
+// calling /startUp will load to memory the managers that have been created already by the user
 // this means you wont have to create a new one each time you open the app. no parameters
 
 import (
@@ -15,6 +15,11 @@ import (
 type ManagerRecord struct {
 	Name string `json:"name"`
 	Path string `json:"path"`
+}
+
+type startUpResponse struct {
+	ResponseMessage string   `json:"responseMessage"`
+	ManagerNames    []string `json:"managerNames"`
 }
 
 var managersFilePath = filepath.Join("storage", "main.json")
@@ -35,10 +40,7 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//send the smart managers
-	w.WriteHeader(http.StatusOK)
-
-	fmt.Fprintf(w, `{"message": "Request successful!, composites: %s"}`, strconv.Itoa(len(recs)))
+	var managerNames []string
 
 	for _, r := range recs {
 		// Convert the record back into your in‑memory Folder
@@ -49,6 +51,18 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		composites = append(composites, composite)
+		managerNames = append(managerNames, composite.Name)
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	res := startUpResponse{
+		ResponseMessage: "Request successful!, composites: " + strconv.Itoa(len(recs)),
+		ManagerNames:    managerNames,
+	}
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 
 }
