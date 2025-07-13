@@ -38,7 +38,7 @@ go_grpc_client:
 	go run grpc/client/grpcClient.go
 
 go_test:
-	cd golang/filesystem && go test -v
+	cd golang/filesystem && go test -tags=test -v
 
 go_api:
 	cd golang && \
