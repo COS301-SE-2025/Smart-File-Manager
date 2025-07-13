@@ -14,7 +14,12 @@ type ManagerRecord struct {
 	Path string `json:"path"`
 }
 
-const managersFile = "./storage/main.json"
+var managersFilePath = filepath.Join("storage", "main.json")
+
+// used to change directory during testing
+func SetManagersFilePath(p string) {
+	managersFilePath = p
+}
 
 // api entry
 func startUpHandler(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +52,7 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 
 func loadManagerRecords() ([]ManagerRecord, error) {
 	// If the file doesn't exist yet, start with empty
-	data, err := os.ReadFile(managersFile)
+	data, err := os.ReadFile(managersFilePath)
 
 	if os.IsNotExist(err) {
 		return nil, nil
@@ -68,18 +73,17 @@ func loadManagerRecords() ([]ManagerRecord, error) {
 // writes to the json file
 func saveManagerRecords(recs []ManagerRecord) error {
 	// ensure parent dir exists
-	if err := os.MkdirAll(filepath.Dir(managersFile), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(managersFilePath), 0755); err != nil {
 		return err
 	}
 	out, err := json.MarshalIndent(recs, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(managersFile, out, 0644)
+	return os.WriteFile(managersFilePath, out, 0644)
 }
 
 // functions used when adding/removing managers that keeps track of the ones to save:
-
 
 func AddManager(name, path string) error {
 	composite, err := ConvertToObject(name, path)
