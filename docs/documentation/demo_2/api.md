@@ -321,3 +321,21 @@ POST /removeTag?path={path}&tag={tag}
 * The backend must be running at the defined base URI for requests to succeed.
 
 Let me know if you'd like a PDF or markdown version of this.
+
+
+
+# startUp
+
+** No parameters **
+
+** Endpoint: **
+get /startUp
+
+** response: **
+
+{
+  "responseMessage": "Request successful!, composites: 1",
+  "managerNames": [
+    "first2"
+  ]
+}
