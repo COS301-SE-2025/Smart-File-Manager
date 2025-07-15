@@ -1,170 +1,256 @@
+// filesystem/filesystem_test.go
 package filesystem
-
-//generated tests
 
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"testing"
 )
 
-// setupTestStorage redirects the on-disk file to a temp location
-func setupTestStorage(t *testing.T) func() {
-	t.Helper()
-	dir := t.TempDir()
-	file := filepath.Join(dir, "main.json")
-	SetManagersFilePath(file)
-	return func() { os.RemoveAll(dir) }
-}
-
-func TestLoadAndSaveManagerRecords(t *testing.T) {
-	cleanup := setupTestStorage(t)
-	defer cleanup()
-
-	// prepare some records
-	want := []ManagerRecord{
-		{Name: "A", Path: "/path/A"},
-		{Name: "B", Path: "/path/B"},
-	}
-
-	// save them
-	if err := saveManagerRecords(want); err != nil {
-		t.Fatalf("saveManagerRecords error: %v", err)
-	}
-
-	// load them back
-	got, err := loadManagerRecords()
-	if err != nil {
-		t.Fatalf("loadManagerRecords error: %v", err)
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("loadManagerRecords = %v; want %v", got, want)
-	}
-}
-
-func TestAddAndRemoveManager(t *testing.T) {
-	cleanup := setupTestStorage(t)
-	defer cleanup()
-
-	// clear any in-memory composites
+// helper to reset globals between tests
+func resetState(t *testing.T, tempDir string) {
 	composites = nil
+	SetManagersFilePath(filepath.Join(tempDir, "main.json"))
+}
 
-	// create two real temp dirs for ConvertToObject
-	dir1 := t.TempDir()
-	dir2 := t.TempDir()
+// Test loadManagerRecords when file does not exist
+func TestLoadManagerRecords_NoFile(t *testing.T) {
+	dir := t.TempDir()
+	resetState(t, dir)
 
-	// add managers
-	if err := AddManager("M1", dir1); err != nil {
-		t.Fatalf("AddManager M1 error: %v", err)
-	}
-	if err := AddManager("M2", dir2); err != nil {
-		t.Fatalf("AddManager M2 error: %v", err)
-	}
-
-	// in-memory slice should have two entries
-	if len(composites) != 2 {
-		t.Fatalf("composites length = %d; want 2", len(composites))
-	}
-
-	// on-disk should also have 2
 	recs, err := loadManagerRecords()
 	if err != nil {
-		t.Fatalf("loadManagerRecords after adds: %v", err)
+		t.Fatalf("expected no error for missing file, got %v", err)
 	}
-	if len(recs) != 2 {
-		t.Errorf("records length = %d; want 2", len(recs))
-	}
-
-	// remove first
-	if err := RemoveManager(dir1); err != nil {
-		t.Fatalf("RemoveManager error: %v", err)
-	}
-
-	// now in-memory should have just one, with Path=dir2
-	if len(composites) != 1 || composites[0].Path != dir2 {
-		t.Errorf("composites after remove = %v; want only [%q]", composites, dir2)
-	}
-
-	// on-disk should also reflect one
-	recs, err = loadManagerRecords()
-	if err != nil {
-		t.Fatalf("loadManagerRecords after remove: %v", err)
-	}
-	if len(recs) != 1 || recs[0].Path != dir2 {
-		t.Errorf("records after remove = %v; want only [%q]", recs, dir2)
+	if recs != nil {
+		t.Fatalf("expected nil slice when file missing, got %v", recs)
 	}
 }
 
-func TestStartUpHandler(t *testing.T) {
-	cleanup := setupTestStorage(t)
-	defer cleanup()
+// Test loadManagerRecords with invalid JSON
+func TestLoadManagerRecords_InvalidJSON(t *testing.T) {
+	dir := t.TempDir()
+	resetState(t, dir)
 
-	// clear in-memory
-	composites = nil
-
-	// 1) No file on disk → composites stays empty
-	req := httptest.NewRequest("GET", "/startup", nil)
-	w := httptest.NewRecorder()
-	startUpHandler(w, req)
-	res := w.Result()
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		t.Fatalf("status = %d; want 200", res.StatusCode)
-	}
-	body := new(bytes.Buffer)
-	body.ReadFrom(res.Body)
-	if !bytes.Contains(body.Bytes(), []byte(`composites: 0`)) {
-		t.Errorf("body = %q; want composites: 0", body.String())
-	}
-	if len(composites) != 0 {
-		t.Errorf("composites = %v; want empty", composites)
+	// write invalid JSON
+	if err := os.WriteFile(managersFilePath, []byte(`{bad json`), 0644); err != nil {
+		t.Fatal(err)
 	}
 
-	// 2) Write two records to disk
-	temp1 := t.TempDir()
-	temp2 := t.TempDir()
-	wantRecs := []ManagerRecord{
-		{Name: "X", Path: temp1},
-		{Name: "Y", Path: temp2},
+	_, err := loadManagerRecords()
+	if err == nil {
+		t.Fatal("expected JSON unmarshal error, got nil")
 	}
-	if err := saveManagerRecords(wantRecs); err != nil {
-		t.Fatalf("saveManagerRecords: %v", err)
+}
+
+// Test loadManagerRecords with valid JSON
+func TestLoadManagerRecords_ValidJSON(t *testing.T) {
+	dir := t.TempDir()
+	resetState(t, dir)
+
+	want := []ManagerRecord{
+		{Name: "one", Path: "/tmp/one"},
+		{Name: "two", Path: "/tmp/two"},
+	}
+	data, _ := json.Marshal(want)
+	if err := os.MkdirAll(filepath.Dir(managersFilePath), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(managersFilePath, data, 0644); err != nil {
+		t.Fatal(err)
 	}
 
-	// clear in-memory and call handler again
-	composites = nil
-	req = httptest.NewRequest("GET", "/startup", nil)
-	w = httptest.NewRecorder()
-	startUpHandler(w, req)
-	res = w.Result()
-	defer res.Body.Close()
+	got, err := loadManagerRecords()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(got) != 2 || got[0] != want[0] || got[1] != want[1] {
+		t.Fatalf("loadManagerRecords = %v; want %v", got, want)
+	}
+}
 
-	if res.StatusCode != http.StatusOK {
-		t.Fatalf("status2 = %d; want 200", res.StatusCode)
+// Test saveManagerRecords writes a well-formatted JSON file
+func TestSaveManagerRecords(t *testing.T) {
+	dir := t.TempDir()
+	resetState(t, dir)
+
+	os.RemoveAll(filepath.Dir(managersFilePath))
+	recs := []ManagerRecord{{Name: "A", Path: "/p"}}
+	if err := saveManagerRecords(recs); err != nil {
+		t.Fatalf("saveManagerRecords failed: %v", err)
 	}
-	body.Reset()
-	body.ReadFrom(res.Body)
-	if !bytes.Contains(body.Bytes(), []byte(`composites: 2`)) {
-		t.Errorf("body2 = %q; want composites: 2", body.String())
+
+	data, err := os.ReadFile(managersFilePath)
+	if err != nil {
+		t.Fatal(err)
 	}
-	// in-memory slice should now have two entries
+	var loaded []ManagerRecord
+	if err := json.Unmarshal(data, &loaded); err != nil {
+		t.Fatalf("written file not valid JSON: %v", err)
+	}
+	if len(loaded) != 1 || loaded[0] != recs[0] {
+		t.Fatalf("saved records %v; want %v", loaded, recs)
+	}
+}
+
+// Test AddManager appends to composites and persists file
+func TestAddAndRemoveManager(t *testing.T) {
+	dir := t.TempDir()
+	resetState(t, dir)
+
+	// create a real dir so ConvertToObject won't error
+	tmp := t.TempDir()
+	// Add first
+	if err := AddManager("X", tmp); err != nil {
+		t.Fatalf("AddManager failed: %v", err)
+	}
+	if len(composites) != 1 {
+		t.Fatalf("expected 1 composite, got %d", len(composites))
+	}
+
+	// Add second
+	tmp2 := t.TempDir()
+	if err := AddManager("Y", tmp2); err != nil {
+		t.Fatalf("AddManager failed: %v", err)
+	}
 	if len(composites) != 2 {
-		t.Errorf("composites after startup = %v; want 2 entries", composites)
+		t.Fatalf("expected 2 composites, got %d", len(composites))
 	}
 
-	// Optional: check that the printed message is valid JSON and contains message
-	var msg struct{ Message string }
-	if err := json.Unmarshal(body.Bytes(), &msg); err != nil {
-		t.Errorf("response not valid JSON: %v", err)
+	// Remove one
+	if err := RemoveManager(tmp); err != nil {
+		t.Fatalf("RemoveManager failed: %v", err)
 	}
-	if !bytes.Contains([]byte(msg.Message), []byte("composites: "+strconv.Itoa(len(wantRecs)))) {
-		t.Errorf("message = %q; want composites count", msg.Message)
+	if len(composites) != 1 || composites[0].Path != tmp2 {
+		t.Fatalf("after RemoveManager, expected only %v, got %v", tmp2, composites)
+	}
+
+	// Check file reflects only tmp2
+	recs, err := loadManagerRecords()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(recs) != 1 || recs[0].Path != tmp2 {
+		t.Fatalf("file has %v; want only %v", recs, tmp2)
+	}
+}
+
+// Test startUpHandler happy path
+func TestStartUpHandler_Success(t *testing.T) {
+	dir := t.TempDir()
+	resetState(t, dir)
+	composites = nil
+
+	// Add two managers
+	tmp1 := t.TempDir()
+	tmp2 := t.TempDir()
+	if err := AddManager("M1", tmp1); err != nil {
+		t.Fatal(err)
+	}
+	if err := AddManager("M2", tmp2); err != nil {
+		t.Fatal(err)
+	}
+
+	// reset composites so startUpHandler rebuilds from disk
+	composites = nil
+
+	req := httptest.NewRequest(http.MethodGet, "/startUp", nil)
+	rr := httptest.NewRecorder()
+	startUpHandler(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Fatalf("handler returned status %d; want %d", status, http.StatusOK)
+	}
+
+	var resp startUpResponse
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("could not decode response: %v", err)
+	}
+
+	expectedMsg := "Request successful!, composites: " + strconv.Itoa(2)
+	if resp.ResponseMessage != expectedMsg {
+		t.Errorf("got message %q; want %q", resp.ResponseMessage, expectedMsg)
+	}
+	if len(resp.ManagerNames) != 2 ||
+		resp.ManagerNames[0] != "M1" ||
+		resp.ManagerNames[1] != "M2" {
+		t.Errorf("got names %v; want [M1 M2]", resp.ManagerNames)
+	}
+}
+
+// Test startUpHandler when ReadFile fails
+func TestStartUpHandler_LoadError(t *testing.T) {
+	// point the managersFilePath at a directory
+	dir := t.TempDir()
+	SetManagersFilePath(dir)
+	composites = nil
+
+	req := httptest.NewRequest(http.MethodGet, "/startUp", nil)
+	rr := httptest.NewRecorder()
+	startUpHandler(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d; want %d", rr.Code, http.StatusBadRequest)
+	}
+	body := rr.Body.String()
+	if !bytes.Contains([]byte(body), []byte("Internal error:")) {
+		t.Errorf("body = %q; want to contain Internal error", body)
+	}
+}
+
+// replace your flakyWriter definition with this:
+
+type flakyWriter struct {
+	header     http.Header
+	status     int
+	body       bytes.Buffer
+	writeCount int
+}
+
+// Header must be a method, not a field.
+func (w *flakyWriter) Header() http.Header {
+	return w.header
+}
+
+func (w *flakyWriter) WriteHeader(code int) {
+	w.status = code
+}
+
+func (w *flakyWriter) Write(p []byte) (int, error) {
+	w.writeCount++
+	if w.writeCount == 1 {
+		// simulate a failure on the first write
+		return 0, fmt.Errorf("flaky write error")
+	}
+	return w.body.Write(p)
+}
+
+// then in your test init it like this:
+func TestStartUpHandler_EncodeError(t *testing.T) {
+	dir := t.TempDir()
+	resetState(t, dir)
+	composites = nil
+
+	// write an empty slice so loadManagerRecords passes
+	if err := saveManagerRecords([]ManagerRecord{}); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/startUp", nil)
+	w := &flakyWriter{header: make(http.Header)}
+	startUpHandler(w, req)
+
+	// after the first JSON write fails, we expect a 500
+	if w.status != http.StatusInternalServerError {
+		t.Fatalf("status = %d; want %d", w.status, http.StatusInternalServerError)
+	}
+	if !bytes.Contains(w.body.Bytes(), []byte("Failed to encode response")) {
+		t.Errorf("body = %q; want fallback error", w.body.String())
 	}
 }
