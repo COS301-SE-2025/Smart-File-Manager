@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -302,6 +304,48 @@ func printDirectoryWithMetadata(dir *pb.Directory, num int) {
 
 }
 
+// endpoint called using no grpc:
+func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GOVERSION OF loadTree called")
+	w.Header().Set("Content-Type", "application/json")
+
+	name := r.URL.Query().Get("name")
+	mu.Lock()
+	defer mu.Unlock()
+
+	for _, c := range composites {
+		if c.Name == name {
+			// build the nested []FileNode
+			// err := grpcFunc(c, "METADATA")
+			// if err != nil {
+			// 	log.Fatalf("grpcFunc failed: %v", err)
+			// 	http.Error(w, "internal server error, GRPC CALLED WRONG", http.StatusInternalServerError)
+			// }
+			children := GoSidecreateDirectoryJSONStructure(c)
+			// for _, i := range c.Subfolders {
+
+			// }
+			// FileNode
+			// Folder
+
+			root := DirectoryTreeJson{
+				Name:     c.Name,
+				IsFolder: true,
+				Children: children,
+			}
+
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
+
+			return
+		}
+	}
+
+	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
+
+}
+
 // actual api endpoint function
 func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("loadTree called")
@@ -339,6 +383,77 @@ func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // helper recursive function
+func GoSidecreateDirectoryJSONStructure(folder *Folder) []FileNode {
+	var nodes []FileNode
+
+	for _, file := range folder.Files {
+
+		fi, err := os.Stat(file.Path)
+
+		md := &Metadata{}
+
+		// sysInfo := fi.Sys()
+		// if sysInfo == nil {
+		// 	fmt.Println("System-specific file info not available.")
+
+		// }
+
+		// winSysInfo, ok := sysInfo.(*syscall.Win32FileAttributeData)
+		// if !ok {
+		// 	fmt.Println("Not a Windows system or unexpected system info type.")
+
+		// }
+		//time.Unix(0, winSysInfo.CreationTime.Nanoseconds()
+
+		if err != nil {
+			fmt.Println(err)
+			md = nil
+		} else {
+			layout := "2006-01-02 15:04"
+			md.Size = strconv.FormatInt(fi.Size(), 10)
+
+			md.DateCreated = fi.ModTime().Format(layout)
+			md.LastModified = fi.ModTime().Format(layout)
+
+			md.MimeType = ""
+			lastDotIndex := strings.LastIndex(file.Name, ".")
+			if lastDotIndex != -1 {
+				// Slice the string from the last period's index to the end
+				md.MimeType = file.Name[lastDotIndex:]
+			} else {
+				md.MimeType = "mystery"
+			}
+
+		}
+
+		tags := file.Tags
+
+		nodes = append(nodes, FileNode{
+			Name:     file.Name,
+			Path:     file.Path,
+			IsFolder: false,
+			Tags:     tags,
+			Metadata: md,
+		})
+	}
+
+	for _, sub := range folder.Subfolders {
+		// recurse first
+		childNodes := GoSidecreateDirectoryJSONStructure(sub)
+
+		nodes = append(nodes, FileNode{
+			Name:     sub.Name,
+			Path:     sub.Path,
+			IsFolder: true,
+			Tags:     sub.Tags,
+			Metadata: &Metadata{},
+			Children: childNodes,
+		})
+	}
+
+	return nodes
+}
+
 func createDirectoryJSONStructure(folder *Folder) []FileNode {
 	var nodes []FileNode
 
