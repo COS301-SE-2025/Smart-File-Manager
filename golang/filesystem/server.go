@@ -26,7 +26,9 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mu.Lock()
-	composites = append(composites, composite)
+	// composites = append(composites, composite)
+	//appendng happens in this:
+	AddManager(managerName, filePath)
 	mu.Unlock()
 
 	// fmt.Println("Composite added:")
@@ -146,9 +148,9 @@ func HandleRequests() {
 	http.HandleFunc("/removeTag", removeTagHandler)
 	http.HandleFunc("/loadTreeData", loadTreeDataHandler)
 	http.HandleFunc("/sortTree", sortTreeHandler)
+	http.HandleFunc("/startUp", startUpHandler)
 	http.HandleFunc("/lock", lockHandler)
 	http.HandleFunc("/unlock", unlockHandler)
-
 	fmt.Println("Server started on port 51000")
 	// http.ListenAndServe(":51000", nil)
 	http.ListenAndServe("0.0.0.0:51000", nil)
