@@ -28,6 +28,7 @@ func ConvertToObject(managerName, folderPath string) (*Folder, error) {
 }
 
 // exploreDown reads the directory at path and adds subfolders/files to folder
+// It automatically locks the folder and all its descendants if it contains a hidden subfolder.
 func exploreDown(folder *Folder, path string) error {
 	entries, err := os.ReadDir(path)
 	if err != nil {
@@ -35,7 +36,8 @@ func exploreDown(folder *Folder, path string) error {
 	}
 
 	for _, entry := range entries {
-		fullPath := filepath.Join(path, entry.Name())
+		name := entry.Name()
+		fullPath := filepath.Join(path, name)
 		info, err := entry.Info()
 		if err != nil {
 			continue
@@ -43,7 +45,7 @@ func exploreDown(folder *Folder, path string) error {
 
 		if entry.IsDir() {
 			sub := &Folder{
-				Name:         entry.Name(),
+				Name:         name,
 				Path:         fullPath,
 				CreationDate: info.ModTime(),
 			}
@@ -53,12 +55,20 @@ func exploreDown(folder *Folder, path string) error {
 			}
 		} else {
 			file := &File{
-				Name:     entry.Name(),
+				Name:     name,
 				Path:     fullPath,
 				Metadata: []*MetadataEntry{},
 				Tags:     []string{},
 			}
 			folder.AddFile(file)
+		}
+	}
+
+	for _, sub := range folder.Subfolders {
+		if strings.HasPrefix(sub.Name, ".") {
+			folder.LockByPath(folder.Path)
+			fmt.Printf("Auto-locked folder '%s' and contents because it contains hidden folder '%s'\n", folder.Path, sub.Name)
+			break
 		}
 	}
 	return nil
