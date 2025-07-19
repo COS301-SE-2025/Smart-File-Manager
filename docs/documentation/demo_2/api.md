@@ -312,6 +312,40 @@ POST /removeTag?path={path}&tag={tag}
 
 * Exception if removal fails.
 
+## Locking
+
+Locks a file or folder. When locking a folder all sub-folders, -files are also locked.
+
+**Endpoint**
+
+```
+/lock?path=../../testRootFolder
+```
+
+**Returns:**
+
+* `true` on success.
+
+**Throws:**
+
+* Exception if removal fails.
+  
+## Unlocking
+
+Unlocks a file or folder. When unlocking a folder all sub-folders, -files are also unlocked
+
+**Endpoint**
+```
+/unlock?path=../../testRootFolder
+```
+
+**Returns:**
+
+* `true` on success.
+
+**Throws:**
+
+* Exception if removal fails.
 ---
 
 ## Notes
