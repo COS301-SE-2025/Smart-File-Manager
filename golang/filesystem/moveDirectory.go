@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 )
 
 var root string = getPath()
@@ -43,6 +44,19 @@ func moveContent(item *Folder) {
 }
 
 func CreateDirectoryStructure(item *Folder) {
+	// Create the directory structure based on the composite item
+	//base case
+	if item.Subfolders == nil {
+		target := filepath.Join(root, "archives", item.NewPath)
+		err := os.MkdirAll(target, 0755)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+	for _, subfolder := range item.Subfolders {
+		CreateDirectoryStructure(subfolder)
+	}
 
 }
 
