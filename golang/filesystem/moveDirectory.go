@@ -7,10 +7,9 @@ import (
 	"path/filepath"
 )
 
-var root string = getPath()
+var root string
 
 func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
-
 	composites := GetComposites()
 	if len(composites) == 0 {
 		http.Error(w, "No managers found", http.StatusNotFound)
@@ -26,16 +25,18 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 		if item.Name == compositeName {
 			//build the directory structure for the smart manager
 			CreateDirectoryStructure(item)
-			fmt.Println("Directory structure created for composite:", compositeName)
+			// fmt.Println("Directory structure created for composite:", compositeName)
 			//Move the content of the smart manager
 			moveContent(item)
-			fmt.Println("Content moved for composite:", compositeName)
+			// fmt.Println("Content moved for composite:", compositeName)
 			w.Write([]byte("true"))
 			return
 		}
 	}
 	fmt.Println("Smart manager not found: ", compositeName)
 	w.Write([]byte("false"))
+	curDir, _ := os.Getwd()
+	fmt.Println("Current working directory:", curDir)
 
 }
 
@@ -44,20 +45,28 @@ func moveContent(item *Folder) {
 }
 
 func CreateDirectoryStructure(item *Folder) {
-	// Create the directory structure based on the composite item
-	//base case
-	if item.Subfolders == nil {
-		target := filepath.Join(root, "archives", item.NewPath)
-		err := os.MkdirAll(target, 0755)
+	root = getPath()
+	//call the recursive function to create the directory structure
+	CreateDirectoryStructureRecursive(item)
+	//change root back to original path
+	os.Chdir("filesystem")
+}
+func CreateDirectoryStructureRecursive(item *Folder) {
+	if item == nil {
+		return
+	}
+
+	if len(item.Subfolders) == 0 {
+		targetPath := filepath.Join(root, "archives", item.Name, item.NewPath)
+		err := os.MkdirAll(targetPath, 0755)
 		if err != nil {
 			panic(err)
 		}
 		return
 	}
 	for _, subfolder := range item.Subfolders {
-		CreateDirectoryStructure(subfolder)
+		CreateDirectoryStructureRecursive(subfolder)
 	}
-
 }
 
 func getPath() string { // navigate to the correct working directory
