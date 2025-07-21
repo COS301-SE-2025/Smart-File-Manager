@@ -32,6 +32,7 @@ func SetManagersFilePath(p string) {
 // api entry
 func startUpHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("setup called")
+	composites = nil
 	recs, err := loadManagerRecords()
 
 	if err != nil {
