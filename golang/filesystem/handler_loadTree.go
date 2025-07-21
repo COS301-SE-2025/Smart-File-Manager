@@ -48,7 +48,7 @@ func printFolderDetails(folder *Folder, indent int) {
 
 	fmt.Printf("%sFolder: %s\n", prefix, folder.Name)
 	fmt.Printf("%sPath: %s\n", prefix, folder.Path)
-	fmt.Printf("%sNewPath: %s\n", prefix, folder.newPath)
+	fmt.Printf("%sNewPath: %s\n", prefix, folder.NewPath)
 	fmt.Printf("%sCreationDate: %s\n", prefix, folder.CreationDate.Format(time.RFC3339))
 	fmt.Printf("%sLocked: %v\n", prefix, folder.Locked)
 	if len(folder.Tags) > 0 {
@@ -61,7 +61,7 @@ func printFolderDetails(folder *Folder, indent int) {
 	for _, file := range folder.Files {
 		fmt.Printf("%s  File: %s\n", prefix, file.Name)
 		fmt.Printf("%s  Path: %s\n", prefix, file.Path)
-		fmt.Printf("%s  NewPath: %s\n", prefix, file.newPath)
+		fmt.Printf("%s  NewPath: %s\n", prefix, file.NewPath)
 		if len(file.Tags) > 0 {
 			fmt.Printf("%s  Tags: %v\n", prefix, file.Tags)
 		}

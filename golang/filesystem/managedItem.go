@@ -16,7 +16,7 @@ type MetadataEntry struct {
 type File struct {
 	Name     string
 	Path     string
-	newPath  string
+	NewPath  string
 	Metadata []*MetadataEntry
 	Tags     []string
 	Locked   bool // Lock status for file
@@ -26,7 +26,7 @@ type File struct {
 type Folder struct {
 	Name         string
 	Path         string
-	newPath      string
+	NewPath      string
 	CreationDate time.Time
 	Locked       bool // Lock status for folder
 	Files        []*File
