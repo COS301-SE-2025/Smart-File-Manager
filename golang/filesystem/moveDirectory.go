@@ -46,6 +46,7 @@ func moveContent(item *Folder) {
 
 func CreateDirectoryStructure(item *Folder) {
 	root = getPath()
+	root = filepath.Join(root, "archives", item.Name)
 	//call the recursive function to create the directory structure
 	CreateDirectoryStructureRecursive(item)
 	//change root back to original path
@@ -57,7 +58,7 @@ func CreateDirectoryStructureRecursive(item *Folder) {
 	}
 
 	if len(item.Subfolders) == 0 {
-		targetPath := filepath.Join(root, "archives", item.Name, item.NewPath)
+		targetPath := filepath.Join(root, item.NewPath)
 		err := os.MkdirAll(targetPath, 0755)
 		if err != nil {
 			panic(err)
@@ -69,14 +70,22 @@ func CreateDirectoryStructureRecursive(item *Folder) {
 	}
 }
 
-func getPath() string { // navigate to the correct working directory
-
-	err := os.Chdir("..")
+func getPath() string {
+	dir, err := os.Getwd()
 	if err != nil {
-		fmt.Println("Error changing directory:", err)
-		return "NOPTH"
+		panic(err)
 	}
 
-	cwd, _ := os.Getwd()
-	return cwd
+	// Search upward for "Smart-File-Manager"
+	for {
+		if filepath.Base(dir) == "Smart-File-Manager" {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break // hit root
+		}
+		dir = parent
+	}
+	panic("could not find Smart-File-Manager root")
 }

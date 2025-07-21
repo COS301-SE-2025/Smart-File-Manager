@@ -11,10 +11,10 @@ func main() {
 	filesystem.HandleRequests()
 
 	// print current composites
-	composites := filesystem.GetComposites()
-	for _, item := range composites {
-		item.Display(0)
-	}
+	// composites := filesystem.GetComposites()
+	// for _, item := range composites {
+	// 	item.Display(0)
+	// }
 }
 func mockFolderStructure() *filesystem.Folder {
 	return &filesystem.Folder{
