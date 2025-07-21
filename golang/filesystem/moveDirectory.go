@@ -25,10 +25,8 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 		if item.Name == compositeName {
 			//build the directory structure for the smart manager
 			CreateDirectoryStructure(item)
-			// fmt.Println("Directory structure created for composite:", compositeName)
-			//Move the content of the smart manager
+			//move the content of the smart manager to the new path
 			moveContent(item)
-			// fmt.Println("Content moved for composite:", compositeName)
 			w.Write([]byte("true"))
 			return
 		}
@@ -42,6 +40,27 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 
 func moveContent(item *Folder) {
 	//Move the files&folders according to new path after sorting
+	root = getPath()
+	root = filepath.Join(root, "archives", item.Name)
+	moveContentRecursive(item)
+	//change root back to original path
+	os.Chdir("filesystem")
+}
+
+func moveContentRecursive(item *Folder) {
+	if item == nil {
+		return
+	}
+
+	for _, file := range item.Files {
+		sourcePath := file.Path
+		targetPath := filepath.Join(root, file.NewPath)
+		// Move the file
+		err := os.Rename(sourcePath, targetPath)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 func CreateDirectoryStructure(item *Folder) {
