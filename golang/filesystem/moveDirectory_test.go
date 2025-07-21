@@ -20,9 +20,9 @@ func TestCreateDirectoryStructure(t *testing.T) {
 	}
 
 	// Step 2: Ensure archives directory is removed after test
-	t.Cleanup(func() {
-		_ = os.RemoveAll("archives")
-	})
+	// t.Cleanup(func() {
+	// 	_ = os.RemoveAll("archives")
+	// })
 
 	// Step 3: Create a mock folder structure
 	managers := []string{"manager1", "manager2", "manager3"}
@@ -79,6 +79,68 @@ func TestCreateDirectoryStructure(t *testing.T) {
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("directory tree mismatch:\n got:  %#v\n want: %#v", got, want)
+	}
+}
+
+func TestMoveContent(t *testing.T) {
+	projectRoot := findProjectRoot(t)
+	archivesDir := filepath.Join(projectRoot, "archives")
+	filesysDir := filepath.Join(projectRoot, "golang", "filesystem")
+
+	// Clean up old test state
+	_ = os.RemoveAll(archivesDir)
+	_ = os.MkdirAll(filepath.Join(archivesDir, "myManager", "greeting"), 0755)
+
+	// Create a dummy file in filesystem/ directory
+	srcFilename := "hello.txt"
+	srcPath := filepath.Join(filesysDir, srcFilename)
+	content := []byte("👋 world")
+	if err := os.WriteFile(srcPath, content, 0644); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(srcPath)
+
+	// Folder to move
+	item := &Folder{
+		Name: "myManager",
+		Files: []*File{
+			{
+				Name:    srcFilename,
+				Path:    srcFilename, // relative to filesysDir
+				NewPath: "greeting/hi.txt",
+			},
+		},
+	}
+
+	// Change working directory to where `moveContent` expects to be (filesystem/)
+	origWd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(filesysDir); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(origWd)
+
+	// Manually set root so it doesn't call getPath
+	root = filepath.Join(projectRoot, "archives", item.Name)
+
+	// Run function under test
+	moveContent(item)
+
+	// Assert source no longer exists
+	if _, err := os.Stat(srcFilename); !os.IsNotExist(err) {
+		t.Errorf("expected source %s to be gone, got err=%v", srcFilename, err)
+	}
+
+	// Assert target exists and has correct content
+	destPath := filepath.Join(root, item.Files[0].NewPath)
+	data, err := os.ReadFile(destPath)
+	if err != nil {
+		t.Fatalf("failed to read dest file: %v", err)
+	}
+	if string(data) != string(content) {
+		t.Errorf("dest content = %q; want %q", data, content)
 	}
 }
 
