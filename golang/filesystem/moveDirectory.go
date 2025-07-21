@@ -3,7 +3,10 @@ package filesystem
 import (
 	"fmt"
 	"net/http"
+	"os"
 )
+
+var root string = getPath()
 
 func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -21,7 +24,7 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 	for _, item := range composites {
 		if item.Name == compositeName {
 			//build the directory structure for the smart manager
-			createDirectoryStructure(item)
+			CreateDirectoryStructure(item)
 			fmt.Println("Directory structure created for composite:", compositeName)
 			//Move the content of the smart manager
 			moveContent(item)
@@ -39,7 +42,18 @@ func moveContent(item *Folder) {
 	//Move the files&folders according to new path after sorting
 }
 
-func createDirectoryStructure(item *Folder) {
-	//Create the directory structure for the sorted content
+func CreateDirectoryStructure(item *Folder) {
 
+}
+
+func getPath() string { // navigate to the correct working directory
+
+	err := os.Chdir("..")
+	if err != nil {
+		fmt.Println("Error changing directory:", err)
+		return "NOPTH"
+	}
+
+	cwd, _ := os.Getwd()
+	return cwd
 }
