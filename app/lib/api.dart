@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'models/file_tree_node.dart';
+import 'models/startup_response.dart';
 
 const uri = "http://localhost:51000";
 
@@ -11,7 +12,6 @@ class Api {
       final response = await http.get(
         Uri.parse("$uri/loadTreeData?name=$name"),
       );
-      print(response.body);
 
       if (response.statusCode == 200) {
         return FileTreeNode.fromJson(
@@ -27,11 +27,29 @@ class Api {
     }
   }
 
+  //Call to initialize app and get existing smart managers
+  static Future<StartupResponse> startUp() async {
+    try {
+      final response = await http.get(Uri.parse("$uri/startUp"));
+
+      if (response.statusCode == 200) {
+        return StartupResponse.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to load data: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error loading initial data from startup: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
   //Call To Sort Tree structure
   static Future<FileTreeNode> sortManager(String name) async {
     try {
       final response = await http.get(Uri.parse("$uri/sortTree?name=$name"));
-      print(response.body);
 
       if (response.statusCode == 200) {
         return FileTreeNode.fromJson(
