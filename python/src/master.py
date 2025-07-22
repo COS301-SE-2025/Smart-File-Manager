@@ -62,7 +62,7 @@ class Master():
                 full_vecs.append(file["full_vector"])
 
             # Recursively cluster and return a directory
-            kmeans = KMeansCluster(int(len(full_vecs)*(1/6)))
+            kmeans = KMeansCluster(int(len(full_vecs)*(1/6)), 10, self.full_vec.model)
             response_directory = kmeans.dirCluster(full_vecs,files)
             kmeans.printDirectoryTree(response_directory) 
             response = DirectoryResponse(root=response_directory, response_code=200, response_msg="Files successfully clustered")
