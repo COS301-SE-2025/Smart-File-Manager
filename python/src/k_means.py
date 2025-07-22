@@ -56,7 +56,7 @@ class KMeansCluster:
         sorted_keywords = sorted(keyword_scores.items(), key=lambda x: x[1], reverse=True)
         top_keywords = [kw for kw, _ in sorted_keywords[:max_keywords]]
 
-        if not top_keywords:
+        if not top_keywords: # probably an image. Can use a suffix if there are multiple of these folders. Or we can use their names in a sentence transformer
             return "Misc"
         
         # Encode and find a centroid
@@ -144,11 +144,11 @@ class KMeansCluster:
 
 
     def printDirectoryTree(self, directory, indent=""):
-        print(f"{indent}{directory.name}/")
+       # print(f"{indent}{directory.name}/")
         for file in directory.files:
-            print(f"{indent} - {file.name} ")
+           # print(f"{file.name} ")
           #  print(f"{indent} - {file.original_path} ")
-           # print(f"{indent} - {file.new_path} ")
+            print(f'"{file.new_path}",')
         for subdir in directory.directories:
             self.printDirectoryTree(subdir, indent + "  ")
 
