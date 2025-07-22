@@ -152,7 +152,11 @@ func HandleRequests() {
 	http.HandleFunc("/startUp", startUpHandler)
 	http.HandleFunc("/lock", lockHandler)
 	http.HandleFunc("/unlock", unlockHandler)
+
+	http.HandleFunc("/search", SearchHandler())
+
 	fmt.Println("Server started on port 51000")
+
 	// http.ListenAndServe(":51000", nil)
 	http.ListenAndServe("0.0.0.0:51000", nil)
 
