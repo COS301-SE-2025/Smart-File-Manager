@@ -1,13 +1,15 @@
 # the actual clustering that will make a directory to send back to go
+import os
 
 from sklearn.cluster import KMeans
+from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
 from directory_builder import DirectoryCreator
 from collections import defaultdict
 
 class KMeansCluster:
-    def __init__(self, numClusters):
+    def __init__(self, numClusters, depth, model):
         self.kmeans = KMeans(
             n_clusters=numClusters,
             n_init=50, 
@@ -17,6 +19,10 @@ class KMeansCluster:
             )
         self.n_clusters = numClusters
         self.minSize = 2 # hardcoded for now # even numbers are good
+        self.maxDepth = depth
+        self.maxKeywords = 10 # for folder name creation
+        # temporary
+        self.model = model
 
 
     def cluster(self,files):
@@ -30,35 +36,56 @@ class KMeansCluster:
         return predictions, centers_rounded
     
     def dirCluster(self,full_vecs,files):
-        builder = DirectoryCreator("Root",files)
+        builder = DirectoryCreator("Root",files) # instead of root it should be the parent folder
         root_dir = self.recDirCluster(full_vecs, files, 0, "Directory", builder)
         #print(root_dir)
         #self.printMetaData(root_dir)
         return root_dir
         
+    def generateFolderName(self, files, max_keywords = 10):
+        all_keywords = []
+        keyword_scores = {}
+
+        for file in files:
+            for kw,score in file["keywords"]:
+                if kw not in keyword_scores:
+                    keyword_scores[kw] = 0
+                keyword_scores[kw] += 1.0 / (1.0 + score)
+
+        # Top weighted keywrods
+        sorted_keywords = sorted(keyword_scores.items(), key=lambda x: x[1], reverse=True)
+        top_keywords = [kw for kw, _ in sorted_keywords[:max_keywords]]
+
+        if not top_keywords:
+            return "Misc"
+        
+        # Encode and find a centroid
+        embeddings = self.model.encode(top_keywords)
+        centroid = np.mean(embeddings, axis=0,keepdims=True)
+
+        # Best keyword
+        sims = cosine_similarity(centroid, embeddings)[0]
+        best_idx = int(np.argmax(sims))
+        folder_keyword = top_keywords[best_idx]
+        folder_keyword.replace(".","")
+
+        return folder_keyword.replace(" ", "_")
+
+
     def recDirCluster(self,full_vecs,files, depth, dir_prefix, builder):
         # Assign directory name
-        dir_name = f"{dir_prefix}_{depth}"
-
-
-        # Added some code here for the directory names but its not good
-        """
-        all_top_keywords = []
-        for file in files:
-            if len(file["keywords"]) > 0:
-                all_top_keywords.append(file["keywords"][0])
-
-        all_top_keywords = sorted(all_top_keywords, key=lambda x : x[1], reverse=True)
-        if len(all_top_keywords) > 0:
-            dir_name = all_top_keywords[0][0]
+        folder_name = self.generateFolderName(files)        
+        #dir_name = f"{dir_prefix}/{folder_name}"
+        if folder_name.lower() not in [part.lower() for part in dir_prefix.split(os.sep)]:
+            dir_name = os.path.join(dir_prefix, folder_name)
         else:
-            dir_name = "Images"
-        """
+            dir_name = dir_prefix
+        
 
             
 
         # Quit if not enough folders
-        if len(full_vecs) < self.minSize or depth > 30:
+        if len(full_vecs) < self.minSize or depth > self.maxDepth: # depth can be changed on init of kmeans
             return builder.buildDirectory(dir_name, files, []) 
         
         # if there are too many clusters reduce it 
@@ -105,7 +132,7 @@ class KMeansCluster:
             # Good number of entries, atleast minsize so recursively check (if exactly minsize it will make a dir of these two folders)
             elif len(entries) >= self.minSize:                  
                 sub_vecs = [e["full_vector"] for e in entries]
-                sub_dir = self.recDirCluster(sub_vecs,entries,depth+1,f"{dir_name}_{label}", builder)
+                sub_dir = self.recDirCluster(sub_vecs,entries,depth+1,f"{dir_name}", builder)
                 subdirs.append(sub_dir)
             # Not quite enough files to recluster so keep them together   
             else:
@@ -120,6 +147,8 @@ class KMeansCluster:
         print(f"{indent}{directory.name}/")
         for file in directory.files:
             print(f"{indent} - {file.name} ")
+          #  print(f"{indent} - {file.original_path} ")
+           # print(f"{indent} - {file.new_path} ")
         for subdir in directory.directories:
             self.printDirectoryTree(subdir, indent + "  ")
 
