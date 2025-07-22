@@ -84,10 +84,10 @@ class _MainNavigationState extends State<MainNavigation> {
 
   void _loadExistingManagers() async {
     if (_isInitialized) return;
-    
+
     try {
       final startupResponse = await Api.startUp();
-      
+
       setState(() {
         _managers.clear();
         for (String managerName in startupResponse.managerNames) {
@@ -95,7 +95,7 @@ class _MainNavigationState extends State<MainNavigation> {
             ManagerNavigationItem(
               icon: Icons.folder,
               label: managerName,
-              directory: '', // Directory path is not returned by startup endpoint
+              directory: '',
               isLoading: false,
             ),
           );
