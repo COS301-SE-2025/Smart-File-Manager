@@ -47,6 +47,7 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   //has a list of managers that are created
   final List<ManagerNavigationItem> _managers = [];
+  bool _isInitialized = false;
 
   //if manager exist, ignore otherwise proceed
   bool _managerNameExists(String name) {
@@ -73,6 +74,40 @@ class _MainNavigationState extends State<MainNavigation> {
             ],
           ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingManagers();
+  }
+
+  void _loadExistingManagers() async {
+    if (_isInitialized) return;
+    
+    try {
+      final startupResponse = await Api.startUp();
+      
+      setState(() {
+        _managers.clear();
+        for (String managerName in startupResponse.managerNames) {
+          _managers.add(
+            ManagerNavigationItem(
+              icon: Icons.folder,
+              label: managerName,
+              directory: '', // Directory path is not returned by startup endpoint
+              isLoading: false,
+            ),
+          );
+        }
+        _isInitialized = true;
+      });
+    } catch (e) {
+      print('Error loading existing managers: $e');
+      setState(() {
+        _isInitialized = true;
+      });
+    }
   }
 
   @override
