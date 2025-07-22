@@ -30,6 +30,7 @@ type FileNode struct {
 	Tags     []string   `json:"tags,omitempty"`
 	Metadata *Metadata  `json:"metadata,omitempty"`
 	Children []FileNode `json:"children,omitempty"`
+	Locked   bool       `json:"locked"`
 }
 
 type Metadata struct {
@@ -140,13 +141,15 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 			Path:     file.OriginalPath,
 			Tags:     tagsToStrings(file.Tags),
 			Metadata: metadataConverter(file.Metadata),
+			Locked:   file.IsLocked,
 		})
 	}
 
 	for _, sub := range dir.Directories {
 		child := &Folder{
-			Name: sub.Name,
-			Path: sub.Path,
+			Name:   sub.Name,
+			Path:   sub.Path,
+			Locked: sub.IsLocked,
 		}
 		mergeProtoToFolder(sub, child)
 		existing.Subfolders = append(existing.Subfolders, child)
@@ -189,6 +192,7 @@ func convertFolderToProto(f Folder) *pb.Directory {
 			Name:         file.Name,
 			OriginalPath: file.Path,
 			Tags:         stringsToTags(file.Tags),
+			IsLocked:     file.Locked,
 		})
 		// case *fs.Folder:
 		// 	protoDir.Directories = append(protoDir.Directories, convertFolderToProto(v))
@@ -226,6 +230,7 @@ func convertProtoToFolder(dir *pb.Directory) *Folder {
 			Path:     file.OriginalPath,
 			Tags:     tagsToStrings(file.Tags),
 			Metadata: metadataConverter(file.Metadata),
+			Locked:   file.IsLocked,
 		})
 		// case *fs.Folder:
 		// 	protoDir.Directories = append(protoDir.Directories, convertFolderToProto(v))
@@ -356,6 +361,7 @@ func createDirectoryJSONStructure(folder *Folder) []FileNode {
 			IsFolder: false,
 			Tags:     tags,
 			Metadata: md,
+			Locked:   file.Locked,
 		})
 	}
 
@@ -370,6 +376,7 @@ func createDirectoryJSONStructure(folder *Folder) []FileNode {
 			Tags:     sub.Tags,
 			Metadata: &Metadata{},
 			Children: childNodes,
+			Locked:   sub.Locked,
 		})
 	}
 

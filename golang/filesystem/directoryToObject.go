@@ -38,6 +38,7 @@ func exploreDown(folder *Folder, path string) error {
 	for _, entry := range entries {
 		name := entry.Name()
 		fullPath := filepath.Join(path, name)
+
 		info, err := entry.Info()
 		if err != nil {
 			continue
@@ -48,6 +49,7 @@ func exploreDown(folder *Folder, path string) error {
 				Name:         name,
 				Path:         fullPath,
 				CreationDate: info.ModTime(),
+				Locked:       false,
 			}
 			folder.AddSubfolder(sub)
 			if err := exploreDown(sub, fullPath); err != nil {
@@ -59,6 +61,7 @@ func exploreDown(folder *Folder, path string) error {
 				Path:     fullPath,
 				Metadata: []*MetadataEntry{},
 				Tags:     []string{},
+				Locked:   false,
 			}
 			folder.AddFile(file)
 		}

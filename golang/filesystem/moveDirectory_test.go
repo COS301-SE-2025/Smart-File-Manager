@@ -20,9 +20,9 @@ func TestCreateDirectoryStructure(t *testing.T) {
 	}
 
 	// Step 2: Ensure archives directory is removed after test
-	// t.Cleanup(func() {
-	// 	_ = os.RemoveAll("archives")
-	// })
+	t.Cleanup(func() {
+		_ = os.RemoveAll("archives")
+	})
 
 	// Step 3: Create a mock folder structure
 	managers := []string{"manager1", "manager2", "manager3"}
