@@ -315,18 +315,9 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 
 	for _, c := range composites {
 		if c.Name == name {
-			// build the nested []FileNode
-			// err := grpcFunc(c, "METADATA")
-			// if err != nil {
-			// 	log.Fatalf("grpcFunc failed: %v", err)
-			// 	http.Error(w, "internal server error, GRPC CALLED WRONG", http.StatusInternalServerError)
-			// }
+			
 			children := GoSidecreateDirectoryJSONStructure(c)
-			// for _, i := range c.Subfolders {
-
-			// }
-			// FileNode
-			// Folder
+			
 
 			root := DirectoryTreeJson{
 				Name:     c.Name,
