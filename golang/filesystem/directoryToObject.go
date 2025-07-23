@@ -38,6 +38,7 @@ func exploreDown(folder *Folder, path string) error {
 	for _, entry := range entries {
 		name := entry.Name()
 		fullPath := filepath.Join(path, name)
+
 		info, err := entry.Info()
 		if err != nil {
 			continue
@@ -48,10 +49,11 @@ func exploreDown(folder *Folder, path string) error {
 				Name:         name,
 				Path:         fullPath,
 				CreationDate: info.ModTime(),
+				Locked:       false,
 			}
 			folder.AddSubfolder(sub)
 			if err := exploreDown(sub, fullPath); err != nil {
-				fmt.Printf("warning: cannot explore %s: %v\n", fullPath, err)
+				// fmt.Printf("warning: cannot explore %s: %v\n", fullPath, err)
 			}
 		} else {
 			file := &File{
@@ -59,6 +61,7 @@ func exploreDown(folder *Folder, path string) error {
 				Path:     fullPath,
 				Metadata: []*MetadataEntry{},
 				Tags:     []string{},
+				Locked:   false,
 			}
 			folder.AddFile(file)
 		}
@@ -67,7 +70,7 @@ func exploreDown(folder *Folder, path string) error {
 	for _, sub := range folder.Subfolders {
 		if strings.HasPrefix(sub.Name, ".") {
 			folder.LockByPath(folder.Path)
-			fmt.Printf("Auto-locked folder '%s' and contents because it contains hidden folder '%s'\n", folder.Path, sub.Name)
+			// fmt.Printf("Auto-locked folder '%s' and contents because it contains hidden folder '%s'\n", folder.Path, sub.Name)
 			break
 		}
 	}

@@ -16,7 +16,7 @@ type MetadataEntry struct {
 type File struct {
 	Name     string
 	Path     string
-	newPath  string
+	NewPath  string
 	Metadata []*MetadataEntry
 	Tags     []string
 	Locked   bool // Lock status for file
@@ -26,7 +26,7 @@ type File struct {
 type Folder struct {
 	Name         string
 	Path         string
-	newPath      string
+	NewPath      string
 	CreationDate time.Time
 	Locked       bool // Lock status for folder
 	Files        []*File
@@ -115,13 +115,13 @@ func (f *Folder) LockByPath(path string) {
 // lockRecursive locks this folder and all nested folders and files
 func (f *Folder) lockRecursive() {
 	f.Locked = true
-	fmt.Printf("Folder '%s' locked\n", f.Path)
+	// fmt.Printf("Folder '%s' locked\n", f.Path)
 	for _, sf := range f.Subfolders {
 		sf.lockRecursive()
 	}
 	for _, file := range f.Files {
 		file.Locked = true
-		fmt.Printf("File '%s' locked\n", file.Path)
+		// fmt.Printf("File '%s' locked\n", file.Path)
 	}
 }
 
@@ -142,13 +142,13 @@ func (f *Folder) UnlockByPath(path string) {
 // unlockRecursive unlocks this folder and all nested folders and files
 func (f *Folder) unlockRecursive() {
 	f.Locked = false
-	fmt.Printf("Folder '%s' unlocked\n", f.Path)
+	// fmt.Printf("Folder '%s' unlocked\n", f.Path)
 	for _, sf := range f.Subfolders {
 		sf.unlockRecursive()
 	}
 	for _, file := range f.Files {
 		file.Locked = false
-		fmt.Printf("File '%s' unlocked\n", file.Path)
+		// fmt.Printf("File '%s' unlocked\n", file.Path)
 	}
 }
 

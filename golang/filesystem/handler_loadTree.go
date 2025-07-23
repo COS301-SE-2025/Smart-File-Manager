@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -30,6 +32,8 @@ type FileNode struct {
 	Tags     []string   `json:"tags,omitempty"`
 	Metadata *Metadata  `json:"metadata,omitempty"`
 	Children []FileNode `json:"children,omitempty"`
+	Locked   bool       `json:"locked"`
+	NewPath  string     `json:"newPath,omitempty"` // for moving files
 }
 
 type Metadata struct {
@@ -48,7 +52,7 @@ func printFolderDetails(folder *Folder, indent int) {
 
 	fmt.Printf("%sFolder: %s\n", prefix, folder.Name)
 	fmt.Printf("%sPath: %s\n", prefix, folder.Path)
-	fmt.Printf("%sNewPath: %s\n", prefix, folder.newPath)
+	fmt.Printf("%sNewPath: %s\n", prefix, folder.NewPath)
 	fmt.Printf("%sCreationDate: %s\n", prefix, folder.CreationDate.Format(time.RFC3339))
 	fmt.Printf("%sLocked: %v\n", prefix, folder.Locked)
 	if len(folder.Tags) > 0 {
@@ -61,7 +65,7 @@ func printFolderDetails(folder *Folder, indent int) {
 	for _, file := range folder.Files {
 		fmt.Printf("%s  File: %s\n", prefix, file.Name)
 		fmt.Printf("%s  Path: %s\n", prefix, file.Path)
-		fmt.Printf("%s  NewPath: %s\n", prefix, file.newPath)
+		fmt.Printf("%s  NewPath: %s\n", prefix, file.NewPath)
 		if len(file.Tags) > 0 {
 			fmt.Printf("%s  Tags: %v\n", prefix, file.Tags)
 		}
@@ -108,13 +112,7 @@ func grpcFunc(c *Folder, requestType string) error {
 		log.Fatalf("SendDirectoryStructure RPC failed: %v", err)
 	}
 
-	// fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
-	// printDirectory(resp.Root, 0)
-	// fmt.Println("========start of proto response======")
-	// fmt.Println("res code: " + strconv.FormatInt(int64(resp.ResponseCode), 10))
-	// fmt.Println("res message: " + resp.ResponseMsg)
-	// // printDirectoryWithMetadata(resp.Root, 0)
-	// fmt.Println("========end of proto response======")
+	fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
 
 	// convertProtoToFolder(resp.Root)
 	mergeProtoToFolder(resp.Root, c)
@@ -140,13 +138,16 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 			Path:     file.OriginalPath,
 			Tags:     tagsToStrings(file.Tags),
 			Metadata: metadataConverter(file.Metadata),
+			Locked:   file.IsLocked,
+			NewPath:  file.NewPath,
 		})
 	}
 
 	for _, sub := range dir.Directories {
 		child := &Folder{
-			Name: sub.Name,
-			Path: sub.Path,
+			Name:   sub.Name,
+			Path:   sub.Path,
+			Locked: sub.IsLocked,
 		}
 		mergeProtoToFolder(sub, child)
 		existing.Subfolders = append(existing.Subfolders, child)
@@ -189,6 +190,8 @@ func convertFolderToProto(f Folder) *pb.Directory {
 			Name:         file.Name,
 			OriginalPath: file.Path,
 			Tags:         stringsToTags(file.Tags),
+			IsLocked:     file.Locked,
+			NewPath:      file.NewPath,
 		})
 		// case *fs.Folder:
 		// 	protoDir.Directories = append(protoDir.Directories, convertFolderToProto(v))
@@ -226,6 +229,8 @@ func convertProtoToFolder(dir *pb.Directory) *Folder {
 			Path:     file.OriginalPath,
 			Tags:     tagsToStrings(file.Tags),
 			Metadata: metadataConverter(file.Metadata),
+			Locked:   file.IsLocked,
+			NewPath:  file.NewPath,
 		})
 		// case *fs.Folder:
 		// 	protoDir.Directories = append(protoDir.Directories, convertFolderToProto(v))
@@ -286,12 +291,8 @@ func printDirectoryWithMetadata(dir *pb.Directory, num int) {
 	for _, file := range dir.Files {
 		fmt.Println(space + "File name: " + file.Name)
 		fmt.Println(space + "File original path: " + file.OriginalPath)
-		fmt.Println(space + "=====METADATA=========")
-		metaData := file.Metadata
+		fmt.Println(space + "File new path: " + file.NewPath)
 
-		for _, singleData := range metaData {
-			fmt.Println(space + singleData.Key + "  :  " + singleData.Value)
-		}
 		fmt.Println("----")
 	}
 
@@ -299,6 +300,48 @@ func printDirectoryWithMetadata(dir *pb.Directory, num int) {
 	// 	newNum := num + 1
 	// 	printDirectoryWithMetadata(dir, newNum)
 	// }
+
+}
+
+// endpoint called using no grpc:
+func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GOVERSION OF loadTree called")
+	w.Header().Set("Content-Type", "application/json")
+
+	name := r.URL.Query().Get("name")
+	mu.Lock()
+	defer mu.Unlock()
+
+	for _, c := range composites {
+		if c.Name == name {
+			// build the nested []FileNode
+			// err := grpcFunc(c, "METADATA")
+			// if err != nil {
+			// 	log.Fatalf("grpcFunc failed: %v", err)
+			// 	http.Error(w, "internal server error, GRPC CALLED WRONG", http.StatusInternalServerError)
+			// }
+			children := GoSidecreateDirectoryJSONStructure(c)
+			// for _, i := range c.Subfolders {
+
+			// }
+			// FileNode
+			// Folder
+
+			root := DirectoryTreeJson{
+				Name:     c.Name,
+				IsFolder: true,
+				Children: children,
+			}
+
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
+
+			return
+		}
+	}
+
+	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
 
 }
 
@@ -339,6 +382,77 @@ func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // helper recursive function
+func GoSidecreateDirectoryJSONStructure(folder *Folder) []FileNode {
+	var nodes []FileNode
+
+	for _, file := range folder.Files {
+
+		fi, err := os.Stat(file.Path)
+
+		md := &Metadata{}
+
+		// sysInfo := fi.Sys()
+		// if sysInfo == nil {
+		// 	fmt.Println("System-specific file info not available.")
+
+		// }
+
+		// winSysInfo, ok := sysInfo.(*syscall.Win32FileAttributeData)
+		// if !ok {
+		// 	fmt.Println("Not a Windows system or unexpected system info type.")
+
+		// }
+		//time.Unix(0, winSysInfo.CreationTime.Nanoseconds()
+
+		if err != nil {
+			fmt.Println(err)
+			md = nil
+		} else {
+			layout := "2006-01-02 15:04"
+			md.Size = strconv.FormatInt(fi.Size(), 10)
+
+			md.DateCreated = fi.ModTime().Format(layout)
+			md.LastModified = fi.ModTime().Format(layout)
+
+			md.MimeType = ""
+			lastDotIndex := strings.LastIndex(file.Name, ".")
+			if lastDotIndex != -1 {
+				// Slice the string from the last period's index to the end
+				md.MimeType = file.Name[lastDotIndex:]
+			} else {
+				md.MimeType = "mystery"
+			}
+
+		}
+
+		tags := file.Tags
+
+		nodes = append(nodes, FileNode{
+			Name:     file.Name,
+			Path:     file.Path,
+			IsFolder: false,
+			Tags:     tags,
+			Metadata: md,
+		})
+	}
+
+	for _, sub := range folder.Subfolders {
+		// recurse first
+		childNodes := GoSidecreateDirectoryJSONStructure(sub)
+
+		nodes = append(nodes, FileNode{
+			Name:     sub.Name,
+			Path:     sub.Path,
+			IsFolder: true,
+			Tags:     sub.Tags,
+			Metadata: &Metadata{},
+			Children: childNodes,
+		})
+	}
+
+	return nodes
+}
+
 func createDirectoryJSONStructure(folder *Folder) []FileNode {
 	var nodes []FileNode
 
@@ -356,6 +470,8 @@ func createDirectoryJSONStructure(folder *Folder) []FileNode {
 			IsFolder: false,
 			Tags:     tags,
 			Metadata: md,
+			Locked:   file.Locked,
+			NewPath:  file.NewPath, // include NewPath for moving files
 		})
 	}
 
@@ -370,6 +486,8 @@ func createDirectoryJSONStructure(folder *Folder) []FileNode {
 			Tags:     sub.Tags,
 			Metadata: &Metadata{},
 			Children: childNodes,
+			Locked:   sub.Locked,
+			NewPath:  sub.NewPath,
 		})
 	}
 
