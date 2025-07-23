@@ -214,6 +214,29 @@ GET /sortTree?name={name}
 * Exception if the request fails.
 
 ---
+## moveDirectory
+
+After sorting a Smart Manager the user can choose to actually move the files that were sorted into a new sorted directory.
+
+**Parameters:**
+
+* `name` : Smart Manager name
+
+**Endpoint:**
+
+```
+GET /moveDirectory?name={name}
+```
+
+**Returns:**
+
+* `true` on success.
+* `false` on failure.
+
+**Throws:**
+
+* Exception if invalid.
+---
 
 ## addSmartManager
 
