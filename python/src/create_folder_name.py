@@ -20,9 +20,9 @@ class FolderNameCreator:
                 return "Untitled"
             
             keyword_scores = {}
-            print("-----------------------------")
+ #           print("-----------------------------")
             for file in files:
-                print("Considering file: ", file["filename"])
+#                print("Considering file: ", file["filename"])
                 for kw,score in file["keywords"]:
                     if kw not in keyword_scores:
                         keyword_scores[kw] = 0
@@ -43,8 +43,8 @@ class FolderNameCreator:
             folder_name = "_".join(normalized_keywords[:3])
            # folder_name = "_".join(kw.replace(" ", "_").replace(".","") for kw in folder_keyword)
             
-            print("Folder name chosen: ", folder_name)
-            print("-----------------------------")
+#            print("Folder name chosen: ", folder_name)
+#            print("-----------------------------")
             return folder_name
 
 
