@@ -142,6 +142,13 @@ func TestMoveContent(t *testing.T) {
 	if string(data) != string(content) {
 		t.Errorf("dest content = %q; want %q", data, content)
 	}
+
+	archivesPath := filepath.Join(projectRoot, "archives")
+
+	if err := clearDirectory(archivesPath); err != nil {
+		t.Fatal(err)
+	}
+
 }
 
 // helper functions
@@ -177,4 +184,17 @@ func findProjectRoot(t *testing.T) string {
 		}
 		dir = parent
 	}
+}
+func clearDirectory(path string) error {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		err := os.RemoveAll(filepath.Join(path, entry.Name()))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
