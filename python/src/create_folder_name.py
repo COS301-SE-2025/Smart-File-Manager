@@ -15,7 +15,7 @@ class FolderNameCreator:
         self.lemmatizer = WordNetLemmatizer()
         # Weighting of different vars
         self.weights = {
-            "keywords":0.5,
+            "keywords":0.8, # If there are keywords they should really be different to not be together
             "filename":0.001, # Should only make a small difference compared to keywrods (when they are used)
             "tags":1.5, # Even though they should already be weighted significantly
             # Metadata which can be considered
@@ -23,6 +23,7 @@ class FolderNameCreator:
         }
         self.foldername_length = 2
 
+    # Remove all types of extensions - .png, .tar.gz, etc.
     def remove_all_extensions(self,filename):
         while True:
             filename, ext = os.path.splitext(filename)
@@ -40,14 +41,14 @@ class FolderNameCreator:
 
             # Assign scores with weightings
             for file in files:
-                fn = self.remove_all_extensions(file["filename"])
+                fn = self.remove_all_extensions(file["filename"]).lower()
                 if fn not in filename_scores:
                     filename_scores[fn] = 0
                 filename_scores[fn] += self.weights["filename"]
                 for kw,score in file["keywords"]:
-                    if kw not in keyword_scores:
-                        keyword_scores[kw] = 0
-                    keyword_scores[kw] += score * self.weights["keywords"]
+                    if kw.lower() not in keyword_scores:
+                        keyword_scores[kw.lower()] = 0
+                    keyword_scores[kw.lower()] += score * self.weights["keywords"]
 
 
             # Extend by adding metadata as another arg
@@ -93,6 +94,30 @@ class FolderNameCreator:
 
         return [(word, scores[word]) for word in folder_keyword]
 
+    
+    def lemmatize(self, folder_keyword):
+        seen = set()
+        normalized_keywords = []
+        for kw in folder_keyword:
+            words = kw.lower().replace(".", "_").split()
+            for word in words:
+                lemma = self.lemmatizer.lemmatize(word)
+                if lemma not in seen:
+                    seen.add(lemma)
+                    normalized_keywords.append(lemma)
+        return normalized_keywords
+
+    def lemmatize_with_scores(self, folder_keywords_with_scores):
+        seen = {}
+        for kw, score in folder_keywords_with_scores:
+            words = kw.lower().replace(".", "").split()
+            for word in words:
+                lemma = self.lemmatizer.lemmatize(word)
+                if lemma not in seen or score > seen[lemma]:
+                    seen[lemma] = score
+        return sorted(seen.items(), key=lambda x: -x[1])
+
+"""
     def generateWithKeywords(self, keyword_scores):
         # Top weighted keywrods
         sorted_keywords = sorted(keyword_scores.items(), key=lambda x: x[1], reverse=True)
@@ -124,26 +149,4 @@ class FolderNameCreator:
         folder_keyword = [os.path.splitext(folder_names[i])[0] for i in best_idx]
 
         return folder_keyword
-    
-    def lemmatize(self, folder_keyword):
-        seen = set()
-        normalized_keywords = []
-        for kw in folder_keyword:
-            words = kw.lower().replace(".", "_").split()
-            for word in words:
-                lemma = self.lemmatizer.lemmatize(word)
-                if lemma not in seen:
-                    seen.add(lemma)
-                    normalized_keywords.append(lemma)
-        return normalized_keywords
-
-    def lemmatize_with_scores(self, folder_keywords_with_scores):
-        seen = {}
-        for kw, score in folder_keywords_with_scores:
-            words = kw.lower().replace(".", "").split()
-            for word in words:
-                lemma = self.lemmatizer.lemmatize(word)
-                if lemma not in seen or score > seen[lemma]:
-                    seen[lemma] = score
-        return sorted(seen.items(), key=lambda x: -x[1])
-
+"""
