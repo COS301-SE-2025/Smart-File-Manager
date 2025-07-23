@@ -10,19 +10,15 @@ import (
 var root string
 
 func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
-	composites := GetComposites()
-	if len(composites) == 0 {
-		http.Error(w, "No managers found", http.StatusNotFound)
-		return
-	}
-
+	w.Header().Set("Content-Type", "application/json")
+	compositeName := r.URL.Query().Get("name")
 	mu.Lock()
 	defer mu.Unlock()
 
-	compositeName := r.URL.Query().Get("name")
-
 	for _, item := range composites {
+		fmt.Printf("Checking manager: %s\n", item.Name)
 		if item.Name == compositeName {
+			fmt.Printf("found manager: %s\n", item.Name)
 			//build the directory structure for the smart manager
 			CreateDirectoryStructure(item)
 			//move the content of the smart manager to the new path
@@ -31,10 +27,8 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	fmt.Println("Smart manager not found: ", compositeName)
+	fmt.Println("Smart managerpoop not found: ", compositeName)
 	w.Write([]byte("false"))
-	curDir, _ := os.Getwd()
-	fmt.Println("Current working directory:", curDir)
 
 }
 
@@ -77,7 +71,7 @@ func CreateDirectoryStructureRecursive(item *Folder) {
 	}
 
 	if len(item.Subfolders) == 0 {
-		targetPath := filepath.Join(root, item.NewPath)
+		targetPath := filepath.Join(root, item.Path)
 		err := os.MkdirAll(targetPath, 0755)
 		if err != nil {
 			panic(err)

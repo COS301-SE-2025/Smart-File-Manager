@@ -31,6 +31,7 @@ type FileNode struct {
 	Metadata *Metadata  `json:"metadata,omitempty"`
 	Children []FileNode `json:"children,omitempty"`
 	Locked   bool       `json:"locked"`
+	NewPath  string     `json:"newPath,omitempty"` // for moving files
 }
 
 type Metadata struct {
@@ -109,13 +110,7 @@ func grpcFunc(c *Folder, requestType string) error {
 		log.Fatalf("SendDirectoryStructure RPC failed: %v", err)
 	}
 
-	// fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
-	// printDirectory(resp.Root, 0)
-	// fmt.Println("========start of proto response======")
-	// fmt.Println("res code: " + strconv.FormatInt(int64(resp.ResponseCode), 10))
-	// fmt.Println("res message: " + resp.ResponseMsg)
-	// // printDirectoryWithMetadata(resp.Root, 0)
-	// fmt.Println("========end of proto response======")
+	fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
 
 	// convertProtoToFolder(resp.Root)
 	mergeProtoToFolder(resp.Root, c)
@@ -142,6 +137,7 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 			Tags:     tagsToStrings(file.Tags),
 			Metadata: metadataConverter(file.Metadata),
 			Locked:   file.IsLocked,
+			NewPath:  file.NewPath,
 		})
 	}
 
@@ -193,6 +189,7 @@ func convertFolderToProto(f Folder) *pb.Directory {
 			OriginalPath: file.Path,
 			Tags:         stringsToTags(file.Tags),
 			IsLocked:     file.Locked,
+			NewPath:      file.NewPath,
 		})
 		// case *fs.Folder:
 		// 	protoDir.Directories = append(protoDir.Directories, convertFolderToProto(v))
@@ -231,6 +228,7 @@ func convertProtoToFolder(dir *pb.Directory) *Folder {
 			Tags:     tagsToStrings(file.Tags),
 			Metadata: metadataConverter(file.Metadata),
 			Locked:   file.IsLocked,
+			NewPath:  file.NewPath,
 		})
 		// case *fs.Folder:
 		// 	protoDir.Directories = append(protoDir.Directories, convertFolderToProto(v))
@@ -291,12 +289,8 @@ func printDirectoryWithMetadata(dir *pb.Directory, num int) {
 	for _, file := range dir.Files {
 		fmt.Println(space + "File name: " + file.Name)
 		fmt.Println(space + "File original path: " + file.OriginalPath)
-		fmt.Println(space + "=====METADATA=========")
-		metaData := file.Metadata
+		fmt.Println(space + "File new path: " + file.NewPath)
 
-		for _, singleData := range metaData {
-			fmt.Println(space + singleData.Key + "  :  " + singleData.Value)
-		}
 		fmt.Println("----")
 	}
 
@@ -362,6 +356,7 @@ func createDirectoryJSONStructure(folder *Folder) []FileNode {
 			Tags:     tags,
 			Metadata: md,
 			Locked:   file.Locked,
+			NewPath:  file.NewPath, // include NewPath for moving files
 		})
 	}
 
@@ -377,6 +372,7 @@ func createDirectoryJSONStructure(folder *Folder) []FileNode {
 			Metadata: &Metadata{},
 			Children: childNodes,
 			Locked:   sub.Locked,
+			NewPath:  sub.NewPath,
 		})
 	}
 

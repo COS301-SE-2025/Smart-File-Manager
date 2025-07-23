@@ -147,16 +147,15 @@ func TestMoveContent(t *testing.T) {
 // helper functions
 func mockFolderStructureNamed(managerName string) *Folder {
 	return &Folder{
-		Name:    managerName,
-		NewPath: "test_root",
+		Name: managerName,
 		Subfolders: []*Folder{
 			{
-				NewPath: "test_root/sub1",
+				Path: "test_root/sub1",
 				Subfolders: []*Folder{
-					{NewPath: "test_root/sub1/sub1_1"},
+					{Path: "test_root/sub1/sub1_1"},
 				},
 			},
-			{NewPath: "test_root/sub2"},
+			{Path: "test_root/sub2"},
 		},
 	}
 }
