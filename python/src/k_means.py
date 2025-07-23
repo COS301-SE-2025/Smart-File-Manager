@@ -10,7 +10,7 @@ from collections import defaultdict
 from create_folder_name import FolderNameCreator
 
 class KMeansCluster:
-    def __init__(self, numClusters, depth, model):
+    def __init__(self, numClusters, depth, model, parent_folder):
         self.kmeans = KMeans(
             n_clusters=numClusters,
             n_init=50, 
@@ -22,6 +22,7 @@ class KMeansCluster:
         self.min_size = 2 # hardcoded for now # even numbers are good
         self.max_depth = depth
         self.folder_namer = FolderNameCreator(model)
+        self.parent_folder = parent_folder
 
 
     def cluster(self,files):
@@ -35,7 +36,7 @@ class KMeansCluster:
         return predictions, centers_rounded
     
     def dirCluster(self,full_vecs,files):
-        builder = DirectoryCreator("Root",files) # instead of root it should be the parent folder
+        builder = DirectoryCreator(self.parent_folder,files) # instead of root it should be the parent folder
         root_dir = self.recDirCluster(full_vecs, files, 0, self.folder_namer.generateFolderName(files), builder)
         #print(root_dir)
         #self.printMetaData(root_dir)
@@ -45,10 +46,14 @@ class KMeansCluster:
 
 
     def recDirCluster(self,full_vecs,files, depth, dir_prefix, builder):
+
         if depth > 0:
             # Assign directory name
             folder_name = self.folder_namer.generateFolderName(files)        
             dir_name = os.path.join(dir_prefix, folder_name)
+
+            if folder_name in dir_prefix:
+                return builder.buildDirectory(dir_prefix,files,[])
         else:
             dir_name = dir_prefix
         
@@ -93,7 +98,7 @@ class KMeansCluster:
             # if a label has one entry then clustering is pretty good
             # To avoid having files in leaves we return all of the files used in this clustering
             # -> can defnitely backfire but lets hope the clustering is goated
-            if len(entries) < self.min_size:
+            if len(entries) <= 1:
                 # Flavour 1 (millions of dirs)
                 # sub_vecs = [e["full_vector"] for e in entries]
                 # sub_dir = self.recDirCluster(sub_vecs,entries,depth,f"{dir_name}_{label}", builder)
