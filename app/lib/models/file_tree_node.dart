@@ -5,6 +5,7 @@ class FileTreeNode {
   final List<String>? tags;
   final String? path;
   final Map<String, String>? metadata;
+  final bool locked;
 
   FileTreeNode({
     required this.name,
@@ -13,6 +14,7 @@ class FileTreeNode {
     this.tags,
     this.path,
     this.metadata,
+    required this.locked,
   });
 
   factory FileTreeNode.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,7 @@ class FileTreeNode {
           json['metadata'] != null
               ? Map<String, String>.from(json['metadata'])
               : {},
+      locked: json['isFolder'] ?? false,
     );
   }
 
@@ -42,6 +45,7 @@ class FileTreeNode {
       'children': children?.map((child) => child.toJson()).toList(),
       'tags': tags,
       'metadata': metadata,
+      'locked': locked,
     };
   }
 
