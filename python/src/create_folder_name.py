@@ -38,16 +38,7 @@ class FolderNameCreator:
                 folder_keyword = self.generateWithKeywords(keyword_scores)
 
             # Normalize: lowercase + lemmatize + deduplicate
-            seen = set()
-            normalized_keywords = []
-            for kw in folder_keyword:
-                words = kw.lower().replace(".", "").split()
-                for word in words:
-                    lemma = self.lemmatizer.lemmatize(word)
-                    if lemma not in seen:
-                        seen.add(lemma)
-                        normalized_keywords.append(lemma)
-
+            normalized_keywords = self.lemmatize(folder_keyword)
             # Join top 3 after normalization
             folder_name = "_".join(normalized_keywords[:3])
            # folder_name = "_".join(kw.replace(" ", "_").replace(".","") for kw in folder_keyword)
@@ -69,7 +60,7 @@ class FolderNameCreator:
         # Best keyword
         sims = cosine_similarity(centroid, embeddings).flatten()
         best_idx =sims.argsort()[-3:][::-1] 
-        
+
         folder_keyword = [top_keywords[i] for i in best_idx]
 
         return folder_keyword
@@ -88,3 +79,16 @@ class FolderNameCreator:
         folder_keyword = [os.path.splitext(folder_names[i])[0] for i in best_idx]
 
         return folder_keyword
+    
+    def lemmatize(self, folder_keyword):
+        seen = set()
+        normalized_keywords = []
+        for kw in folder_keyword:
+            words = kw.lower().replace(".", "").split()
+            for word in words:
+                lemma = self.lemmatizer.lemmatize(word)
+                if lemma not in seen:
+                    seen.add(lemma)
+                    normalized_keywords.append(lemma)
+        return normalized_keywords
+
