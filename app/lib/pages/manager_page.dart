@@ -8,8 +8,14 @@ import 'package:app/custom_widgets/hoverable_button.dart';
 
 class ManagerPage extends StatefulWidget {
   final String name;
-  const ManagerPage({required this.name, super.key});
-
+  final FileTreeNode? treeData;
+  final Function(String, FileTreeNode)? onTreeDataUpdate;
+  const ManagerPage({
+    required this.name,
+    this.treeData,
+    this.onTreeDataUpdate,
+    super.key,
+  });
   @override
   State<ManagerPage> createState() => _ManagerPageState();
 }
@@ -22,71 +28,141 @@ class _ManagerPageState extends State<ManagerPage> {
   bool _isDetailsVisible = false;
   bool _isLoading = true;
   bool _isSorting = false;
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
-    getTree();
+    if (widget.treeData != null) {
+      setState(() {
+        _treeData = widget.treeData;
+        _isLoading = false;
+      });
+    } else {
+      getTree(); // Fallback method to get the data if not exists
+    }
+  }
+
+  @override
+  void didUpdateWidget(ManagerPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // If receive new tree data, update state
+    if (widget.treeData != null && widget.treeData != oldWidget.treeData) {
+      if (!_disposed && mounted) {
+        setState(() {
+          _treeData = widget.treeData;
+          _isLoading = false;
+        });
+      }
+    }
+
+    // If manager name changed and do not have tree data, load it
+    if (widget.name != oldWidget.name && widget.treeData == null) {
+      getTree();
+    }
   }
 
   Future<void> getTree() async {
-    FileTreeNode response = await Api.loadTreeData(widget.name);
+    if (!_disposed && mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
-    setState(() {
-      _treeData = response;
-      _isLoading = false;
-    });
+    try {
+      FileTreeNode response = await Api.loadTreeData(widget.name);
+
+      if (!_disposed && mounted) {
+        setState(() {
+          _treeData = response;
+          _isLoading = false;
+        });
+
+        // Update the parent loaded tree data
+        widget.onTreeDataUpdate?.call(widget.name, response);
+      }
+    } catch (e) {
+      if (!_disposed && mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      print('Error loading tree data: $e');
+    }
   }
 
   Future<void> _handleSortManager() async {
-    setState(() {
-      _isLoading = true;
-      _isSorting = true;
-    });
+    if (!_disposed && mounted) {
+      setState(() {
+        _isLoading = true;
+        _isSorting = true;
+      });
+    }
 
     try {
       FileTreeNode response = await Api.sortManager(widget.name);
 
-      setState(() {
-        _treeData = response;
-        _isLoading = false;
-        _isSorting = false;
-      });
+      if (!_disposed && mounted) {
+        setState(() {
+          _treeData = response;
+          _isLoading = false;
+          _isSorting = false;
+        });
+
+        widget.onTreeDataUpdate?.call(widget.name, response);
+      }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _isSorting = false;
-      });
+      if (!_disposed && mounted) {
+        setState(() {
+          _isLoading = false;
+          _isSorting = false;
+        });
+      }
       print('Error sorting manager: $e');
     }
   }
 
   void _handleViewChange(int index) {
-    setState(() {
-      _currentView = index;
-      _isDetailsVisible = false;
-      _selectedFile = null;
-    });
+    if (!_disposed && mounted) {
+      setState(() {
+        _currentView = index;
+        _isDetailsVisible = false;
+        _selectedFile = null;
+      });
+    }
   }
 
   void _handleFileSelect(FileTreeNode file) {
-    setState(() {
-      _selectedFile = file;
-      _isDetailsVisible = true;
-    });
+    if (!_disposed && mounted) {
+      setState(() {
+        _selectedFile = file;
+        _isDetailsVisible = true;
+      });
+    }
   }
 
   void _handleNavigation(List<String> newPath) {
-    setState(() {
-      _currentPath = newPath;
-    });
+    if (!_disposed && mounted) {
+      setState(() {
+        _currentPath = newPath;
+      });
+    }
   }
 
   void _handleDetailPanelClose() {
-    setState(() {
-      _isDetailsVisible = false;
-      _selectedFile = null;
-    });
+    if (!_disposed && mounted) {
+      setState(() {
+        _isDetailsVisible = false;
+        _selectedFile = null;
+      });
+    }
   }
 
   @override
