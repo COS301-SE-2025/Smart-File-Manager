@@ -1,3 +1,4 @@
+import 'package:app/models/file_tree_node.dart';
 import 'package:flutter/material.dart';
 import 'package:app/custom_widgets/create_manager.dart';
 import 'package:app/constants.dart';
@@ -15,12 +16,14 @@ class NavigationItem {
 class ManagerNavigationItem extends NavigationItem {
   final String directory;
   final bool isLoading;
+  final FileTreeNode? treeData;
 
   ManagerNavigationItem({
     required super.icon,
     required super.label,
     required this.directory,
     this.isLoading = false,
+    this.treeData,
   });
 }
 
@@ -28,7 +31,8 @@ class MainNavigation extends StatefulWidget {
   final List<NavigationItem> items;
   final int selectedIndex;
   final Function(int) onTap;
-  final Function(String)? onManagerTap;
+  final Function(String, FileTreeNode?)? onManagerTap;
+  final Function(String, FileTreeNode)? onManagerTreeDataUpdate;
   final String? selectedManager;
 
   const MainNavigation({
@@ -37,6 +41,7 @@ class MainNavigation extends StatefulWidget {
     required this.selectedIndex,
     required this.onTap,
     this.onManagerTap,
+    this.onManagerTreeDataUpdate,
     this.selectedManager,
   });
 
@@ -48,6 +53,13 @@ class _MainNavigationState extends State<MainNavigation> {
   //has a list of managers that are created
   final List<ManagerNavigationItem> _managers = [];
   bool _isInitialized = false;
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   //if manager exist, ignore otherwise proceed
   bool _managerNameExists(String name) {
@@ -76,6 +88,62 @@ class _MainNavigationState extends State<MainNavigation> {
     );
   }
 
+  Future<void> loadTreeDataForManager(String managerName) async {
+    final index = _managers.indexWhere((m) => m.label == managerName);
+    if (index == -1) return;
+
+    // If already loaded or loading, return
+    if (_managers[index].treeData != null || _managers[index].isLoading) {
+      return;
+    }
+
+    // Check if widget is still mounted before updating state
+    if (!_disposed && mounted) {
+      setState(() {
+        _managers[index] = ManagerNavigationItem(
+          icon: _managers[index].icon,
+          label: _managers[index].label,
+          directory: _managers[index].directory,
+          isLoading: true,
+          treeData: _managers[index].treeData,
+        );
+      });
+    }
+
+    try {
+      final treeData = await Api.loadTreeData(managerName);
+
+      if (!_disposed && mounted) {
+        setState(() {
+          _managers[index] = ManagerNavigationItem(
+            icon: Icons.folder,
+            label: managerName,
+            directory: _managers[index].directory,
+            isLoading: false,
+            treeData: treeData,
+          );
+        });
+
+        // Notify parent
+        widget.onManagerTreeDataUpdate?.call(managerName, treeData);
+      }
+    } catch (e) {
+      print('Error loading tree data for $managerName: $e');
+
+      if (!_disposed && mounted) {
+        setState(() {
+          _managers[index] = ManagerNavigationItem(
+            icon: Icons.folder,
+            label: managerName,
+            directory: _managers[index].directory,
+            isLoading: false,
+            treeData: null,
+          );
+        });
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -88,25 +156,76 @@ class _MainNavigationState extends State<MainNavigation> {
     try {
       final startupResponse = await Api.startUp();
 
-      setState(() {
-        _managers.clear();
+      if (!_disposed && mounted) {
+        setState(() {
+          _managers.clear();
+          for (String managerName in startupResponse.managerNames) {
+            _managers.add(
+              ManagerNavigationItem(
+                icon: Icons.folder,
+                label: managerName,
+                directory: '',
+                isLoading: true,
+              ),
+            );
+          }
+          _isInitialized = true;
+        });
+
+        // Load tree data for each manager in background
         for (String managerName in startupResponse.managerNames) {
-          _managers.add(
-            ManagerNavigationItem(
-              icon: Icons.folder,
-              label: managerName,
-              directory: '',
-              isLoading: false,
-            ),
-          );
+          _loadTreeDataInBackground(managerName);
         }
-        _isInitialized = true;
-      });
+      }
     } catch (e) {
       print('Error loading existing managers: $e');
-      setState(() {
-        _isInitialized = true;
-      });
+      if (!_disposed && mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+    }
+  }
+
+  void _loadTreeDataInBackground(String managerName) async {
+    try {
+      final treeData = await Api.loadTreeData(managerName);
+
+      if (!_disposed && mounted) {
+        setState(() {
+          final index = _managers.indexWhere((m) => m.label == managerName);
+          if (index != -1) {
+            _managers[index] = ManagerNavigationItem(
+              icon: Icons.folder,
+              label: managerName,
+              directory: _managers[index].directory,
+              isLoading: false,
+              treeData: treeData,
+            );
+          }
+        });
+
+        widget.onManagerTreeDataUpdate?.call(managerName, treeData);
+      }
+    } catch (e) {
+      print('Error loading tree data for $managerName: $e');
+
+      if (!_disposed && mounted) {
+        setState(() {
+          final index = _managers.indexWhere(
+            (m) => m.label == managerName && m.isLoading,
+          );
+          if (index != -1) {
+            _managers[index] = ManagerNavigationItem(
+              icon: Icons.folder,
+              label: managerName,
+              directory: _managers[index].directory,
+              isLoading: false,
+              treeData: null,
+            );
+          }
+        });
+      }
     }
   }
 
@@ -162,7 +281,16 @@ class _MainNavigationState extends State<MainNavigation> {
                     onTap:
                         item.isLoading
                             ? null
-                            : () => widget.onManagerTap?.call(item.label),
+                            : () {
+                              // Load tree data if not available
+                              if (item.treeData == null) {
+                                loadTreeDataForManager(item.label);
+                              }
+                              widget.onManagerTap?.call(
+                                item.label,
+                                item.treeData,
+                              );
+                            },
                   );
                 }),
               ],
