@@ -1,11 +1,11 @@
-# IF THIS IS HERE IT ISNT ADDED TO README
-# pip install nltk
-
 import os
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import nltk
 from nltk.stem import WordNetLemmatizer
+
+from collections import defaultdict
+
 nltk.download('wordnet', quiet=True)
 
 class FolderNameCreator:
@@ -13,40 +13,85 @@ class FolderNameCreator:
         self.model = model
         self.max_keywords = 5000 # for folder name creation
         self.lemmatizer = WordNetLemmatizer()
+        # Weighting of different vars
+        self.weights = {
+            "keywords":0.5,
+            "filename":0.001, # Should only make a small difference compared to keywrods (when they are used)
+            "tags":1.5, # Even though they should already be weighted significantly
+            # Metadata which can be considered
+            "created":0.5
+        }
+        self.foldername_length = 2
 
-
+    def remove_all_extensions(self,filename):
+        while True:
+            filename, ext = os.path.splitext(filename)
+            if not ext:
+                break
+        return filename
+    
     def generateFolderName(self, files) -> str:
+            # No files no name
             if not files:
                 return "Untitled"
             
+            filename_scores = {}
             keyword_scores = {}
- #           print("-----------------------------")
+
+            # Assign scores with weightings
             for file in files:
-#                print("Considering file: ", file["filename"])
+                fn = self.remove_all_extensions(file["filename"])
+                if fn not in filename_scores:
+                    filename_scores[fn] = 0
+                filename_scores[fn] += self.weights["filename"]
                 for kw,score in file["keywords"]:
                     if kw not in keyword_scores:
                         keyword_scores[kw] = 0
-                    keyword_scores[kw] += 1.0 / (1.0 + score)
+                    keyword_scores[kw] += score * self.weights["keywords"]
 
 
-            if not keyword_scores: # probably an image. Can use a suffix if there are multiple of these folders. Or we can use their names in a sentence transformer
-                folder_names = [os.path.basename(file["filename"]) for file in files]
+            # Extend by adding metadata as another arg
+            combined = self.combine_lists(
+                self.generateWithScores(keyword_scores),
+                self.generateWithScores(filename_scores)
+            )
+            lemmatized = self.lemmatize_with_scores(combined)
+            folder_name = "_".join([word for word, _ in lemmatized[:self.foldername_length]])
 
-                folder_keyword = self.generateWithoutKeywords(folder_names)
-
-            else:
-                folder_keyword = self.generateWithKeywords(keyword_scores)
-
-            # Normalize: lowercase + lemmatize + deduplicate
-            normalized_keywords = self.lemmatize(folder_keyword)
-            # Join top 3 after normalization
-            folder_name = "_".join(normalized_keywords[:3])
-           # folder_name = "_".join(kw.replace(" ", "_").replace(".","") for kw in folder_keyword)
             
-#            print("Folder name chosen: ", folder_name)
-#            print("-----------------------------")
             return folder_name
 
+
+    def combine_lists(self, keywords, filenames):
+        scores = defaultdict(float)
+
+        for kw,score in keywords:
+            scores[kw] = score
+
+        for fn,score in filenames:
+            scores[fn] = score 
+
+        return sorted(scores.items(), key=lambda x: -x[1])
+
+    def generateWithScores(self, scores):
+        if not scores:
+            return []
+        # Top weighted keywrods
+        sorted_keywords = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        top_keywords = [kw for kw, _ in sorted_keywords[:self.max_keywords]]
+
+        # Encode file names with sentence transformer
+        embeddings = self.model.encode(top_keywords)
+        centroid = np.mean(embeddings, axis=0, keepdims=True)
+
+        # Find most representative name (closest to centroid)
+        sims = cosine_similarity(centroid, embeddings).flatten()
+        best_idx = sims.argsort()[-self.foldername_length:][::-1]
+
+        # folder_keyword = folder_names[best_idx]
+        folder_keyword = [top_keywords[i] for i in best_idx]
+
+        return [(word, scores[word]) for word in folder_keyword]
 
     def generateWithKeywords(self, keyword_scores):
         # Top weighted keywrods
@@ -59,7 +104,7 @@ class FolderNameCreator:
 
         # Best keyword
         sims = cosine_similarity(centroid, embeddings).flatten()
-        best_idx =sims.argsort()[-3:][::-1] 
+        best_idx =sims.argsort()[-self.foldername_length:][::-1] 
 
         folder_keyword = [top_keywords[i] for i in best_idx]
 
@@ -73,7 +118,7 @@ class FolderNameCreator:
 
         # Find most representative name (closest to centroid)
         sims = cosine_similarity(centroid, embeddings).flatten()
-        best_idx = sims.argsort()[-2:][::-1]
+        best_idx = sims.argsort()[-self.foldername_length:][::-1]
 
         # folder_keyword = folder_names[best_idx]
         folder_keyword = [os.path.splitext(folder_names[i])[0] for i in best_idx]
@@ -84,11 +129,21 @@ class FolderNameCreator:
         seen = set()
         normalized_keywords = []
         for kw in folder_keyword:
-            words = kw.lower().replace(".", "").split()
+            words = kw.lower().replace(".", "_").split()
             for word in words:
                 lemma = self.lemmatizer.lemmatize(word)
                 if lemma not in seen:
                     seen.add(lemma)
                     normalized_keywords.append(lemma)
         return normalized_keywords
+
+    def lemmatize_with_scores(self, folder_keywords_with_scores):
+        seen = {}
+        for kw, score in folder_keywords_with_scores:
+            words = kw.lower().replace(".", "").split()
+            for word in words:
+                lemma = self.lemmatizer.lemmatize(word)
+                if lemma not in seen or score > seen[lemma]:
+                    seen[lemma] = score
+        return sorted(seen.items(), key=lambda x: -x[1])
 
