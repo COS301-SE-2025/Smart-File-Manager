@@ -342,7 +342,7 @@ Locks a file or folder. When locking a folder all sub-folders, -files are also l
 **Endpoint**
 
 ```
-/lock?path=../../testRootFolder
+/lock?name={name}&path=../../testRootFolder
 ```
 
 **Returns:**
@@ -359,7 +359,7 @@ Unlocks a file or folder. When unlocking a folder all sub-folders, -files are al
 
 **Endpoint**
 ```
-/unlock?path=../../testRootFolder
+/unlock?name={name}&path=../../testRootFolder
 ```
 
 **Returns:**
