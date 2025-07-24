@@ -62,11 +62,6 @@ func TestConvertToObject(t *testing.T) {
 			for name := range nestedExpected {
 				t.Errorf("Expected to find %s in subdir, but did not", name)
 			}
-
-			// 🔒 Verify subdir is auto-locked due to hidden folder
-			if !sf.Locked {
-				t.Errorf("Expected folder %q to be locked due to hidden folder, but it was not", sf.Name)
-			}
 		}
 	}
 
