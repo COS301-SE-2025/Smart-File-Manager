@@ -42,6 +42,7 @@ class FolderNameCreator:
             if not files:
                 return "Untitled"           
 
+            # Reset the vals
             self.filename_scores = {}
             self.parent_name_scores = {}
             self.keyword_scores = {}
@@ -57,14 +58,13 @@ class FolderNameCreator:
 
                 # parent name assigned
                 self.assignParentScores(file["absolute_path"], self.parent_name_scores)
-              #  print(parent_name_scores)
+
                 # Assign keywords scores
                 for kw,score in file["keywords"]:
                     if kw.lower() not in self.keyword_scores:
                         self.keyword_scores[kw.lower()] = 0
                     self.keyword_scores[kw.lower()] += (score * self.weights["keywords"])
 
-           # print(parent_name_scores)
             # Extend by adding metadata as another arg
             combined = self.combine_lists(
                 self.getRepresentativeKeywords(self.keyword_scores),
@@ -113,6 +113,7 @@ class FolderNameCreator:
     def getRepresentativeKeywords(self, scores):
         if not scores:
             return []
+
         # Top weighted keywrods
         sorted_keywords = sorted(scores.items(), key=lambda x: x[1], reverse=True)
         top_keywords = [kw for kw, _ in sorted_keywords[:self.max_keywords]]
@@ -155,36 +156,3 @@ class FolderNameCreator:
                     seen[lemma] = score
         return sorted(seen.items(), key=lambda x: -x[1])
 
-"""
-    def generateWithKeywords(self, keyword_scores):
-        # Top weighted keywrods
-        sorted_keywords = sorted(keyword_scores.items(), key=lambda x: x[1], reverse=True)
-        top_keywords = [kw for kw, _ in sorted_keywords[:self.max_keywords]]
-
-        # Encode and find a centroid
-        embeddings = self.model.encode(top_keywords)
-        centroid = np.mean(embeddings, axis=0,keepdims=True)
-
-        # Best keyword
-        sims = cosine_similarity(centroid, embeddings).flatten()
-        best_idx =sims.argsort()[-self.foldername_length:][::-1] 
-
-        folder_keyword = [top_keywords[i] for i in best_idx]
-
-        return folder_keyword
-    
-    def generateWithoutKeywords(self, folder_names):
-
-        # Encode file names with sentence transformer
-        embeddings = self.model.encode(folder_names)
-        centroid = np.mean(embeddings, axis=0, keepdims=True)
-
-        # Find most representative name (closest to centroid)
-        sims = cosine_similarity(centroid, embeddings).flatten()
-        best_idx = sims.argsort()[-self.foldername_length:][::-1]
-
-        # folder_keyword = folder_names[best_idx]
-        folder_keyword = [os.path.splitext(folder_names[i])[0] for i in best_idx]
-
-        return folder_keyword
-"""
