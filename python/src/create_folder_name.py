@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
@@ -16,14 +17,17 @@ class FolderNameCreator:
         self.lemmatizer = WordNetLemmatizer()
         # Weighting of different vars
         self.weights = {
-            "keywords":0.8, # If there are keywords they should really be different to not be together
-            "filename":0.001, # Should only make a small difference compared to keywrods (when they are used)
+            "keywords":0.7, # If there are keywords they should really be different to not be together
+            "filename":0.002, # Should only make a small difference compared to keywrods (when they are used)
             "tags":1.5, # Even though they should already be weighted significantly
-            "original_parent":0.05,
+            "original_parent":0.01,
             # Metadata which can be considered
             "created":0.5
         }
         self.foldername_length = 2
+        self.filename_scores = {}
+        self.parent_name_scores = {}
+        self.keyword_scores = {}
 
     # Remove all types of extensions - .png, .tar.gz, etc.
     def remove_all_extensions(self,filename):
@@ -36,40 +40,42 @@ class FolderNameCreator:
     def generateFolderName(self, files) -> str:
             # No files no name
             if not files:
-                return "Untitled"
-            
-            filename_scores = {}
-            parent_name_scores = {}
-            keyword_scores = {}
+                return "Untitled"           
 
+            self.filename_scores = {}
+            self.parent_name_scores = {}
+            self.keyword_scores = {}
             # Assign scores with weightings
             for file in files:
                 # file name
                 fn = self.remove_all_extensions(file["filename"]).lower()
-                if fn not in filename_scores:
-                    filename_scores[fn] = 0
-                filename_scores[fn] += self.weights["filename"]
+                if not (fn.startswith("~") or fn.endswith(".tmp")):
+                    if fn not in self.filename_scores:
+                        self.filename_scores[fn] = 0
+                    self.filename_scores[fn] += (self.weights["filename"])
+
 
                 # parent name assigned
-                self.assignParentScores(file["absolute_path"], parent_name_scores)
+                self.assignParentScores(file["absolute_path"], self.parent_name_scores)
               #  print(parent_name_scores)
                 # Assign keywords scores
                 for kw,score in file["keywords"]:
-                    if kw.lower() not in keyword_scores:
-                        keyword_scores[kw.lower()] = 0
-                    keyword_scores[kw.lower()] += score * self.weights["keywords"]
+                    if kw.lower() not in self.keyword_scores:
+                        self.keyword_scores[kw.lower()] = 0
+                    self.keyword_scores[kw.lower()] += (score * self.weights["keywords"])
 
-            print(parent_name_scores)
+           # print(parent_name_scores)
             # Extend by adding metadata as another arg
             combined = self.combine_lists(
-                self.generateWithScores(keyword_scores),
-                self.generateWithScores(filename_scores),
-                self.generateWithScores(parent_name_scores)
+                self.getRepresentativeKeywords(self.keyword_scores),
+                self.getRepresentativeKeywords(self.filename_scores),
+                self.getRepresentativeKeywords(self.parent_name_scores)
             )
             lemmatized = self.lemmatize_with_scores(combined)
             folder_name = "_".join([word for word, _ in lemmatized[:self.foldername_length]])
+            folder_name = re.sub(r'[^\w\d_]+', '', folder_name)  # remove any accidental punct
+            folder_name = folder_name.strip("_")
 
-            
             return folder_name
 
     def assignParentScores(self, absolute_path, parent_name_scores):
@@ -79,6 +85,8 @@ class FolderNameCreator:
 
         for parent in parents:
             name = parent.name.lower()
+            if name in self.keyword_scores or name in self.filename_scores:
+                continue
             if name == "":
                 continue
             if name not in parent_name_scores:
@@ -92,17 +100,17 @@ class FolderNameCreator:
         scores = defaultdict(float)
 
         for kw,score in keywords:
-            scores[kw] = score
+            scores[kw] += score
 
         for fn,score in filenames:
-            scores[fn] = score 
+            scores[fn] += score 
 
         for pn,score in parent_names:
-            scores[pn] = score
+            scores[pn] += score
 
         return sorted(scores.items(), key=lambda x: -x[1])
 
-    def generateWithScores(self, scores):
+    def getRepresentativeKeywords(self, scores):
         if not scores:
             return []
         # Top weighted keywrods
@@ -127,7 +135,8 @@ class FolderNameCreator:
         seen = set()
         normalized_keywords = []
         for kw in folder_keyword:
-            words = kw.lower().replace(".", "_").split()
+            #words = kw.lower().replace(".", "_").split()
+            words = re.split(r'[\s\._\-]+', kw.lower())
             for word in words:
                 lemma = self.lemmatizer.lemmatize(word)
                 if lemma not in seen:
@@ -138,7 +147,8 @@ class FolderNameCreator:
     def lemmatize_with_scores(self, folder_keywords_with_scores):
         seen = {}
         for kw, score in folder_keywords_with_scores:
-            words = kw.lower().replace(".", "").split()
+            #words = kw.lower().replace(".", "").split()
+            words = re.split(r'[\s\._\-]+', kw.lower())
             for word in words:
                 lemma = self.lemmatizer.lemmatize(word)
                 if lemma not in seen or score > seen[lemma]:
