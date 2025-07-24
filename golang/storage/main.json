@@ -1,23 +1,18 @@
 [
   {
-<<<<<<< HEAD
-    "name": "aa",
+    "name": "medium",
+    "path": "/mnt/c/Users/bosma/OneDrive - University of Pretoria/BsC Computer Science/Year 1/Semester 2"
+  },
+  {
+    "name": "tiny",
     "path": "/mnt/c/Users/bosma/OneDrive/Desktop/Papers"
   },
   {
-    "name": "bb",
+    "name": "vv",
     "path": "/mnt/c/Users/bosma/OneDrive/Desktop/Papers"
   },
   {
-    "name": "cc",
-    "path": "/mnt/c/Users/bosma/OneDrive/Desktop/Papers"
-=======
-    "name": "first2",
-    "path": "/mnt/c/Users/jackb/OneDrive - University of Pretoria/Documents/TUKS/year 3/COS301/capstone/Smart-File-Manager/testRootFolder"
-  },
-  {
-    "name": "first1",
-    "path": "/mnt/c/Users/jackb/OneDrive - University of Pretoria/Documents/TUKS/year 3/COS301/capstone/Smart-File-Manager/testRootFolder"
->>>>>>> 87bfa6a30bd5d9b7fb8a6a7b7c997a41ed6a2404
+    "name": "test",
+    "path": "/mnt/c/Users/bosma/OneDrive - University of Pretoria/BsC Computer Science/Year 2/Semester 2/Modules/COS 214/Practicals"
   }
 ]

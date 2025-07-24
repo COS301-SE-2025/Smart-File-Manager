@@ -63,7 +63,8 @@ class _GraphViewPageState extends State<GraphViewPage> {
     controller = ForceDirectedGraphController<FileTreeNode>(
       graph: ForceDirectedGraph.generateNNodes(
         nodeCount: 0,
-        generator: () => FileTreeNode(name: "data", isFolder: false),
+        generator:
+            () => FileTreeNode(name: "data", isFolder: false, locked: false),
         config: GraphConfig(scaling: 0.1, elasticity: 0.8, repulsionRange: 200),
       ),
     );
@@ -376,17 +377,35 @@ class _GraphViewPageState extends State<GraphViewPage> {
                         width: isHighlighted ? 1.0 : 0.5,
                       ),
                     ),
-                    child: Text(
-                      data.name,
-                      style: TextStyle(
-                        color: isHighlighted ? levelColor : Colors.white70,
-                        fontSize: math.max(9.0, 11.0 - (depth * 0.5)),
-                        fontWeight:
-                            isHighlighted ? FontWeight.w600 : FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        (data.locked == true)
+                            ? Icon(Icons.lock, size: 15, color: Colors.white70)
+                            : Icon(
+                              Icons.lock_open,
+                              size: 15,
+                              color: Colors.white70,
+                            ),
+                        const SizedBox(width: 2),
+                        Flexible(
+                          child: Text(
+                            data.name,
+                            style: TextStyle(
+                              color:
+                                  isHighlighted ? levelColor : Colors.white70,
+                              fontSize: math.max(9.0, 11.0 - (depth * 0.5)),
+                              fontWeight:
+                                  isHighlighted
+                                      ? FontWeight.w600
+                                      : FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

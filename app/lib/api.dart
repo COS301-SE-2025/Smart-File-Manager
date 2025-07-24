@@ -14,6 +14,7 @@ class Api {
       );
 
       if (response.statusCode == 200) {
+        print(response.body);
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
