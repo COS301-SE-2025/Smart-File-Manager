@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import nltk
@@ -18,6 +19,7 @@ class FolderNameCreator:
             "keywords":0.8, # If there are keywords they should really be different to not be together
             "filename":0.001, # Should only make a small difference compared to keywrods (when they are used)
             "tags":1.5, # Even though they should already be weighted significantly
+            "original_parent":0.05,
             # Metadata which can be considered
             "created":0.5
         }
@@ -37,24 +39,32 @@ class FolderNameCreator:
                 return "Untitled"
             
             filename_scores = {}
+            parent_name_scores = {}
             keyword_scores = {}
 
             # Assign scores with weightings
             for file in files:
+                # file name
                 fn = self.remove_all_extensions(file["filename"]).lower()
                 if fn not in filename_scores:
                     filename_scores[fn] = 0
                 filename_scores[fn] += self.weights["filename"]
+
+                # parent name assigned
+                self.assignParentScores(file["absolute_path"], parent_name_scores)
+              #  print(parent_name_scores)
+                # Assign keywords scores
                 for kw,score in file["keywords"]:
                     if kw.lower() not in keyword_scores:
                         keyword_scores[kw.lower()] = 0
                     keyword_scores[kw.lower()] += score * self.weights["keywords"]
 
-
+            print(parent_name_scores)
             # Extend by adding metadata as another arg
             combined = self.combine_lists(
                 self.generateWithScores(keyword_scores),
-                self.generateWithScores(filename_scores)
+                self.generateWithScores(filename_scores),
+                self.generateWithScores(parent_name_scores)
             )
             lemmatized = self.lemmatize_with_scores(combined)
             folder_name = "_".join([word for word, _ in lemmatized[:self.foldername_length]])
@@ -62,8 +72,23 @@ class FolderNameCreator:
             
             return folder_name
 
+    def assignParentScores(self, absolute_path, parent_name_scores):
+        path = Path(absolute_path)
+        parents = list(path.parents)
+        depth = 1
 
-    def combine_lists(self, keywords, filenames):
+        for parent in parents:
+            name = parent.name.lower()
+            if name == "":
+                continue
+            if name not in parent_name_scores:
+                parent_name_scores[name] = 0
+            parent_name_scores[name] += self.weights["original_parent"] ** depth
+            depth += 1
+
+
+
+    def combine_lists(self, keywords, filenames, parent_names):
         scores = defaultdict(float)
 
         for kw,score in keywords:
@@ -71,6 +96,9 @@ class FolderNameCreator:
 
         for fn,score in filenames:
             scores[fn] = score 
+
+        for pn,score in parent_names:
+            scores[pn] = score
 
         return sorted(scores.items(), key=lambda x: -x[1])
 
