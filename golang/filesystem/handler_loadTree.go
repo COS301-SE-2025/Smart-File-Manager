@@ -433,6 +433,7 @@ func GoSidecreateDirectoryJSONStructure(folder *Folder) []FileNode {
 			IsFolder: false,
 			Tags:     tags,
 			Metadata: md,
+			Locked:   file.Locked,
 		})
 	}
 
@@ -447,6 +448,7 @@ func GoSidecreateDirectoryJSONStructure(folder *Folder) []FileNode {
 			Tags:     sub.Tags,
 			Metadata: &Metadata{},
 			Children: childNodes,
+			Locked:   sub.Locked,
 		})
 	}
 

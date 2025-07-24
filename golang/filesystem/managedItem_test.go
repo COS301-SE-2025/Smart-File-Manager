@@ -236,7 +236,7 @@ func TestDirectFileLock(t *testing.T) {
 	f := newFile("f.txt", "/root/f.txt")
 	r.AddFile(f)
 
-	f.LockByPath("/root/f.txt")
+	f.Lock()
 	if !f.Locked {
 		t.Errorf("expected file to be locked, but it's not")
 	}
