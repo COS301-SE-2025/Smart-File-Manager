@@ -33,7 +33,7 @@ class FileTreeNode {
           json['metadata'] != null
               ? Map<String, String>.from(json['metadata'])
               : {},
-      locked: json['isFolder'] ?? false,
+      locked: json['locked'] ?? false,
     );
   }
 
@@ -50,5 +50,6 @@ class FileTreeNode {
   }
 
   @override
-  String toString() => 'FileTreeNode(name: $name, isFolder: $isFolder)';
+  String toString() =>
+      'FileTreeNode(name: $name, isFolder: $isFolder, locked: $locked)';
 }
