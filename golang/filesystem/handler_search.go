@@ -56,17 +56,21 @@ func levelshteinDist(a, b string) int {
 }
 
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
-	// compositeName := r.URL.Query().Get("compositeName")
+	compositeName := r.URL.Query().Get("compositeName")
 	searchText := r.URL.Query().Get("searchText")
 
-	fmt.Println(strconv.Itoa(levelshteinDist()))
+	fmt.Println(strconv.Itoa(levelshteinDist(searchText, "jacks records")))
 
-
-	// for _, comp := range composites {
-	// 	if comp.Name == compositeName {
-	// 		getMatches(searchText, comp)
-	// 	}
-	// }
+	for _, comp := range composites {
+		if comp.Name == compositeName {
+			fmt.Println("entered")
+			results := getMatches(searchText, comp)
+			for _, i := range results.rankedFiles {
+				fmt.Println(i.file.Name)
+				fmt.Println(i.distance)
+			}
+		}
+	}
 
 }
 
@@ -88,7 +92,7 @@ func getMatches(text string, composite *Folder) *safeResults {
 
 	for _, file := range composite.Files {
 		var dist int = levelshteinDist(file.Name, text)
-		if dist <= 5 {
+		if dist <= 15 {
 			currentRankedFile := &rankedFile{
 				file:     *file,
 				distance: dist,
