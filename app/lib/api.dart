@@ -14,6 +14,8 @@ class Api {
       );
 
       if (response.statusCode == 200) {
+        print(jsonDecode(response.body) as Map<String, dynamic>);
+
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
@@ -144,6 +146,43 @@ class Api {
       }
     } catch (e, stackTrace) {
       print('Error deleting tag at deleteTag: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //lock files/folders
+  static Future<bool> locking(String path) async {
+    try {
+      final response = await http.post(Uri.parse("$uri/lock?path=$path"));
+      print(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        throw Exception(
+          'Failed to lock File/Folder: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error locking folder/file: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<bool> unlocking(String path) async {
+    try {
+      final response = await http.post(Uri.parse("$uri/unlock?path=$path"));
+      print(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        throw Exception(
+          'Failed to unlock File/Folder: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error unlocking folder/file: $e');
       print(stackTrace);
       rethrow;
     }
