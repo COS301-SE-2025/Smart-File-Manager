@@ -3,17 +3,32 @@ package filesystem
 import (
 	"encoding/json"
 	"net/http"
+	"path/filepath"
+	"strings"
 	"sync"
 )
 
-//todo
-// remove file extention from name searchText
-// take length into acount. ie searching "jacks" should find "jacks books" before "bills"
-
-const limit int = 15
+const limit int = 25
 const maxDist int = 25
 
 func levelshteinDist(a, b string) int {
+	a = strings.ToLower(a)
+	b = strings.ToLower(b)
+
+	// strip extensions (as you already do)
+	if i := strings.LastIndex(a, "."); i >= 0 {
+		a = a[:i]
+	}
+	if i := strings.LastIndex(b, "."); i >= 0 {
+		b = b[:i]
+	}
+
+	// ── BOOST exact substrings ──
+	if strings.Contains(b, a) {
+		return 1
+	}
+
+	// now fall back on full Levenshtein
 	la, lb := len(a), len(b)
 	if la == 0 {
 		return lb
@@ -21,15 +36,14 @@ func levelshteinDist(a, b string) int {
 	if lb == 0 {
 		return la
 	}
-	// Make sure we use the shorter string for the inner loop
+	// ensure la >= lb
 	if la < lb {
-		// swap to ensure lb <= la
 		a, b = b, a
 		la, lb = lb, la
 	}
+
 	prev := make([]int, lb+1)
 	curr := make([]int, lb+1)
-	// initialize row 0
 	for j := 0; j <= lb; j++ {
 		prev[j] = j
 	}
@@ -41,11 +55,11 @@ func levelshteinDist(a, b string) int {
 			if ai != b[j-1] {
 				cost = 1
 			}
-			// substitution, insertion, deletion
 			sub := prev[j-1] + cost
 			ins := curr[j-1] + 1
 			del := prev[j] + 1
-			// take min
+
+			// take the minimum
 			if ins < sub {
 				sub = ins
 			}
@@ -54,7 +68,6 @@ func levelshteinDist(a, b string) int {
 			}
 			curr[j] = sub
 		}
-		// swap rows for next iteration
 		prev, curr = curr, prev
 	}
 	return prev[lb]
@@ -118,7 +131,14 @@ func getMatches(text string, composite *Folder) *safeResults {
 		close(resultChan)
 	}()
 
+	seen := make(map[string]struct{})
 	for currentRankedFile := range resultChan {
+
+		key := currentRankedFile.file.Path
+		if _, ok := seen[key]; ok {
+			continue // already inserted this file
+		}
+		seen[key] = struct{}{}
 
 		inserted := false
 		for i, iteratedRankedFile := range res.rankedFiles {
@@ -154,6 +174,17 @@ func getMatches(text string, composite *Folder) *safeResults {
 			}
 		}
 	}
+	unique := make([]rankedFile, 0, len(res.rankedFiles))
+	finalSeen := make(map[string]struct{}, len(res.rankedFiles))
+	for _, rf := range res.rankedFiles {
+		key := filepath.Clean(rf.file.Path)
+		if _, ok := finalSeen[key]; ok {
+			continue
+		}
+		finalSeen[key] = struct{}{}
+		unique = append(unique, rf)
+	}
+	res.rankedFiles = unique
 
 	return res
 }
