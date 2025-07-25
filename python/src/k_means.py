@@ -56,9 +56,7 @@ class KMeansCluster:
                 return builder.buildDirectory(dir_prefix,files,[])
         else:
             dir_name = dir_prefix
-        
-
-            
+                    
 
         # Quit if not enough folders
         if len(full_vecs) < self.min_size or depth > self.max_depth: # depth can be changed on init of kmeans

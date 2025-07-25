@@ -6,12 +6,15 @@ import numpy as np
 import nltk
 from nltk.stem import WordNetLemmatizer
 
-from collections import defaultdict
+#adding these imports could be slow
+from sentence_transformers import SentenceTransformer
+from typing import List, Tuple, Dict
 
+from collections import defaultdict
 nltk.download('wordnet', quiet=True)
 
 class FolderNameCreator:
-    def __init__(self, model):
+    def __init__(self, model : SentenceTransformer):
         self.model = model
         self.max_keywords = 5000 # for folder name creation
         self.lemmatizer = WordNetLemmatizer()
@@ -30,14 +33,14 @@ class FolderNameCreator:
         self.keyword_scores = {}
 
     # Remove all types of extensions - .png, .tar.gz, etc.
-    def remove_all_extensions(self,filename):
+    def remove_all_extensions(self,filename : str) -> str:
         while True:
             filename, ext = os.path.splitext(filename)
             if not ext:
                 break
         return filename
     
-    def generateFolderName(self, files) -> str:
+    def generateFolderName(self, files : List[Dict]) -> str:
             # No files no name
             if not files:
                 return "Untitled"           
@@ -78,7 +81,7 @@ class FolderNameCreator:
 
             return folder_name
 
-    def assignParentScores(self, absolute_path, parent_name_scores):
+    def assignParentScores(self, absolute_path : str, parent_name_scores : Dict[str,float]) -> None:
         path = Path(absolute_path)
         parents = list(path.parents)
         depth = 1
@@ -96,7 +99,7 @@ class FolderNameCreator:
 
 
 
-    def combine_lists(self, keywords, filenames, parent_names):
+    def combine_lists(self, keywords : Dict[str, float], filenames : Dict[str,float], parent_names:Dict[str,float]) -> Dict[str,float]:
         scores = defaultdict(float)
 
         for kw,score in keywords:
@@ -110,7 +113,7 @@ class FolderNameCreator:
 
         return sorted(scores.items(), key=lambda x: -x[1])
 
-    def getRepresentativeKeywords(self, scores):
+    def getRepresentativeKeywords(self, scores : Dict[str, float]):
         if not scores:
             return []
 
