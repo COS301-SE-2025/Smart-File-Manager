@@ -475,6 +475,11 @@ class _ManagerPageState extends State<ManagerPage> {
           currentPath: _currentPath,
           onFileSelected: _handleFileSelect,
           onNavigate: _handleNavigation,
+          managerName: widget.name,
+          onTagChanged: () {
+            // Trigger rebuild of details panel when tags change
+            if (mounted) setState(() {});
+          },
         );
       case 1:
         return GraphViewPage(
@@ -482,6 +487,11 @@ class _ManagerPageState extends State<ManagerPage> {
           currentPath: _currentPath,
           onFileSelected: _handleFileSelect,
           onNavigate: _handleNavigation,
+          managerName: widget.name,
+          onTagChanged: () {
+            // Trigger rebuild of details panel when tags change
+            if (mounted) setState(() {});
+          },
         );
       default:
         return const Placeholder();
