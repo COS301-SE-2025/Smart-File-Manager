@@ -11,25 +11,32 @@ import (
 const limit int = 25
 const maxDist int = 25
 
-func levelshteinDist(a, b string) int {
-	a = strings.ToLower(a)
-	b = strings.ToLower(b)
+func levelshteinDist(searchText string, fileName string) int {
+	if fileName[0] != '.' {
 
-	// strip extensions (as you already do)
-	if i := strings.LastIndex(a, "."); i >= 0 {
-		a = a[:i]
-	}
-	if i := strings.LastIndex(b, "."); i >= 0 {
-		b = b[:i]
+		searchText = strings.ToLower(searchText)
+		fileName = strings.ToLower(fileName)
+
+		//if the search doesnt contain a . then we remove the file
+		// extention from the fie names for better search results
+		if !strings.Contains(searchText, ".") {
+
+			if i := strings.LastIndex(searchText, "."); i >= 0 {
+				searchText = searchText[:i]
+			}
+			if i := strings.LastIndex(fileName, "."); i >= 0 {
+				fileName = fileName[:i]
+			}
+		}
 	}
 
 	// ── BOOST exact substrings ──
-	if strings.Contains(b, a) {
+	if strings.Contains(fileName, searchText) {
 		return 1
 	}
 
 	// now fall back on full Levenshtein
-	la, lb := len(a), len(b)
+	la, lb := len(searchText), len(fileName)
 	if la == 0 {
 		return lb
 	}
@@ -38,7 +45,7 @@ func levelshteinDist(a, b string) int {
 	}
 	// ensure la >= lb
 	if la < lb {
-		a, b = b, a
+		searchText, fileName = fileName, searchText
 		la, lb = lb, la
 	}
 
@@ -49,10 +56,10 @@ func levelshteinDist(a, b string) int {
 	}
 	for i := 1; i <= la; i++ {
 		curr[0] = i
-		ai := a[i-1]
+		ai := searchText[i-1]
 		for j := 1; j <= lb; j++ {
 			cost := 0
-			if ai != b[j-1] {
+			if ai != fileName[j-1] {
 				cost = 1
 			}
 			sub := prev[j-1] + cost
@@ -196,7 +203,7 @@ func exploreFolder(f *Folder, text string, c chan<- rankedFile, wg *sync.WaitGro
 		go exploreFolder(folder, text, c, wg)
 	}
 	for _, file := range f.Files {
-		dist := levelshteinDist(file.Name, text)
+		dist := levelshteinDist(text, file.Name)
 		if dist <= maxDist {
 
 			c <- rankedFile{file: *file, distance: dist}
