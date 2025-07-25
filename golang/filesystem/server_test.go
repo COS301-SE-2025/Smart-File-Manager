@@ -1,6 +1,8 @@
 package filesystem
 
 import (
+	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
@@ -155,5 +157,78 @@ func TestAPI_MoveDirectoryHandler(t *testing.T) {
 	}
 	if string(data) != string(content) {
 		t.Errorf("moved file content = %q; want %q", data, content)
+	}
+}
+
+// Test the find-duplicates endpoint
+func TestAPI_FindDuplicateFilesHandler(t *testing.T) {
+	tmp := t.TempDir()
+	projectRoot := filepath.Join(tmp, "Smart-File-Manager")
+	if err := os.MkdirAll(projectRoot, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a data folder with two identical files
+	dataDir := filepath.Join(projectRoot, "data")
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	fileA := filepath.Join(dataDir, "a.txt")
+	fileB := filepath.Join(dataDir, "b.txt")
+	content := []byte("duplicate test")
+	if err := os.WriteFile(fileA, content, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(fileB, content, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Register composite
+	composites = []*Folder{{
+		Name:    "dupTest",
+		Path:    "data",
+		NewPath: "data",
+		Files: []*File{{
+			Name: "a.txt", Path: fileA,
+		}, {
+			Name: "b.txt", Path: fileB,
+		}},
+	}}
+
+	// Move into project root so handler finds it
+	origWd, _ := os.Getwd()
+	if err := os.Chdir(projectRoot); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(origWd)
+
+	// Call endpoint
+	req := httptest.NewRequest("GET", "/findDuplicateFiles?name=dupTest", nil)
+	w := httptest.NewRecorder()
+	findDuplicateFilesHandler(w, req)
+
+	// Check response code
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+
+	// Parse JSON
+	var entries []DuplicateEntry
+	if err := json.Unmarshal(w.Body.Bytes(), &entries); err != nil {
+		t.Fatalf("failed to parse JSON: %v", err)
+	}
+
+	// Expect one duplicate entry
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 duplicate entry, got %d", len(entries))
+	}
+
+	exp := DuplicateEntry{
+		Name:      "b.txt",
+		Original:  fileA,
+		Duplicate: fileB,
+	}
+	if entries[0] != exp {
+		t.Errorf("unexpected entry: got %+v, want %+v", entries[0], exp)
 	}
 }
