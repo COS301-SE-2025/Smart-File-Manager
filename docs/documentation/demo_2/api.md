@@ -377,9 +377,6 @@ Unlocks a file or folder. When unlocking a folder all sub-folders, -files are al
 * Make sure to URI-encode query parameter values when needed.
 * The backend must be running at the defined base URI for requests to succeed.
 
-Let me know if you'd like a PDF or markdown version of this.
-
-
 
 # startUp
 
@@ -396,3 +393,51 @@ get /startUp
     "first2"
   ]
 }
+
+---
+
+## findDuplicates
+
+Identifies and returns a list of files that are considered duplicates based on file size, hash, and content matching.
+
+**Parameters:**
+
+* `name`: The name of the Smart Manager to search for duplicates in.
+
+**Endpoint:**
+
+```
+GET /findDuplicates?name={name}
+```
+
+**Returns:**
+
+* A JSON array of duplicate file pairs. Each object includes:
+
+  * `name`: The common file name.
+  * `original`: The full path to the original file.
+  * `duplicate`: The full path to the detected duplicate.
+
+**Example Response:**
+
+```json
+[
+  {
+    "name": "The Man of Steel.docx",
+    "original": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers2/The Man of Steel (another copy).docx",
+    "duplicate": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers2/The Man of Steel.docx"
+  },
+  {
+    "name": "pyramid-technology.pdf",
+    "original": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers2/pyramid-technology (copy).pdf",
+    "duplicate": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers2/pyramid-technology.pdf"
+  }
+]
+```
+
+**Throws:**
+
+* Exception if the request fails or if the Smart Manager name is invalid.
+
+---
+
