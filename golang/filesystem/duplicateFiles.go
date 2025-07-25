@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 )
 
 type DuplicateEntry struct {
@@ -33,34 +34,51 @@ func computeFileHash(path string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func FindDuplicateFiles(item *Folder) []DuplicateEntry {
-	fileHashes := make(map[string]string)
-	var duplicates []DuplicateEntry
+func FindDuplicateFiles(root *Folder) []DuplicateEntry {
+	// 1st pass: group all files by their file size
+	sizeBuckets := make(map[int64][]string)
+	collectBySize(root, sizeBuckets)
 
-	var walk func(folder *Folder)
-	walk = func(folder *Folder) {
-		for _, file := range folder.Files {
-			hash := computeFileHash(file.Path)
+	duplicates := []DuplicateEntry{}
+
+	// 2nd pass: for each bucket with >1 file, compute full hash and detect dups
+	for _, paths := range sizeBuckets {
+		if len(paths) < 2 {
+			continue
+		}
+
+		hashMap := make(map[string]string)
+		for _, p := range paths {
+			hash := computeFileHash(p)
 			if hash == "" {
 				continue
 			}
-			if origPath, exists := fileHashes[hash]; exists {
+			if orig, exists := hashMap[hash]; exists {
+				// duplicate found
 				duplicates = append(duplicates, DuplicateEntry{
-					Name:      file.Name,
-					Original:  origPath,
-					Duplicate: file.Path,
+					Name:      filepath.Base(p),
+					Original:  orig,
+					Duplicate: p,
 				})
 			} else {
-				fileHashes[hash] = file.Path
+				hashMap[hash] = p
 			}
-		}
-		for _, sub := range folder.Subfolders {
-			walk(sub)
 		}
 	}
 
-	walk(item)
 	return duplicates
+}
+
+// collectBySize recurses through folder tree, grouping file paths by size
+func collectBySize(folder *Folder, buckets map[int64][]string) {
+	for _, f := range folder.Files {
+		if info, err := os.Stat(f.Path); err == nil && info.Mode().IsRegular() {
+			buckets[info.Size()] = append(buckets[info.Size()], f.Path)
+		}
+	}
+	for _, sub := range folder.Subfolders {
+		collectBySize(sub, buckets)
+	}
 }
 
 func findDuplicateFilesHandler(w http.ResponseWriter, r *http.Request) {
