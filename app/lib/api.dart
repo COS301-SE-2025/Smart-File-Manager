@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'models/file_tree_node.dart';
 import 'models/startup_response.dart';
+import 'models/duplicate_model.dart';
 
 const uri = "http://localhost:51000";
 
@@ -183,6 +184,33 @@ class Api {
       }
     } catch (e, stackTrace) {
       print('Error unlocking folder/file: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //Call to load duplicate data
+  static Future<List<DuplicateModel>> loadDuplicates(String name) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$uri/findDuplicateFiles?name=$name"),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = jsonDecode(response.body);
+        print(jsonDecode(response.body));
+        return jsonList
+            .map(
+              (item) => DuplicateModel.fromJson(item as Map<String, dynamic>),
+            )
+            .toList();
+      } else {
+        throw Exception(
+          'Failed to load duplicate data: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error loading duplicates: $e');
       print(stackTrace);
       rethrow;
     }
