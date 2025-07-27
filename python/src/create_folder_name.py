@@ -4,6 +4,9 @@ from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import nltk
+
+from nltk.corpus import wordnet
+from nltk import pos_tag
 from nltk.stem import WordNetLemmatizer
 
 #adding these imports could be slow
@@ -11,7 +14,7 @@ from sentence_transformers import SentenceTransformer
 from typing import List, Tuple, Dict
 
 from collections import defaultdict
-nltk.download('wordnet', quiet=True)
+
 
 class FolderNameCreator:
     def __init__(self, model : SentenceTransformer):
@@ -31,6 +34,21 @@ class FolderNameCreator:
         self.filename_scores = {}
         self.parent_name_scores = {}
         self.keyword_scores = {}
+
+        self._ensure_nltk_data()
+
+
+    def _ensure_nltk_data(self):
+        try:
+            nltk.data.find("tokenizers/punkt")
+            nltk.data.find("taggers/averaged_perceptron_tagger")
+            nltk.data.find("corpora/wordnet")
+            nltk.data.find("corpora/omw-1.4")
+        except LookupError:
+            nltk.download("punkt", quiet=True)
+            nltk.download("averaged_perceptron_tagger_eng", quiet=True)
+            nltk.download("wordnet", quiet=True)
+            nltk.download("omw-1.4", quiet=True)
 
     # Remove all types of extensions - .png, .tar.gz, etc.
     def remove_all_extensions(self,filename : str) -> str:
@@ -135,14 +153,29 @@ class FolderNameCreator:
         return [(word, scores[word]) for word in folder_keyword]
 
     
+    # Helper function to map NLTK POS to WordNet POS
+    def get_wordnet_pos(self, treebank_tag):
+        if treebank_tag.startswith('J'):
+            return wordnet.ADJ
+        elif treebank_tag.startswith('V'):
+            return wordnet.VERB
+        elif treebank_tag.startswith('N'):
+            return wordnet.NOUN
+        elif treebank_tag.startswith('R'):
+            return wordnet.ADV
+        else:
+            return wordnet.NOUN  # fallback to noun
+
     def lemmatize(self, folder_keyword):
         seen = set()
         normalized_keywords = []
         for kw in folder_keyword:
-            #words = kw.lower().replace(".", "_").split()
             words = re.split(r'[\s\._\-]+', kw.lower())
-            for word in words:
-                lemma = self.lemmatizer.lemmatize(word)
+            # Tag parts of speech
+            tagged = pos_tag(words)
+            for word, tag in tagged:
+                wn_tag = self.get_wordnet_pos(tag)
+                lemma = self.lemmatizer.lemmatize(word, pos=wn_tag)
                 if lemma not in seen:
                     seen.add(lemma)
                     normalized_keywords.append(lemma)
@@ -151,11 +184,11 @@ class FolderNameCreator:
     def lemmatize_with_scores(self, folder_keywords_with_scores):
         seen = {}
         for kw, score in folder_keywords_with_scores:
-            #words = kw.lower().replace(".", "").split()
             words = re.split(r'[\s\._\-]+', kw.lower())
-            for word in words:
-                lemma = self.lemmatizer.lemmatize(word)
+            tagged = pos_tag(words)
+            for word, tag in tagged:
+                wn_tag = self.get_wordnet_pos(tag)
+                lemma = self.lemmatizer.lemmatize(word, pos=wn_tag)
                 if lemma not in seen or score > seen[lemma]:
                     seen[lemma] = score
         return sorted(seen.items(), key=lambda x: -x[1])
-
