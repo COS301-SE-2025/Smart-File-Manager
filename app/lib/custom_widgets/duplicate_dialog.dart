@@ -1,0 +1,137 @@
+import 'package:flutter/material.dart';
+import 'package:app/constants.dart';
+import 'package:app/models/duplicate_model.dart';
+import 'package:app/api.dart';
+
+class DuplicateDialog extends StatefulWidget {
+  List<DuplicateModel>? duplicates;
+  final String name;
+
+  DuplicateDialog({required this.name, super.key, this.duplicates});
+
+  @override
+  State<DuplicateDialog> createState() => _DuplicateDialogState();
+}
+
+class _DuplicateDialogState extends State<DuplicateDialog> {
+  final TextEditingController _duplicateController = TextEditingController();
+  bool _isLoading = true;
+
+  @override
+  void dispose() {
+    _duplicateController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDuplicateData(widget.name);
+  }
+
+  Future<void> _loadDuplicateData(String name) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final duplicates = await Api.loadDuplicates(name);
+
+    if (mounted) {
+      setState(() {
+        widget.duplicates = duplicates;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: kScaffoldColor,
+      title: const Text('Duplicates', style: kTitle1),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 400,
+        child:
+            _isLoading
+                ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      CircularProgressIndicator(color: Color(0xffFFB400)),
+                      SizedBox(height: 16),
+                      Text(
+                        'Loading duplicates...',
+                        style: TextStyle(color: Color(0xff9CA3AF)),
+                      ),
+                    ],
+                  ),
+                )
+                : widget.duplicates == null || widget.duplicates!.isEmpty
+                ? const Center(
+                  child: Text(
+                    'No duplicates found.',
+                    style: TextStyle(color: Color(0xff9CA3AF), fontSize: 16),
+                  ),
+                )
+                : Column(
+                  children: [
+                    Expanded(
+                      child: ListView(
+                        shrinkWrap: true,
+                        children:
+                            widget.duplicates!.map((object) {
+                              return Card(
+                                color: Color(0xff242424),
+                                elevation: 0,
+                                margin: const EdgeInsets.all(8.0),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        object.name,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Original Path: ${object.originalPath}',
+                                        style: TextStyle(
+                                          color: Color(0xff9CA3AF),
+                                        ),
+                                      ),
+                                      Text(
+                                        'Duplicate Path: ${object.duplicatePath}',
+                                        style: TextStyle(
+                                          color: Color(0xff9CA3AF),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        if (mounted) {
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: const Text(
+                        "Close",
+                        style: TextStyle(color: Color(0xffFFB400)),
+                      ),
+                    ),
+                  ],
+                ),
+      ),
+    );
+  }
+}
