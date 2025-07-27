@@ -58,7 +58,7 @@ class _TagDialogState extends State<TagDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context, false),
+          onPressed: () => Navigator.pop(context, null),
           child: const Text(
             'Cancel',
             style: TextStyle(color: Color(0xff9CA3AF)),
