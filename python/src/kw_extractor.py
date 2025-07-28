@@ -21,6 +21,10 @@ class KWExtractor:
         }
         self.confidence_threshold = 0.085
 
+    def set_n(self, new_val : int):
+        if new_val > 0:
+            self.yake_extractor.n = new_val
+
     #Main extractor function
     def extract_kw(self, input: File) -> List[Tuple[str, float]]:
 

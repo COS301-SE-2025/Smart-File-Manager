@@ -81,12 +81,16 @@ class Master():
             response = DirectoryResponse(root=request.root, response_code=400, response_msg="No file could be opened")
 
     def handleKeywordRequest(self, request : DirectoryRequest) -> DirectoryResponse:
+
+        self.kw_extractor.set_n(1)        
+
         if self.__keyword_extractor__(request.root):
             response = DirectoryResponse(root=request.root, response_code=200, response_msg="Successfully extracted keywords for at least 1 file")
-            return response
         else:
             response = DirectoryResponse(root=request.root, response_code=400, response_msg="Could not extract any keywords")
-        
+
+        self.kw_extractor.set_n(3)
+        return response 
 
     def __keyword_extractor__(self, currentDirectory : Directory) -> bool:
 
@@ -97,7 +101,7 @@ class Master():
             keywords = self.kw_extractor.extract_kw(curFile)
             for word in keywords:
                 success = True
-                curFile.keywords.append(Keyword(keyword=word[0], score=word[1]))
+                curFile.keywords.append(Keyword(keyword=word[0].lower(), score=word[1]))
 
         for curDir in currentDirectory.directories:
             if self.__keyword_extractor__(curDir):

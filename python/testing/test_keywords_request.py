@@ -1,8 +1,10 @@
+from typing import Dict, List
 import grpc
 import pytest
 from concurrent import futures
 import sys
 import os
+import time
 
 # Add src to path temporarily so the generated grpc file can find message_structure_pb2
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -46,7 +48,7 @@ def createDirectoryRequest():
         File(name="collection_page_wireframe.png", original_path=get_path("collection_page_wireframe.png")),
         File(name="COS 301 - Mini-Project - Demo 1 Instructions.pdf", original_path=get_path("COS 301 - Mini-Project - Demo 1 Instructions.pdf")),
         File(name="COS 301 - Mini-Project - Demo 2 Instructions.pdf", original_path=get_path("COS 301 - Mini-Project - Demo 2 Instructions.pdf")),
-        File(name="COS122 Tutorial 4 Sept 7-8, 2023.pdf", original_path=get_path("COS122 Tutorial 4 Sept 7-8, 2023.pdf"), tags=[]),
+        File(name="COS122 Tutorial 4 Sept 7-8, 2023.pdf", original_path=get_path("COS122 Tutorial 4 Sept 7-8, 2023.pdf")),
         File(name="COS221 Assignment 1 2025.pdf", original_path=get_path("COS221 Assignment 1 2025.pdf")),
         File(name="cpp_api.md", original_path=get_path("cpp_api.md")),
         File(name="DeeBee.png", original_path=get_path("DeeBee.png")),
@@ -90,13 +92,17 @@ def createDirectoryRequest():
     yield req
 
 
-def recHelper(curDir : Directory):
+def recHelper(curDir : Directory, kws : Dict[str, List[str]]):
 
     # Check response contains at least some keywords 
     for curFile in curDir.files:
         
         if not curFile.original_path.endswith(".png") and not curFile.original_path.endswith(".jpeg"):
             assert len(curFile.keywords) > 0
+            words = []
+            for w in curFile.keywords:
+                words.append(w)
+            kws[curFile.name] = words
     
         # Recurisve call
         if len(curDir.directories) != 0:
@@ -106,12 +112,17 @@ def recHelper(curDir : Directory):
 # Sends an actual directory and checks if metadata was correctly attached to filejjs
 def test_send_real_dir(grpc_test_server, createDirectoryRequest):
     req = createDirectoryRequest  # Accessing req from the fixture
+    start = time.time()
     response = grpc_test_server.SendDirectoryStructure(req)
+    end = time.time()
 
     # Check if enough metadata was extracted
-    recHelper(response.root)
-    print(response.root)
+    kws = {}
+    recHelper(response.root, kws)
+    for file, words in kws.items():
+        print(f"{file}: {words}")
 
+    print(f"Method took: {end - start} seconds")
     # Check if response is well formed
     assert response.response_code == 200
     assert response.response_msg != "No file could be opened"
