@@ -27,5 +27,6 @@ app/pubspec.lock
 
 # Coverage
 .coverage
+profiling/
 
 
