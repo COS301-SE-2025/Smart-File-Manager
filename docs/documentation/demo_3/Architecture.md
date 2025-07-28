@@ -4,7 +4,7 @@
   <img src="assets/spark_logo_dark_background.png" alt="Company Logo" width="300" height=100%/>
 </p>
 
-**Version:** 2.0.0.0  
+**Version:** 3.0.0.0  
 **Prepared By:** Spark Industries  
 **Prepared For:** Southern Cross Solutions  
 **Document Type:** Architectural Requirements Document  

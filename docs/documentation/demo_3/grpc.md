@@ -4,7 +4,7 @@
 
 # gRPC endpoint Documentation 
 
-**Version:** 2.0.0.0  
+**Version:** 3.0.0.0  
 **Prepared By:** Spark Industries  
 **Prepared For:** Southern Cross Solutions & Personal Development team use  
 
@@ -103,6 +103,12 @@ message MetadataEntry {
   string value = 2;
 }
 
+// Keyword extracted from file along with the score it was given by yake
+message Keyword {
+  string keyword = 1;
+  float score = 2;
+}
+
 message File {
   string name = 1;
   string original_path = 2;
@@ -110,6 +116,7 @@ message File {
   repeated Tag tags = 4;
   repeated MetadataEntry metadata = 5;
   bool is_locked = 6;
+  repeated Keyword keywords = 6;
 }
 
 message Directory {
@@ -124,10 +131,7 @@ message Directory {
 // Go to python 
 message DirectoryRequest {
   Directory root = 1;
-  enum type{
-    CLUSTER = 0;
-    METADATA = 1; // Returns metadata for all files
-  }
+  string requestType = 2; // This can be CLUSTERING or METADATA or KEYWORDS
 }
 
 // Python to go

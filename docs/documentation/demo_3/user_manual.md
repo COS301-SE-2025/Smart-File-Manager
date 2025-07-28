@@ -1,6 +1,6 @@
 # Smart File Manager - User Manual
 
-Version 1.0.0
+Version 2.0.0
 
 ## Table of Contents
 
