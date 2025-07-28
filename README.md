@@ -33,6 +33,8 @@ Smart File Manager (SFM) is a digital housekeeper that uses metadata, natural la
 
 - [Demo 2 Video](https://drive.google.com/file/d/1r3b0Cgn8EPdx442N7hdfmTc4ODt7TX4g/view?usp=drive_link)
 
+- [Demo 3 Video]()
+
 ## 📑 Documentation
 
 <details>
@@ -59,6 +61,19 @@ Smart File Manager (SFM) is a digital housekeeper that uses metadata, natural la
 
 </details>
 
+<details>
+<summary><strong>📋 Demo 3 Documentation</strong></summary>
+
+🔗 [Functional Requirements Document (SRS)](docs/documentation/demo_3/srs.md) <br>
+🔗 [Architectural Specifications](docs/documentation/demo_3/Architecture.md) <br>
+🔗 [Wireframe Documentation](docs/documentation/demo_3/wireframe.md) <br>
+🔗 [Research Document](docs/documentation/demo_3/researchDoc.md) <br>
+🔗 [Go API](docs/documentation/demo_3/api.md) <br>
+🔗 [User Manual](docs/documentation/demo_3/user_manual.md) <br>
+🔗 [Coding Standards](docs/documentation/demo_3/coding_standards.md)
+
+</details>
+
 ## 📊 Project Board
 
 The GitHub Project boards are used to track current tasks allocated to each team member, facilitating effective communication, progress monitoring, and ensuring we meet project deadlines while maintaining accountability and transparency throughout the development process.
@@ -76,7 +91,7 @@ The GitHub Project boards are used to track current tasks allocated to each team
   <tr>
     <td width="30%">
       <strong>Jack Bawden</strong><br>
-      <img src="docs/documentation/demo_2/assets/readmeAssets/Jack.jpg" width="100%" height="300">
+      <img src="docs/documentation/demo_3/assets/readmeAssets/Jack.jpg" width="100%" height="300">
     </td>
     <td width="20%">
       <code>Golang & Python</code><br>
@@ -91,7 +106,7 @@ The GitHub Project boards are used to track current tasks allocated to each team
   <tr>
     <td width="30%">
       <strong>Philipp du Plessis</strong><br>
-      <img src="docs/documentation/demo_2/assets/readmeAssets/philipp.jpg" width="100%" height="300">
+      <img src="docs/documentation/demo_3/assets/readmeAssets/philipp.jpg" width="100%" height="300">
     </td>
     <td width="20%">
       <code>Golang & Python</code><br>
@@ -106,7 +121,7 @@ The GitHub Project boards are used to track current tasks allocated to each team
   <tr>
     <td width="30%">
       <strong>Tiaan Bosman</strong><br>
-      <img src="docs/documentation/demo_2/assets/readmeAssets/tiaan.jpeg" width="100%" height="300">
+      <img src="docs/documentation/demo_3/assets/readmeAssets/tiaan.jpeg" width="100%" height="300">
     </td>
     <td width="20%">
       <code>UX & UI Developer</code><br>
@@ -122,7 +137,7 @@ The GitHub Project boards are used to track current tasks allocated to each team
   <tr>
     <td width="30%">
       <strong>Henco Pretorius</strong><br>
-      <img src="docs/documentation/demo_2/assets/readmeAssets/Henco.jpg" width="100%" height="300">
+      <img src="docs/documentation/demo_3/assets/readmeAssets/Henco.jpg" width="100%" height="300">
     </td>
     <td width="20%">
       <code>Golang & Python</code><br>
@@ -137,7 +152,7 @@ The GitHub Project boards are used to track current tasks allocated to each team
   <tr>
     <td width="30%">
       <strong>Dewald Colesky</strong><br>
-      <img src="docs/documentation/demo_2/assets/readmeAssets/dewald.JPG" width="100%" height="300">
+      <img src="docs/documentation/demo_3/assets/readmeAssets/dewald.JPG" width="100%" height="300">
     </td>
     <td width="20%">
       <code>Backend Legend</code><br>
