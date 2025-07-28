@@ -2,6 +2,7 @@ package filesystem
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -95,21 +96,29 @@ type folderResponse struct {
 	Files []File `json:"files"`
 }
 
+// todo error if comp not found
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
+
 	compositeName := r.URL.Query().Get("compositeName")
 	searchText := r.URL.Query().Get("searchText")
 
 	for _, comp := range composites {
 		if comp.Name == compositeName {
 
+			printDirectoryWithMetadata(convertFolderToProto(*comp), 0)
+
 			sr := getMatches(searchText, comp)
 
-			// build a FolderResponse with just the File objects
 			resp := folderResponse{
 				Name:  sr.Name,
 				Files: make([]File, len(sr.rankedFiles)),
 			}
+
 			for i, rf := range sr.rankedFiles {
+				fmt.Println("    MetaData:")
+				for _, i := range rf.file.Metadata {
+					fmt.Println("    " + i.Key + ": " + i.Value)
+				}
 				resp.Files[i] = rf.file
 			}
 
@@ -122,6 +131,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getMatches(text string, composite *Folder) *safeResults {
+
 	res := &safeResults{
 		Name: composite.Name,
 	}
@@ -181,13 +191,19 @@ func getMatches(text string, composite *Folder) *safeResults {
 			}
 		}
 	}
+
+	//checks to remove dups (yes if concurrency was perfect there wouldnt be dups)
 	unique := make([]rankedFile, 0, len(res.rankedFiles))
+
 	finalSeen := make(map[string]struct{}, len(res.rankedFiles))
+
 	for _, rf := range res.rankedFiles {
 		key := filepath.Clean(rf.file.Path)
+
 		if _, ok := finalSeen[key]; ok {
 			continue
 		}
+
 		finalSeen[key] = struct{}{}
 		unique = append(unique, rf)
 	}
@@ -198,14 +214,19 @@ func getMatches(text string, composite *Folder) *safeResults {
 
 func exploreFolder(f *Folder, text string, c chan<- rankedFile, wg *sync.WaitGroup) {
 	defer wg.Done()
+
 	for _, folder := range f.Subfolders {
 		wg.Add(1)
 		go exploreFolder(folder, text, c, wg)
 	}
+
 	for _, file := range f.Files {
 		dist := levelshteinDist(text, file.Name)
 		if dist <= maxDist {
-
+			fmt.Println("    MetaData:")
+			for _, i := range file.Metadata {
+				fmt.Println("    " + i.Key + ": " + i.Value)
+			}
 			c <- rankedFile{file: *file, distance: dist}
 		}
 	}
