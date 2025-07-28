@@ -9,7 +9,8 @@ class DirectoryCreator:
     def __init__(self, directoryName, fileMap):
         self.directory_name_idx = 0 
         self.directory_name = "Directory"
-        self.FILE_DIR = os.path.join(TEST_DIR, directoryName)
+        #self.FILE_DIR = os.path.join(TEST_DIR, directoryName)
+        self.FILE_DIR = directoryName
         self.file_map = defaultdict()
         for file in fileMap:
             self.file_map[file["filename"]] = file
@@ -62,3 +63,5 @@ class DirectoryCreator:
             for key, val in file_info.items()
             if key not in ("keywords", "full_vector")
         ]
+    
+    
