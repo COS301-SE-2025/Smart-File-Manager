@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'models/file_tree_node.dart';
 import 'models/startup_response.dart';
+import 'models/duplicate_model.dart';
 
 const uri = "http://localhost:51000";
 
@@ -14,6 +15,8 @@ class Api {
       );
 
       if (response.statusCode == 200) {
+        print(jsonDecode(response.body) as Map<String, dynamic>);
+
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
@@ -144,6 +147,70 @@ class Api {
       }
     } catch (e, stackTrace) {
       print('Error deleting tag at deleteTag: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //lock files/folders
+  static Future<bool> locking(String path) async {
+    try {
+      final response = await http.post(Uri.parse("$uri/lock?path=$path"));
+      print(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        throw Exception(
+          'Failed to lock File/Folder: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error locking folder/file: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<bool> unlocking(String path) async {
+    try {
+      final response = await http.post(Uri.parse("$uri/unlock?path=$path"));
+      print(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        throw Exception(
+          'Failed to unlock File/Folder: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error unlocking folder/file: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //Call to load duplicate data
+  static Future<List<DuplicateModel>> loadDuplicates(String name) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$uri/findDuplicateFiles?name=$name"),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = jsonDecode(response.body);
+        print(jsonDecode(response.body));
+        return jsonList
+            .map(
+              (item) => DuplicateModel.fromJson(item as Map<String, dynamic>),
+            )
+            .toList();
+      } else {
+        throw Exception(
+          'Failed to load duplicate data: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error loading duplicates: $e');
       print(stackTrace);
       rethrow;
     }

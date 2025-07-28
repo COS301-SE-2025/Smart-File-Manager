@@ -1,3 +1,4 @@
+import 'package:app/custom_widgets/duplicate_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/pages/manager_page_sub/folder_view_page.dart';
@@ -163,6 +164,13 @@ class _ManagerPageState extends State<ManagerPage> {
         _selectedFile = null;
       });
     }
+  }
+
+  void _showDuplicateDialog(String name) async {
+    showDialog<String>(
+      context: context,
+      builder: (context) => DuplicateDialog(name: name),
+    );
   }
 
   @override
@@ -344,86 +352,22 @@ class _ManagerPageState extends State<ManagerPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Row(
           children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Container(
-                    width: 250,
-                    height: 32,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xff242424),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xff3D3D3D)),
-                    ),
-                    child: Center(
-                      child: TextField(
-                        onChanged: null,
-                        cursorColor: const Color(0xffFFB400),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: 'Search files and folders...',
-                          hintStyle: TextStyle(
-                            color: Color(0xff9CA3AF),
-                            fontSize: 12,
-                          ),
-                          border: InputBorder.none,
-                          isCollapsed: true,
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Color(0xff9CA3AF),
-                            size: 16,
-                          ),
-                          prefixIconConstraints: BoxConstraints(
-                            minWidth: 20,
-                            minHeight: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    height: 32,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xff242424),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xff3D3D3D)),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: null,
-                        hint: const Text(
-                          'Sort by',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xff9CA3AF),
-                          ),
-                        ),
-                        dropdownColor: const Color(0xff2E2E2E),
-                        iconEnabledColor: const Color(0xff9CA3AF),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xff9CA3AF),
-                        ),
-                        items: const [
-                          DropdownMenuItem(value: 'name', child: Text('Name')),
-                          DropdownMenuItem(value: 'size', child: Text('Size')),
-                        ],
-                        onChanged: null,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            HoverableButton(
-              onTap: _isSorting ? null : _handleSortManager,
-              name: _isSorting ? "Sorting..." : "Sort Manager",
+            Row(
+              children: [
+                HoverableButton(
+                  onTap: () {
+                    _showDuplicateDialog(widget.name);
+                  },
+                  name: "Find Duplicates",
+                  icon: Icons.filter_none_rounded,
+                ),
+                const SizedBox(width: 12),
+                HoverableButton(
+                  onTap: _isSorting ? null : _handleSortManager,
+                  name: _isSorting ? "Sorting..." : "Sort Manager",
+                  icon: Icons.account_tree_rounded,
+                ),
+              ],
             ),
           ],
         ),
@@ -475,6 +419,11 @@ class _ManagerPageState extends State<ManagerPage> {
           currentPath: _currentPath,
           onFileSelected: _handleFileSelect,
           onNavigate: _handleNavigation,
+          managerName: widget.name,
+          onTagChanged: () {
+            // Trigger rebuild of details panel when tags change
+            if (mounted) setState(() {});
+          },
         );
       case 1:
         return GraphViewPage(
@@ -482,6 +431,11 @@ class _ManagerPageState extends State<ManagerPage> {
           currentPath: _currentPath,
           onFileSelected: _handleFileSelect,
           onNavigate: _handleNavigation,
+          managerName: widget.name,
+          onTagChanged: () {
+            // Trigger rebuild of details panel when tags change
+            if (mounted) setState(() {});
+          },
         );
       default:
         return const Placeholder();
