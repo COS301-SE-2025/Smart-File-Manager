@@ -1,3 +1,4 @@
+import 'package:app/custom_widgets/duplicate_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/pages/manager_page_sub/folder_view_page.dart';
@@ -8,8 +9,14 @@ import 'package:app/custom_widgets/hoverable_button.dart';
 
 class ManagerPage extends StatefulWidget {
   final String name;
-  const ManagerPage({required this.name, super.key});
-
+  final FileTreeNode? treeData;
+  final Function(String, FileTreeNode)? onTreeDataUpdate;
+  const ManagerPage({
+    required this.name,
+    this.treeData,
+    this.onTreeDataUpdate,
+    super.key,
+  });
   @override
   State<ManagerPage> createState() => _ManagerPageState();
 }
@@ -22,71 +29,148 @@ class _ManagerPageState extends State<ManagerPage> {
   bool _isDetailsVisible = false;
   bool _isLoading = true;
   bool _isSorting = false;
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
-    getTree();
+    if (widget.treeData != null) {
+      setState(() {
+        _treeData = widget.treeData;
+        _isLoading = false;
+      });
+    } else {
+      getTree(); // Fallback method to get the data if not exists
+    }
+  }
+
+  @override
+  void didUpdateWidget(ManagerPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // If receive new tree data, update state
+    if (widget.treeData != null && widget.treeData != oldWidget.treeData) {
+      if (!_disposed && mounted) {
+        setState(() {
+          _treeData = widget.treeData;
+          _isLoading = false;
+        });
+      }
+    }
+
+    // If manager name changed and do not have tree data, load it
+    if (widget.name != oldWidget.name && widget.treeData == null) {
+      getTree();
+    }
   }
 
   Future<void> getTree() async {
-    FileTreeNode response = await Api.loadTreeData(widget.name);
+    if (!_disposed && mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
-    setState(() {
-      _treeData = response;
-      _isLoading = false;
-    });
+    try {
+      FileTreeNode response = await Api.loadTreeData(widget.name);
+
+      if (!_disposed && mounted) {
+        setState(() {
+          _treeData = response;
+          _isLoading = false;
+        });
+
+        // Update the parent loaded tree data
+        widget.onTreeDataUpdate?.call(widget.name, response);
+      }
+    } catch (e) {
+      if (!_disposed && mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      print('Error loading tree data: $e');
+    }
   }
 
   Future<void> _handleSortManager() async {
-    setState(() {
-      _isLoading = true;
-      _isSorting = true;
-    });
+    if (!_disposed && mounted) {
+      setState(() {
+        _isLoading = true;
+        _isSorting = true;
+      });
+    }
 
     try {
       FileTreeNode response = await Api.sortManager(widget.name);
 
-      setState(() {
-        _treeData = response;
-        _isLoading = false;
-        _isSorting = false;
-      });
+      if (!_disposed && mounted) {
+        setState(() {
+          _treeData = response;
+          _isLoading = false;
+          _isSorting = false;
+        });
+
+        widget.onTreeDataUpdate?.call(widget.name, response);
+      }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _isSorting = false;
-      });
+      if (!_disposed && mounted) {
+        setState(() {
+          _isLoading = false;
+          _isSorting = false;
+        });
+      }
       print('Error sorting manager: $e');
     }
   }
 
   void _handleViewChange(int index) {
-    setState(() {
-      _currentView = index;
-      _isDetailsVisible = false;
-      _selectedFile = null;
-    });
+    if (!_disposed && mounted) {
+      setState(() {
+        _currentView = index;
+        _isDetailsVisible = false;
+        _selectedFile = null;
+      });
+    }
   }
 
   void _handleFileSelect(FileTreeNode file) {
-    setState(() {
-      _selectedFile = file;
-      _isDetailsVisible = true;
-    });
+    if (!_disposed && mounted) {
+      setState(() {
+        _selectedFile = file;
+        _isDetailsVisible = true;
+      });
+    }
   }
 
   void _handleNavigation(List<String> newPath) {
-    setState(() {
-      _currentPath = newPath;
-    });
+    if (!_disposed && mounted) {
+      setState(() {
+        _currentPath = newPath;
+      });
+    }
   }
 
   void _handleDetailPanelClose() {
-    setState(() {
-      _isDetailsVisible = false;
-      _selectedFile = null;
-    });
+    if (!_disposed && mounted) {
+      setState(() {
+        _isDetailsVisible = false;
+        _selectedFile = null;
+      });
+    }
+  }
+
+  void _showDuplicateDialog(String name) async {
+    showDialog<String>(
+      context: context,
+      builder: (context) => DuplicateDialog(name: name),
+    );
   }
 
   @override
@@ -268,86 +352,22 @@ class _ManagerPageState extends State<ManagerPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Row(
           children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Container(
-                    width: 250,
-                    height: 32,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xff242424),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xff3D3D3D)),
-                    ),
-                    child: Center(
-                      child: TextField(
-                        onChanged: null,
-                        cursorColor: const Color(0xffFFB400),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: 'Search files and folders...',
-                          hintStyle: TextStyle(
-                            color: Color(0xff9CA3AF),
-                            fontSize: 12,
-                          ),
-                          border: InputBorder.none,
-                          isCollapsed: true,
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Color(0xff9CA3AF),
-                            size: 16,
-                          ),
-                          prefixIconConstraints: BoxConstraints(
-                            minWidth: 20,
-                            minHeight: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    height: 32,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xff242424),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xff3D3D3D)),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: null,
-                        hint: const Text(
-                          'Sort by',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xff9CA3AF),
-                          ),
-                        ),
-                        dropdownColor: const Color(0xff2E2E2E),
-                        iconEnabledColor: const Color(0xff9CA3AF),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xff9CA3AF),
-                        ),
-                        items: const [
-                          DropdownMenuItem(value: 'name', child: Text('Name')),
-                          DropdownMenuItem(value: 'size', child: Text('Size')),
-                        ],
-                        onChanged: null,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            HoverableButton(
-              onTap: _isSorting ? null : _handleSortManager,
-              name: _isSorting ? "Sorting..." : "Sort Manager",
+            Row(
+              children: [
+                HoverableButton(
+                  onTap: () {
+                    _showDuplicateDialog(widget.name);
+                  },
+                  name: "Find Duplicates",
+                  icon: Icons.filter_none_rounded,
+                ),
+                const SizedBox(width: 12),
+                HoverableButton(
+                  onTap: _isSorting ? null : _handleSortManager,
+                  name: _isSorting ? "Sorting..." : "Sort Manager",
+                  icon: Icons.account_tree_rounded,
+                ),
+              ],
             ),
           ],
         ),
@@ -399,6 +419,11 @@ class _ManagerPageState extends State<ManagerPage> {
           currentPath: _currentPath,
           onFileSelected: _handleFileSelect,
           onNavigate: _handleNavigation,
+          managerName: widget.name,
+          onTagChanged: () {
+            // Trigger rebuild of details panel when tags change
+            if (mounted) setState(() {});
+          },
         );
       case 1:
         return GraphViewPage(
@@ -406,6 +431,11 @@ class _ManagerPageState extends State<ManagerPage> {
           currentPath: _currentPath,
           onFileSelected: _handleFileSelect,
           onNavigate: _handleNavigation,
+          managerName: widget.name,
+          onTagChanged: () {
+            // Trigger rebuild of details panel when tags change
+            if (mounted) setState(() {});
+          },
         );
       default:
         return const Placeholder();

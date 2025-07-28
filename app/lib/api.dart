@@ -1,6 +1,8 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'models/file_tree_node.dart';
+import 'models/startup_response.dart';
+import 'models/duplicate_model.dart';
 
 const uri = "http://localhost:51000";
 
@@ -11,9 +13,10 @@ class Api {
       final response = await http.get(
         Uri.parse("$uri/loadTreeData?name=$name"),
       );
-      print(response.body);
 
       if (response.statusCode == 200) {
+        print(jsonDecode(response.body) as Map<String, dynamic>);
+
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
@@ -27,11 +30,29 @@ class Api {
     }
   }
 
+  //Call to initialize app and get existing smart managers
+  static Future<StartupResponse> startUp() async {
+    try {
+      final response = await http.get(Uri.parse("$uri/startUp"));
+
+      if (response.statusCode == 200) {
+        return StartupResponse.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to load data: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error loading initial data from startup: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
   //Call To Sort Tree structure
   static Future<FileTreeNode> sortManager(String name) async {
     try {
       final response = await http.get(Uri.parse("$uri/sortTree?name=$name"));
-      print(response.body);
 
       if (response.statusCode == 200) {
         return FileTreeNode.fromJson(
@@ -126,6 +147,70 @@ class Api {
       }
     } catch (e, stackTrace) {
       print('Error deleting tag at deleteTag: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //lock files/folders
+  static Future<bool> locking(String path) async {
+    try {
+      final response = await http.post(Uri.parse("$uri/lock?path=$path"));
+      print(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        throw Exception(
+          'Failed to lock File/Folder: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error locking folder/file: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<bool> unlocking(String path) async {
+    try {
+      final response = await http.post(Uri.parse("$uri/unlock?path=$path"));
+      print(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        throw Exception(
+          'Failed to unlock File/Folder: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error unlocking folder/file: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //Call to load duplicate data
+  static Future<List<DuplicateModel>> loadDuplicates(String name) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$uri/findDuplicateFiles?name=$name"),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = jsonDecode(response.body);
+        print(jsonDecode(response.body));
+        return jsonList
+            .map(
+              (item) => DuplicateModel.fromJson(item as Map<String, dynamic>),
+            )
+            .toList();
+      } else {
+        throw Exception(
+          'Failed to load duplicate data: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error loading duplicates: $e');
       print(stackTrace);
       rethrow;
     }

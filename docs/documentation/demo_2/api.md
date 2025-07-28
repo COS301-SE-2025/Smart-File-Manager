@@ -214,6 +214,29 @@ GET /sortTree?name={name}
 * Exception if the request fails.
 
 ---
+## moveDirectory
+
+After sorting a Smart Manager the user can choose to actually move the files that were sorted into a new sorted directory.
+
+**Parameters:**
+
+* `name` : Smart Manager name
+
+**Endpoint:**
+
+```
+GET /moveDirectory?name={name}
+```
+
+**Returns:**
+
+* `true` on success.
+* `false` on failure.
+
+**Throws:**
+
+* Exception if invalid.
+---
 
 ## addSmartManager
 
@@ -312,6 +335,40 @@ POST /removeTag?path={path}&tag={tag}
 
 * Exception if removal fails.
 
+## Locking
+
+Locks a file or folder. When locking a folder all sub-folders, -files are also locked.
+
+**Endpoint**
+
+```
+/lock?name={name}&path=../../testRootFolder
+```
+
+**Returns:**
+
+* `true` on success.
+
+**Throws:**
+
+* Exception if removal fails.
+  
+## Unlocking
+
+Unlocks a file or folder. When unlocking a folder all sub-folders, -files are also unlocked
+
+**Endpoint**
+```
+/unlock?name={name}&path=../../testRootFolder
+```
+
+**Returns:**
+
+* `true` on success.
+
+**Throws:**
+
+* Exception if removal fails.
 ---
 
 ## Notes
@@ -320,4 +377,67 @@ POST /removeTag?path={path}&tag={tag}
 * Make sure to URI-encode query parameter values when needed.
 * The backend must be running at the defined base URI for requests to succeed.
 
-Let me know if you'd like a PDF or markdown version of this.
+
+# startUp
+
+** No parameters **
+
+** Endpoint: **
+get /startUp
+
+** response: **
+
+{
+  "responseMessage": "Request successful!, composites: 1",
+  "managerNames": [
+    "first2"
+  ]
+}
+
+---
+
+## findDuplicates
+
+Identifies and returns a list of files that are considered duplicates based on file size, hash, and content matching.
+
+**Parameters:**
+
+* `name`: The name of the Smart Manager to search for duplicates in.
+
+**Endpoint:**
+
+```
+GET /findDuplicates?name={name}
+```
+
+**Returns:**
+
+* A JSON array of duplicate file pairs. Each object includes:
+
+  * `name`: The common file name.
+  * `original`: The full path to the original file.
+  * `duplicate`: The full path to the detected duplicate.
+
+**Example Response:**
+
+```json
+[
+  {
+    "name": "The Man of Steel.docx",
+    "original": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers2/The Man of Steel (another copy).docx",
+    "duplicate": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers2/The Man of Steel.docx"
+  },
+  {
+    "name": "pyramid-technology.pdf",
+    "original": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers2/pyramid-technology (copy).pdf",
+    "duplicate": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers2/pyramid-technology.pdf"
+  }
+]
+```
+
+**Throws:**
+
+* Exception if the request fails or if the Smart Manager name is invalid.
+
+---
+

@@ -16,7 +16,7 @@ type MetadataEntry struct {
 type File struct {
 	Name     string
 	Path     string
-	newPath  string
+	NewPath  string
 	Metadata []*MetadataEntry
 	Tags     []string
 	Locked   bool // Lock status for file
@@ -26,7 +26,7 @@ type File struct {
 type Folder struct {
 	Name         string
 	Path         string
-	newPath      string
+	NewPath      string
 	CreationDate time.Time
 	Locked       bool // Lock status for folder
 	Files        []*File
@@ -99,56 +99,51 @@ func (f *Folder) GetSubfolder(folderPath string) *Folder {
 // LockByPath locks a folder or file at the given path. Locking a folder locks all descendants.
 func (f *Folder) LockByPath(path string) {
 	// If this folder matches, lock entire subtree
-	if f.Path == path {
-		f.lockRecursive()
+	checkFile := f.GetFile(path)
+	if checkFile != nil {
+		checkFile.Lock()
 		return
 	}
-	// Otherwise, delegate to subfolders and files
-	for _, sf := range f.Subfolders {
-		sf.LockByPath(path)
-	}
-	for _, file := range f.Files {
-		file.LockByPath(path)
+	checkFolder := f.GetSubfolder(path)
+	if checkFolder != nil {
+		checkFolder.lockRecursive()
+		return
 	}
 }
 
 // lockRecursive locks this folder and all nested folders and files
 func (f *Folder) lockRecursive() {
 	f.Locked = true
-	fmt.Printf("Folder '%s' locked\n", f.Path)
 	for _, sf := range f.Subfolders {
 		sf.lockRecursive()
 	}
 	for _, file := range f.Files {
 		file.Locked = true
-		fmt.Printf("File '%s' locked\n", file.Path)
 	}
 }
 
 // UnlockByPath unlocks a folder or file at the given path. Unlocking a folder unlocks all descendants.
 func (f *Folder) UnlockByPath(path string) {
-	if f.Path == path {
-		f.unlockRecursive()
+	checkFile := f.GetFile(path)
+	if checkFile != nil {
+		checkFile.Unlock()
 		return
 	}
-	for _, sf := range f.Subfolders {
-		sf.UnlockByPath(path)
-	}
-	for _, file := range f.Files {
-		file.UnlockByPath(path)
+	checkFolder := f.GetSubfolder(path)
+	if checkFolder != nil {
+		checkFolder.unlockRecursive()
+		return
 	}
 }
 
 // unlockRecursive unlocks this folder and all nested folders and files
 func (f *Folder) unlockRecursive() {
 	f.Locked = false
-	fmt.Printf("Folder '%s' unlocked\n", f.Path)
 	for _, sf := range f.Subfolders {
 		sf.unlockRecursive()
 	}
 	for _, file := range f.Files {
 		file.Locked = false
-		fmt.Printf("File '%s' unlocked\n", file.Path)
 	}
 }
 
@@ -197,20 +192,14 @@ func (f *Folder) Display(indent int) {
 }
 
 // -------------------- File Methods --------------------
-// LockByPath locks this file if the path matches
-func (f *File) LockByPath(path string) {
-	if f.Path == path {
-		f.Locked = true
-		fmt.Printf("File '%s' locked\n", f.Path)
-	}
+// Lock locks this file
+func (f *File) Lock() {
+	f.Locked = true
 }
 
-// UnlockByPath unlocks this file if the path matches
-func (f *File) UnlockByPath(path string) {
-	if f.Path == path {
-		f.Locked = false
-		fmt.Printf("File '%s' unlocked\n", f.Path)
-	}
+// Unlock unlocks this file
+func (f *File) Unlock() {
+	f.Locked = false
 }
 
 // RemoveTag removes a tag from this file
