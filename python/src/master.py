@@ -1,8 +1,8 @@
-from typing import Callable
+from typing import Callable, Tuple
 from message_structure_pb2 import DirectoryResponse, Directory
 from concurrent.futures import ThreadPoolExecutor
 from metadata_scraper import MetaDataScraper
-from message_structure_pb2 import DirectoryRequest, Directory, File, Tag, MetadataEntry
+from message_structure_pb2 import DirectoryRequest, Directory, File, Tag, MetadataEntry, Keyword
 from kw_extractor import KWExtractor
 from full_vector import FullVector
 import os
@@ -31,7 +31,8 @@ class Master():
         # Map request type to method and call
         requestHandler = {
             "CLUSTERING" : self.handleClusteringRequest,
-            "METADATA" : self.handleMetadatRequest
+            "METADATA" : self.handleMetadatRequest,
+            "KEYWORDS" : self.handleKeywordRequest
         }
 
         handler = requestHandler.get(request.requestType.upper())
@@ -41,7 +42,7 @@ class Master():
         else:
             reponse =  DirectoryResponse()
             reponse.response_code = 400
-            reponse.response_msg = "Unknown Request type: Must be in  [CLUSTERING, METADATA]"
+            reponse.response_msg = "Unknown Request type: Must be in  [CLUSTERING, METADATA, KEYWORDS]"
             return reponse
 
     
@@ -79,6 +80,30 @@ class Master():
         else:
             response = DirectoryResponse(root=request.root, response_code=400, response_msg="No file could be opened")
 
+    def handleKeywordRequest(self, request : DirectoryRequest) -> DirectoryResponse:
+        if self.__keyword_extractor__(request.root):
+            response = DirectoryResponse(root=request.root, response_code=200, response_msg="Successfully extracted keywords for at least 1 file")
+            return response
+        else:
+            response = DirectoryResponse(root=request.root, response_code=400, response_msg="Could not extract any keywords")
+        
+
+    def __keyword_extractor__(self, currentDirectory : Directory) -> bool:
+
+        success = False
+
+        for curFile in currentDirectory.files:
+            # Invariant: if file could not be opened extract_kw returns empty list
+            keywords = self.kw_extractor.extract_kw(curFile)
+            for word in keywords:
+                success = True
+                curFile.keywords.append(Keyword(keyword=word[0], score=word[1]))
+
+        for curDir in currentDirectory.directories:
+            if self.__keyword_extractor__(curDir):
+                success = True
+
+        return success
 
     def extract_metadata(
         self,

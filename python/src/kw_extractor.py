@@ -27,6 +27,19 @@ class KWExtractor:
         file_name = input.original_path
         mime_type = next((entry.value for entry in input.metadata if entry.key == "mime_type"), None)
 
+        # Fallback cause for some reason pdf and docx mime was not working
+
+        if mime_type is None:
+
+            if file_name.endswith(".pdf"):
+                mime_type = "application/pdf"
+            elif file_name.endswith(".docx") or file_name.endswith(".doc"):
+                mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            elif file_name.endswith(".txt"):
+                mime_type = "text/plain"
+            else:
+                mime_type = "text/plain"  
+
         result = self.open_file(file_name, mime_type, 1)  # List of (filename, keywords)
         if not result:
             return []
@@ -49,7 +62,7 @@ class KWExtractor:
             keywords = handler(file_name, '.', max_duration_seconds)
             result.append((file_name, keywords))
         except Exception as e:
-            print(f"Could not extract keywords from {file_name}")
+            print(f"Could not extract keywords from {file_name} | error {e}")
         
         return result
 
@@ -71,14 +84,16 @@ class KWExtractor:
         start_time = time.time()
         final_sentence = ""
         reader = PdfReader(file_name)
-        for k in range(len(reader.pages)):
-                page = reader.pages[k]
-                for sentence in self.split_by_delimiter_pdf(page.extract_text(), delimiter):
-                    elapsed = time.time() - start_time
-                    if(elapsed > max_duration_seconds):
-                        return self.get_kw(final_sentence)
-                    final_sentence += sentence + delimiter
+        for page in reader.pages:
+            text = page.extract_text()
+            if not text:
+                continue  # Skip pages with no extractable text
+            for sentence in self.split_by_delimiter_pdf(text, delimiter):
+                if time.time() - start_time > max_duration_seconds:
+                    return self.get_kw(final_sentence)
+                final_sentence += sentence + delimiter
         return self.get_kw(final_sentence)
+
         
     
     #open docx file
