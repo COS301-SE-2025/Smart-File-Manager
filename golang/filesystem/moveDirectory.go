@@ -54,6 +54,7 @@ func moveContentRecursive(item *Folder) {
 		if err != nil {
 			panic(err)
 		}
+		file.Path = targetPath // Update the file's path to the new location
 
 	}
 	for _, subfolder := range item.Subfolders {
