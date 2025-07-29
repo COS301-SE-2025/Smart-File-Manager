@@ -315,15 +315,15 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 
 	for _, c := range composites {
 		if c.Name == name {
-			
+
 			children := GoSidecreateDirectoryJSONStructure(c)
-			
 
 			root := DirectoryTreeJson{
 				Name:     c.Name,
 				IsFolder: true,
 				Children: children,
 			}
+			PrettyPrintFolder(c, "")
 
 			if err := json.NewEncoder(w).Encode(root); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
@@ -383,19 +383,6 @@ func GoSidecreateDirectoryJSONStructure(folder *Folder) []FileNode {
 
 		md := &Metadata{}
 
-		// sysInfo := fi.Sys()
-		// if sysInfo == nil {
-		// 	fmt.Println("System-specific file info not available.")
-
-		// }
-
-		// winSysInfo, ok := sysInfo.(*syscall.Win32FileAttributeData)
-		// if !ok {
-		// 	fmt.Println("Not a Windows system or unexpected system info type.")
-
-		// }
-		//time.Unix(0, winSysInfo.CreationTime.Nanoseconds()
-
 		if err != nil {
 			fmt.Println(err)
 			md = nil
@@ -414,6 +401,14 @@ func GoSidecreateDirectoryJSONStructure(folder *Folder) []FileNode {
 			} else {
 				md.MimeType = "mystery"
 			}
+
+			mdEntries := []*MetadataEntry{
+				{Key: "Size", Value: strconv.FormatInt(fi.Size(), 10)},
+				{Key: "DateCreated", Value: fi.ModTime().Format(layout)},
+				{Key: "LastModified", Value: fi.ModTime().Format(layout)},
+			}
+			file.Metadata = mdEntries
+			// file.Tags =
 
 		}
 
