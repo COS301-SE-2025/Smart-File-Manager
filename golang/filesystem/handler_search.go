@@ -91,9 +91,28 @@ type rankedFile struct {
 	distance int
 }
 
+// api res struct
 type folderResponse struct {
 	Name  string `json:"name"`
 	Files []File `json:"files"`
+}
+
+// gpt given
+func PrettyPrintFolder(f *Folder, indent string) {
+	fmt.Printf("%s📁 %s (locked=%v)\n", indent, f.Name, f.Locked)
+	// print files
+	for _, file := range f.Files {
+		fmt.Printf("%s  📄 %s (locked=%v)\n", indent, file.Name, file.Locked)
+		fmt.Printf("%s  Metadata:\n", indent)
+
+		for _, md := range file.Metadata {
+			fmt.Printf("%s    • %s: %s\n", indent, md.Key, md.Value)
+		}
+	}
+	// recurse into subfolders
+	for _, sub := range f.Subfolders {
+		PrettyPrintFolder(sub, indent+"  ")
+	}
 }
 
 // todo error if comp not found
@@ -103,9 +122,12 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	searchText := r.URL.Query().Get("searchText")
 
 	for _, comp := range composites {
+		fmt.Println(comp.Name)
 		if comp.Name == compositeName {
 
-			printDirectoryWithMetadata(convertFolderToProto(*comp), 0)
+			fmt.Println("stat of print with md")
+			PrettyPrintFolder(comp, "")
+			fmt.Println("end of print with md")
 
 			sr := getMatches(searchText, comp)
 
@@ -113,6 +135,9 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 				Name:  sr.Name,
 				Files: make([]File, len(sr.rankedFiles)),
 			}
+
+			// need to go from folderResponse to directoryTreeJson
+			//todo
 
 			for i, rf := range sr.rankedFiles {
 				fmt.Println("    MetaData:")
