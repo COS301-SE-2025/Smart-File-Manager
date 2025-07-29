@@ -37,7 +37,7 @@ class KMeansCluster:
     
     def dirCluster(self,full_vecs,files):
         builder = DirectoryCreator(self.parent_folder,files) # instead of root it should be the parent folder
-        root_dir = self.recDirCluster(full_vecs, files, 0, self.folder_namer.generateFolderName(files), builder)
+        root_dir = self.recDirCluster(full_vecs, files, 0, self.parent_folder, builder)
         #print(root_dir)
         #self.printMetaData(root_dir)
         return root_dir

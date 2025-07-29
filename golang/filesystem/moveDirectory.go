@@ -54,9 +54,10 @@ func moveContentRecursive(item *Folder) {
 		if err != nil {
 			panic(err)
 		}
-		for _, subfolder := range item.Subfolders {
-			moveContentRecursive(subfolder)
-		}
+
+	}
+	for _, subfolder := range item.Subfolders {
+		moveContentRecursive(subfolder)
 	}
 }
 
