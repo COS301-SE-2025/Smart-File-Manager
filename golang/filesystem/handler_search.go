@@ -131,28 +131,51 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 
 			sr := getMatches(searchText, comp)
 
-			resp := folderResponse{
-				Name:  sr.Name,
-				Files: make([]File, len(sr.rankedFiles)),
+			cores := DirectoryTreeJson{
+				Name:     sr.Name,
+				IsFolder: true,
+				Children: make([]FileNode, len(sr.rankedFiles)),
 			}
 
-			// need to go from folderResponse to directoryTreeJson
-			//todo
-
 			for i, rf := range sr.rankedFiles {
-				fmt.Println("    MetaData:")
-				for _, i := range rf.file.Metadata {
-					fmt.Println("    " + i.Key + ": " + i.Value)
+				file := rf.file
+				fileNodeToAdd := FileNode{
+					Name:     file.Name,
+					Path:     file.Path,
+					IsFolder: false,
+					Tags:     file.Tags,
+					Metadata: ConvertMetadataEntries(file.Metadata),
 				}
-				resp.Files[i] = rf.file
+				cores.Children[i] = fileNodeToAdd
 			}
 
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(resp)
+			json.NewEncoder(w).Encode(cores)
 			return
 		}
 	}
 
+}
+
+func ConvertMetadataEntries(entries []*MetadataEntry) *Metadata {
+	md := &Metadata{}
+
+	for _, entry := range entries {
+		switch strings.ToLower(entry.Key) {
+
+		case "size":
+			md.Size = entry.Value
+		case "datecreated":
+			md.DateCreated = entry.Value
+		case "lastmodified":
+			md.LastModified = entry.Value
+		case "mimetype":
+			md.MimeType = entry.Value
+
+		}
+	}
+
+	return md
 }
 
 func getMatches(text string, composite *Folder) *safeResults {
