@@ -89,9 +89,11 @@ func TestMoveContent(t *testing.T) {
 
 	// Clean up old test state
 	_ = os.RemoveAll(archivesDir)
+	// prepare nested archive target paths
 	_ = os.MkdirAll(filepath.Join(archivesDir, "myManager", "greeting"), 0755)
+	_ = os.MkdirAll(filepath.Join(archivesDir, "myManager", "greeting", "deep"), 0755)
 
-	// Create a dummy file in filesystem/ directory
+	// Create dummy files in filesystem/ directory
 	srcFilename := "hello.txt"
 	srcPath := filepath.Join(filesysDir, srcFilename)
 	content := []byte("👋 world")
@@ -100,19 +102,31 @@ func TestMoveContent(t *testing.T) {
 	}
 	defer os.Remove(srcPath)
 
-	// Folder to move
+	// create a nested subfolder with its own file
+	nestedDir := filepath.Join(filesysDir, "inner")
+	if err := os.MkdirAll(nestedDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	nestedFilename := "deep.txt"
+	nestedSrc := filepath.Join(nestedDir, nestedFilename)
+	nestedContent := []byte("deep content")
+	if err := os.WriteFile(nestedSrc, nestedContent, 0644); err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(nestedDir)
+
+	// Folder to move, with nested subfolder
 	item := &Folder{
-		Name: "myManager",
-		Files: []*File{
+		Name:  "myManager",
+		Files: []*File{{Name: srcFilename, Path: srcFilename, NewPath: "greeting/hi.txt"}},
+		Subfolders: []*Folder{
 			{
-				Name:    srcFilename,
-				Path:    srcFilename, // relative to filesysDir
-				NewPath: "greeting/hi.txt",
+				Files: []*File{{Name: nestedFilename, Path: filepath.Join("inner", nestedFilename), NewPath: "greeting/deep/inner_out.txt"}},
 			},
 		},
 	}
 
-	// Change working directory to where `moveContent` expects to be (filesystem/)
+	// Change working directory to where moveContent expects to be
 	origWd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -128,12 +142,12 @@ func TestMoveContent(t *testing.T) {
 	// Run function under test
 	moveContent(item)
 
-	// Assert source no longer exists
+	// Assert top-level source no longer exists
 	if _, err := os.Stat(srcFilename); !os.IsNotExist(err) {
 		t.Errorf("expected source %s to be gone, got err=%v", srcFilename, err)
 	}
 
-	// Assert target exists and has correct content
+	// Assert top-level file moved correctly
 	destPath := filepath.Join(root, item.Files[0].NewPath)
 	data, err := os.ReadFile(destPath)
 	if err != nil {
@@ -143,12 +157,20 @@ func TestMoveContent(t *testing.T) {
 		t.Errorf("dest content = %q; want %q", data, content)
 	}
 
-	archivesPath := filepath.Join(projectRoot, "archives")
-
-	if err := clearDirectory(archivesPath); err != nil {
-		t.Fatal(err)
+	// Assert nested file moved correctly
+	nestedDest := filepath.Join(root, "greeting", "deep", "inner_out.txt")
+	nData, err := os.ReadFile(nestedDest)
+	if err != nil {
+		t.Fatalf("failed to read nested dest file: %v", err)
+	}
+	if string(nData) != string(nestedContent) {
+		t.Errorf("nested dest content = %q; want %q", nData, nestedContent)
 	}
 
+	// cleanup archives
+	if err := clearDirectory(archivesDir); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // helper functions
