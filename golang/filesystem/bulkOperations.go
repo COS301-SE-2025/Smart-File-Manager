@@ -32,12 +32,30 @@ type TagsStruct struct {
 
 type Taggable interface {
 	AddTagToFile(path string, tag string) bool
+	GetFile(path string) *File
 }
 
+// BulkAddTags adds tags to files in bulk
 func BulkAddTags(item Taggable, bulkList []TagsStruct) error {
 	for _, tagItem := range bulkList {
 		for _, tag := range tagItem.Tags {
 			item.AddTagToFile(tagItem.FilePath, tag)
+		}
+	}
+	return nil
+}
+
+// BulkRemoveTags removes tags from files in bulk
+func BulkRemoveTags(item Taggable, bulkList []TagsStruct) error {
+	for _, tagItem := range bulkList {
+		file := item.GetFile(tagItem.FilePath)
+		if file == nil {
+			return fmt.Errorf("file not found: %s", tagItem.FilePath)
+		}
+		for _, tag := range tagItem.Tags {
+			if !file.RemoveTag(tag) {
+				return fmt.Errorf("failed to remove tag %s from file %s", tag, tagItem.FilePath)
+			}
 		}
 	}
 	return nil
