@@ -339,3 +339,30 @@ get /startUp
     "first2"
   ]
 }
+# search
+
+** parameters **
+compositeName: the composite you want to search from
+searchText: the name of the file you want to search for.
+
+** Endpoint: **
+get /search
+
+** response: **
+{
+  "name": "first2", //the composite name
+  "isFolder": true,
+  "children": [ //the files ranked 
+    {
+      "name": "api.md",
+      "path": "/mnt/c/Users/jackb/OneDrive - University of Pretoria/Documents/TUKS/year 3/semester 1/COS301/capstone/Smart-File-Manager/docs/documentation/demo_2/api.md",
+      "isFolder": false,
+      "metadata": {
+        "size": "",
+        "dateCreated": "",
+        "mimeType": "",
+        "lastModified": ""
+      }
+    },
+  ]
+}
