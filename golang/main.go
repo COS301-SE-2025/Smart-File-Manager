@@ -7,9 +7,10 @@ import (
 func main() {
 	filesystem.HandleRequests()
 
-	// print current composites
-	composites := filesystem.GetComposites()
-	for _, item := range composites {
+
+	// print current Composites
+	Composites := filesystem.GetComposites()
+	for _, item := range Composites {
 		item.Display(0)
 	}
 }
