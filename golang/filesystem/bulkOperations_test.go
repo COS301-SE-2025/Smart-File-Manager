@@ -14,8 +14,9 @@ type tagCall struct {
 	tag  string
 }
 
-func (m *mockFolder) AddTagToFile(path, tag string) {
+func (m *mockFolder) AddTagToFile(path, tag string) bool {
 	m.calls = append(m.calls, tagCall{path: path, tag: tag})
+	return true // simulate success
 }
 
 func TestBulkAddTags(t *testing.T) {

@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -230,5 +231,80 @@ func TestAPI_FindDuplicateFilesHandler(t *testing.T) {
 	}
 	if entries[0] != exp {
 		t.Errorf("unexpected entry: got %+v, want %+v", entries[0], exp)
+	}
+}
+func TestAPI_BulkAddTags(t *testing.T) {
+	// Setup: Create temp folder and file
+	tmp := t.TempDir()
+	projectRoot := filepath.Join(tmp, "Smart-File-Manager")
+	dataDir := filepath.Join(projectRoot, "data")
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	filePath := filepath.Join(dataDir, "test.txt")
+	if err := os.WriteFile(filePath, []byte("content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Register the folder and file in composites
+	composites = []*Folder{{
+		Name:    "bulkTest",
+		Path:    "data",
+		NewPath: "data",
+		Files: []*File{{
+			Name: "test.txt",
+			Path: filePath,
+		}},
+	}}
+
+	// Change working directory
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd)
+	if err := os.Chdir(projectRoot); err != nil {
+		t.Fatal(err)
+	}
+
+	// JSON payload for tags
+	jsonBody := `[{
+		"file_path": "` + filePath + `",
+		"tags": ["alpha", "beta", "gamma"]
+	}]`
+
+	// Create request with JSON body and query parameter ?name=bulkTest
+	req := httptest.NewRequest("POST", "/bulkTag?name=bulkTest", strings.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	BulkTagHandler(w, req)
+
+	// Verify response code
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d", w.Code)
+	}
+	if got := w.Body.String(); !strings.Contains(got, "Tags added successfully") {
+		t.Errorf("expected success message, got %s", got)
+	}
+
+	// Check if tags were actually added to the file
+	var file *File
+	for _, f := range composites[0].Files {
+		if f.Path == filePath {
+			file = f
+			break
+		}
+	}
+	if file == nil {
+		t.Fatal("file not found in folder")
+	}
+	expectedTags := map[string]bool{"alpha": false, "beta": false, "gamma": false}
+	for _, tag := range file.Tags {
+		if _, exists := expectedTags[tag]; exists {
+			expectedTags[tag] = true
+		}
+	}
+	for tag, found := range expectedTags {
+		if !found {
+			t.Errorf("expected tag %s not found in file.Tags", tag)
+		}
 	}
 }

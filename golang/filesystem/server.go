@@ -162,6 +162,7 @@ func HandleRequests() {
 	http.HandleFunc("/unlock", unlockHandler)
 	http.HandleFunc("/moveDirectory", moveDirectoryHandler)
 	http.HandleFunc("/findDuplicateFiles", findDuplicateFilesHandler)
+	http.HandleFunc("/bulkTag", BulkTagHandler)
 	fmt.Println("Server started on port 51000")
 	// http.ListenAndServe(":51000", nil)
 	http.ListenAndServe("0.0.0.0:51000", nil)
