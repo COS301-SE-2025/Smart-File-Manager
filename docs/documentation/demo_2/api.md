@@ -334,7 +334,7 @@ get /startUp
 ** response: **
 
 {
-  "responseMessage": "Request successful!, composites: 1",
+  "responseMessage": "Request successful!, Composites: 1",
   "managerNames": [
     "first2"
   ]
