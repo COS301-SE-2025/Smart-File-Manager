@@ -12,7 +12,7 @@ import (
 const limit int = 25
 const maxDist int = 25
 
-func levelshteinDist(searchText string, fileName string) int {
+func levenshteinDist(searchText string, fileName string) int {
 	if fileName[0] != '.' {
 
 		searchText = strings.ToLower(searchText)
@@ -269,7 +269,7 @@ func exploreFolder(f *Folder, text string, c chan<- rankedFile, wg *sync.WaitGro
 	}
 
 	for _, file := range f.Files {
-		dist := levelshteinDist(text, file.Name)
+		dist := levenshteinDist(text, file.Name)
 		if dist <= maxDist {
 			fmt.Println("    MetaData:")
 			for _, i := range file.Metadata {
