@@ -13,7 +13,14 @@ import (
 const limit int = 25
 const maxDist int = 25
 
-func levenshteinDist(searchText string, fileName string) int {
+func LevenshteinDist(searchText string, fileName string) int {
+	if len(searchText) == 0 {
+		return len(fileName)
+	}
+	if len(fileName) == 0 {
+		return len(searchText)
+	}
+
 	if fileName[0] != '.' {
 
 		searchText = strings.ToLower(searchText)
@@ -46,12 +53,6 @@ func levenshteinDist(searchText string, fileName string) int {
 
 	// now fall back on full Levenshtein
 	lenSearchText, lenFileName := len(searchText), len(fileName)
-	if lenSearchText == 0 {
-		return lenFileName
-	}
-	if lenFileName == 0 {
-		return lenSearchText
-	}
 
 	prev := make([]int, lenFileName+1)
 	curr := make([]int, lenFileName+1)
@@ -120,7 +121,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	compositeName := r.URL.Query().Get("compositeName")
 	searchText := r.URL.Query().Get("searchText")
 
-	for _, comp := range composites {
+	for _, comp := range Composites {
 		fmt.Println(comp.Name)
 		if comp.Name == compositeName {
 
@@ -268,7 +269,7 @@ func exploreFolder(f *Folder, text string, c chan<- rankedFile, wg *sync.WaitGro
 	}
 
 	for _, file := range f.Files {
-		dist := levenshteinDist(text, file.Name)
+		dist := LevenshteinDist(text, file.Name)
 		if dist <= maxDist {
 
 			c <- rankedFile{file: *file, distance: dist}
