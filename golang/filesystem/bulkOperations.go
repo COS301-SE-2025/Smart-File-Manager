@@ -25,6 +25,10 @@ type TagsStruct struct {
 }
 
 func BulkAddTags(item *Folder, bulkList []TagsStruct) error {
-	// Implementation for bulk adding tags to files
+	for _, tagItem := range bulkList {
+		for _, tag := range tagItem.Tags {
+			item.AddTagToFile(tagItem.FilePath, tag)
+		}
+	}
 	return nil
 }
