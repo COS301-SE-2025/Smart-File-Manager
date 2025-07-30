@@ -24,7 +24,11 @@ type TagsStruct struct {
 	Tags     []string `json:"tags"`
 }
 
-func BulkAddTags(item *Folder, bulkList []TagsStruct) error {
+type Taggable interface {
+	AddTagToFile(path, tag string)
+}
+
+func BulkAddTags(item Taggable, bulkList []TagsStruct) error {
 	for _, tagItem := range bulkList {
 		for _, tag := range tagItem.Tags {
 			item.AddTagToFile(tagItem.FilePath, tag)
