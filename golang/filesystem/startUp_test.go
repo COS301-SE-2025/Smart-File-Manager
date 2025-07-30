@@ -15,7 +15,7 @@ import (
 
 // helper to reset globals between tests
 func resetState(t *testing.T, tempDir string) {
-	composites = nil
+	Composites = nil
 	SetManagersFilePath(filepath.Join(tempDir, "main.json"))
 }
 
@@ -99,7 +99,7 @@ func TestSaveManagerRecords(t *testing.T) {
 	}
 }
 
-// Test AddManager appends to composites and persists file
+// Test AddManager appends to Composites and persists file
 func TestAddAndRemoveManager(t *testing.T) {
 	dir := t.TempDir()
 	resetState(t, dir)
@@ -110,8 +110,8 @@ func TestAddAndRemoveManager(t *testing.T) {
 	if err := AddManager("X", tmp); err != nil {
 		t.Fatalf("AddManager failed: %v", err)
 	}
-	if len(composites) != 1 {
-		t.Fatalf("expected 1 composite, got %d", len(composites))
+	if len(Composites) != 1 {
+		t.Fatalf("expected 1 composite, got %d", len(Composites))
 	}
 
 	// Add second
@@ -119,16 +119,16 @@ func TestAddAndRemoveManager(t *testing.T) {
 	if err := AddManager("Y", tmp2); err != nil {
 		t.Fatalf("AddManager failed: %v", err)
 	}
-	if len(composites) != 2 {
-		t.Fatalf("expected 2 composites, got %d", len(composites))
+	if len(Composites) != 2 {
+		t.Fatalf("expected 2 Composites, got %d", len(Composites))
 	}
 
 	// Remove one
 	if err := RemoveManager(tmp); err != nil {
 		t.Fatalf("RemoveManager failed: %v", err)
 	}
-	if len(composites) != 1 || composites[0].Path != tmp2 {
-		t.Fatalf("after RemoveManager, expected only %v, got %v", tmp2, composites)
+	if len(Composites) != 1 || Composites[0].Path != tmp2 {
+		t.Fatalf("after RemoveManager, expected only %v, got %v", tmp2, Composites)
 	}
 
 	// Check file reflects only tmp2
@@ -145,7 +145,7 @@ func TestAddAndRemoveManager(t *testing.T) {
 func TestStartUpHandler_Success(t *testing.T) {
 	dir := t.TempDir()
 	resetState(t, dir)
-	composites = nil
+	Composites = nil
 
 	// Add two managers
 	tmp1 := t.TempDir()
@@ -157,8 +157,8 @@ func TestStartUpHandler_Success(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// reset composites so startUpHandler rebuilds from disk
-	composites = nil
+	// reset Composites so startUpHandler rebuilds from disk
+	Composites = nil
 
 	req := httptest.NewRequest(http.MethodGet, "/startUp", nil)
 	rr := httptest.NewRecorder()
@@ -173,7 +173,7 @@ func TestStartUpHandler_Success(t *testing.T) {
 		t.Fatalf("could not decode response: %v", err)
 	}
 
-	expectedMsg := "Request successful!, composites: " + strconv.Itoa(2)
+	expectedMsg := "Request successful!, Composites: " + strconv.Itoa(2)
 	if resp.ResponseMessage != expectedMsg {
 		t.Errorf("got message %q; want %q", resp.ResponseMessage, expectedMsg)
 	}
@@ -189,7 +189,7 @@ func TestStartUpHandler_LoadError(t *testing.T) {
 	// point the managersFilePath at a directory
 	dir := t.TempDir()
 	SetManagersFilePath(dir)
-	composites = nil
+	Composites = nil
 
 	req := httptest.NewRequest(http.MethodGet, "/startUp", nil)
 	rr := httptest.NewRecorder()
@@ -235,7 +235,7 @@ func (w *flakyWriter) Write(p []byte) (int, error) {
 func TestStartUpHandler_EncodeError(t *testing.T) {
 	dir := t.TempDir()
 	resetState(t, dir)
-	composites = nil
+	Composites = nil
 
 	// write an empty slice so loadManagerRecords passes
 	if err := saveManagerRecords([]ManagerRecord{}); err != nil {

@@ -10,7 +10,7 @@ import (
 
 var (
 	//array of smartfile managers
-	composites []*Folder
+	Composites []*Folder
 	mu         sync.Mutex
 )
 
@@ -26,7 +26,7 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mu.Lock()
-	// composites = append(composites, composite)
+	// Composites = append(Composites, composite)
 	//appendng happens in this:
 	AddManager(managerName, filePath)
 	mu.Unlock()
@@ -41,9 +41,9 @@ func removeCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	convertedPath := ConvertToWSLPath(filePath)
 
 	mu.Lock()
-	for i, item := range composites {
+	for i, item := range Composites {
 		if item.Path == convertedPath {
-			composites = slices.Delete(composites, i, i+1)
+			Composites = slices.Delete(Composites, i, i+1)
 			break
 		}
 	}
@@ -62,7 +62,7 @@ func addTagHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		item := c.GetFile(convertedPath)
 		if item != nil {
 			c.AddTagToFile(convertedPath, tag)
@@ -85,7 +85,7 @@ func removeTagHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		// Check file
 		if file := c.GetFile(convertedPath); file != nil {
 			if file.RemoveTag(tag) {
@@ -115,7 +115,7 @@ func lockHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		c.LockByPath(path)
 	}
 	w.Write([]byte("true"))
@@ -128,7 +128,7 @@ func unlockHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		c.UnlockByPath(path)
 	}
 	w.Write([]byte("true"))
@@ -166,5 +166,5 @@ func HandleRequests() {
 func GetComposites() []*Folder {
 	mu.Lock()
 	defer mu.Unlock()
-	return composites
+	return Composites
 }

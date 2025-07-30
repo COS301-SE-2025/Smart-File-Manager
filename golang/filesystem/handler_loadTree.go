@@ -313,7 +313,7 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		if c.Name == name {
 
 			children := GoSidecreateDirectoryJSONStructure(c)
@@ -346,7 +346,7 @@ func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		if c.Name == name {
 			// build the nested []FileNode
 			err := grpcFunc(c, "METADATA")
