@@ -3,6 +3,7 @@ package filesystem
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -31,34 +32,36 @@ func levenshteinDist(searchText string, fileName string) int {
 		}
 	}
 
-	// ── BOOST exact substrings ──
+	//  exact matches should be 0
+	if fileName == searchText {
+		return 0
+	}
+	//this is the name
+	//his ist the
+	//  BOOST exact substrings
+	var boost float32 = 1 //lower boost is better as it makes the distance smaller
 	if strings.Contains(fileName, searchText) {
-		return 1
+		boost = 0.2
 	}
 
 	// now fall back on full Levenshtein
-	la, lb := len(searchText), len(fileName)
-	if la == 0 {
-		return lb
+	lenSearchText, lenFileName := len(searchText), len(fileName)
+	if lenSearchText == 0 {
+		return lenFileName
 	}
-	if lb == 0 {
-		return la
-	}
-	// ensure la >= lb
-	if la < lb {
-		searchText, fileName = fileName, searchText
-		la, lb = lb, la
+	if lenFileName == 0 {
+		return lenSearchText
 	}
 
-	prev := make([]int, lb+1)
-	curr := make([]int, lb+1)
-	for j := 0; j <= lb; j++ {
+	prev := make([]int, lenFileName+1)
+	curr := make([]int, lenFileName+1)
+	for j := 0; j <= lenFileName; j++ {
 		prev[j] = j
 	}
-	for i := 1; i <= la; i++ {
+	for i := 1; i <= lenSearchText; i++ {
 		curr[0] = i
 		ai := searchText[i-1]
-		for j := 1; j <= lb; j++ {
+		for j := 1; j <= lenFileName; j++ {
 			cost := 0
 			if ai != fileName[j-1] {
 				cost = 1
@@ -78,7 +81,9 @@ func levenshteinDist(searchText string, fileName string) int {
 		}
 		prev, curr = curr, prev
 	}
-	return prev[lb]
+
+	return int(math.Round(float64(prev[lenFileName]) * float64(boost)))
+
 }
 
 type safeResults struct {
@@ -89,12 +94,6 @@ type safeResults struct {
 type rankedFile struct {
 	file     File
 	distance int
-}
-
-// api res struct
-type folderResponse struct {
-	Name  string `json:"name"`
-	Files []File `json:"files"`
 }
 
 // gpt given
@@ -271,10 +270,7 @@ func exploreFolder(f *Folder, text string, c chan<- rankedFile, wg *sync.WaitGro
 	for _, file := range f.Files {
 		dist := levenshteinDist(text, file.Name)
 		if dist <= maxDist {
-			fmt.Println("    MetaData:")
-			for _, i := range file.Metadata {
-				fmt.Println("    " + i.Key + ": " + i.Value)
-			}
+
 			c <- rankedFile{file: *file, distance: dist}
 		}
 	}
