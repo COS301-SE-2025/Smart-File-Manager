@@ -112,17 +112,25 @@ func removeTagHandler(w http.ResponseWriter, r *http.Request) {
 func lockHandler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Query().Get("path")
 	name := r.URL.Query().Get("name")
+	if path == "" || name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
+	}
 	mu.Lock()
 	defer mu.Unlock()
 
 	for _, c := range composites {
 		if c.Name == name {
 			c.LockByPath(path)
+			fmt.Println("LOCKED FILE")
+			w.Write([]byte("true"))
+			return
 		} else {
 			w.Write([]byte("false"))
+			return
 		}
 	}
-	w.Write([]byte("true"))
+
 }
 
 // Unlocks a file or folder and its children
@@ -131,15 +139,21 @@ func unlockHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	mu.Lock()
 	defer mu.Unlock()
-
+	if path == "" || name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
+	}
 	for _, c := range composites {
 		if c.Name == name {
 			c.UnlockByPath(path)
+			w.Write([]byte("true"))
+			return
 		} else {
 			w.Write([]byte("false"))
+			return
 		}
 	}
-	w.Write([]byte("true"))
+
 }
 
 func HandleRequests() {
