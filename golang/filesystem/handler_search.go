@@ -120,13 +120,16 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	compositeName := r.URL.Query().Get("compositeName")
 	searchText := r.URL.Query().Get("searchText")
+	w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins, or specify your frontend origin
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	for _, comp := range Composites {
 		fmt.Println(comp.Name)
 		if comp.Name == compositeName {
 
 			fmt.Println("stat of print with md")
-			PrettyPrintFolder(comp, "")
+			// PrettyPrintFolder(comp, "")
 			fmt.Println("end of print with md")
 
 			sr := getMatches(searchText, comp)
