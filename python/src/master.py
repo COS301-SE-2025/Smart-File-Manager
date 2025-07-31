@@ -115,6 +115,8 @@ class Master():
                 file_entry = dict(metadata)
                 file_entry["keywords"] = self.kw_extractor.extract_kw(curFile)
                 file_entry["tags"] = [tag.name.strip().lower() for tag in curFile.tags if tag.name]
+                file_entry["is_locked"] = curFile.is_locked
+                file_entry["original_path"] = curFile.original_path
                 files.append(file_entry)
 
         for curDir in currentDirectory.directories:
