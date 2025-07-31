@@ -151,6 +151,11 @@ func (f *Folder) unlockRecursive() {
 func (f *Folder) AddTagToFile(filePath, tagName string) bool {
 	file := f.GetFile(filePath)
 	if file != nil {
+		for _, tag := range file.Tags {
+			if tag == tagName {
+				return false // Tag already exists
+			}
+		}
 		file.Tags = append(file.Tags, tagName)
 		return true
 	}
