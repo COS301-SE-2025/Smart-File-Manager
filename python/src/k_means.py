@@ -22,7 +22,10 @@ class KMeansCluster:
         self.min_size = 2 # hardcoded for now # even numbers are good
         self.max_depth = depth
         self.folder_namer = FolderNameCreator(model)
-        self.parent_folder = parent_folder
+        #self.parent_folder = parent_folder
+        self.parent_folder = "test_files_3"
+
+        self.locked_files = []
 
 
     def cluster(self,files):
@@ -37,7 +40,17 @@ class KMeansCluster:
     
     def dirCluster(self,full_vecs,files):
         builder = DirectoryCreator(self.parent_folder,files) # instead of root it should be the parent folder
-        root_dir = self.recDirCluster(full_vecs, files, 0, self.parent_folder, builder)
+        self.remove_locked_files(files,full_vecs)
+        print("Num locked files: ", len(self.locked_files))
+
+        for f in self.locked_files:
+            print(f["filename"])
+
+        unlocked_dirs = self.recDirCluster(full_vecs, files, 0, self.parent_folder, builder)
+
+        locked_dirs = self.buildLockedDirs(self.locked_files, builder)
+
+        root_dir = builder.merge(unlocked_dirs, locked_dirs)
         #print(root_dir)
         #self.printMetaData(root_dir)
         return root_dir
@@ -46,7 +59,6 @@ class KMeansCluster:
 
 
     def recDirCluster(self,full_vecs,files, depth, dir_prefix, builder):
-
         if depth > 0:
             # Assign directory name
             folder_name = self.folder_namer.generateFolderName(files)        
@@ -126,3 +138,69 @@ class KMeansCluster:
         for subdir in directory.directories:
             self.printDirectoryTree(subdir, indent + "  ")
 
+    def remove_locked_files(self, files, full_vecs):        
+        # Iterate in reversed since we are modifying indices
+        for i in reversed(range(len(files))):
+            file = files[i]
+            if file.get("is_locked", False):
+                print("Found locked file ", file["filename"])
+                self.locked_files.append(file)
+                del files[i]
+                del full_vecs[i]
+
+    def buildLockedDirs(self, files, builder):
+        def add_to_tree(tree, parts, file):
+            current = tree
+            for part in parts:
+                current = current.setdefault(part, {})
+            current.setdefault("_files", []).append(file)
+            tree = current
+
+        def build_dirs_from_tree(tree):
+            dir = []
+            for name, subtree in tree.items():
+                if name == "_files":
+                    continue
+                subdirs = build_dirs_from_tree(subtree) 
+                files = subtree.get("_files", [])
+                dir.append(builder.buildDirectory(name, files, subdirs))
+            return dir
+
+        dir_tree = {}
+        for f in files:
+            full_path = os.path.normpath(f["original_path"])
+            path_parts = full_path.split(os.sep)
+            try:
+                parent_index = path_parts.index(self.parent_folder)
+                relative_parts = path_parts[parent_index + 1 : -1]
+                if not relative_parts:
+                    relative_parts = ["(root)"]
+            except (ValueError, IndexError):
+                relative_parts = ["Unkown"]
+
+            add_to_tree(dir_tree, relative_parts,f)
+
+        return builder.buildDirectory(self.parent_folder, [], build_dirs_from_tree(dir_tree))
+
+
+
+
+   #     grouped = defaultdict(list)
+   #     for f in files:
+   #        path_parts = os.path.normpath(f["original_path"]).split(os.sep)
+   #        try:
+   #            parent_index = path_parts.index(self.parent_folder)
+   #            group_name = path_parts[parent_index+1]
+   #        except (ValueError, IndexError):
+   #            group_name = "Unkown"
+
+   #        grouped[group_name].append(f)
+
+   #    subdirs = []
+   #    for dir_name, f in grouped.items():
+   #        subdir = builder.buildDirectory(dir_name, f, [])
+   #        subdirs.append(subdir)
+
+   #    
+   #    return builder.buildDirectory(self.parent_folder, [], subdirs)
+        
