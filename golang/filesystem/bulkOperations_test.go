@@ -21,17 +21,14 @@ func createTestFolder() *Folder {
 		{
 			Name: "report.pdf",
 			Path: "/home/user/documents/report.pdf",
-			Tags: []string{"work", "important", "pdf"},
 		},
 		{
 			Name: "vacation.jpg",
 			Path: "/home/user/photos/vacation.jpg",
-			Tags: []string{"holiday", "family", "2025"},
 		},
 		{
 			Name: "song.mp3",
 			Path: "/home/user/music/song.mp3",
-			Tags: []string{"music", "mp3", "favorites"},
 		},
 	}
 	folder := &Folder{
