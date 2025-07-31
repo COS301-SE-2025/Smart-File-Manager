@@ -7,7 +7,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 class FullVector:
     def __init__(self):
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+        self.model = SentenceTransformer('all-MiniLM-L6-v2', local_files_only=True)
         self.scaler_size = MinMaxScaler()
         self.scaler_created = MinMaxScaler()
 
