@@ -441,3 +441,40 @@ GET /findDuplicates?name={name}
 
 ---
 
+## Bulk add and Bulk Remove tags
+**Summary:**
+This pull request contains the added functionality of adding tags and removing tags in bulk.
+
+**Usage:**
+"POST /bulkAddTag/name{manager name},json body"
+"POST /bulkRemoveTag/name{manager name},json body"
+
+**Parameters:**
+* "name" - name of the SmartManager
+* JSON body of all files that require tags
+example of json body:
+'''
+[
+
+{
+  "file_path": "/home/user/documents/report.pdf",
+  "tags": ["work", "important", "pdf"]
+},
+{
+  "file_path": "/home/user/photos/vacation.jpg",
+  "tags": ["holiday", "family", "2025"]
+},
+{
+  "file_path": "/home/user/music/song.mp3",
+  "tags": ["music", "mp3", "favorites"]
+}
+]
+'''
+
+Returns:
+Add
+"Tags added successfully" - on success
+"Failed to add tags" - on failure
+remove
+"Tags removed successfully" - on success
+"Failed to remove tags" - on failure
