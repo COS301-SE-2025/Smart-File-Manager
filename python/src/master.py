@@ -21,7 +21,7 @@ class Master():
         self.full_vec = FullVector()  
 
     # Takes gRPC request's root and sends it to be processed by a slave
-    def submitTask(self, request : DirectoryRequest):
+    def submit_task(self, request : DirectoryRequest):
         future = self.slaves.submit(self.process, request)
         return future # Return future so non blocking
 
@@ -30,9 +30,9 @@ class Master():
 
         # Map request type to method and call
         requestHandler = {
-            "CLUSTERING" : self.handleClusteringRequest,
-            "METADATA" : self.handleMetadatRequest,
-            "KEYWORDS" : self.handleKeywordRequest
+            "CLUSTERING" : self.handle_clustering_request,
+            "METADATA" : self.handle_metadata_request,
+            "KEYWORDS" : self.handle_keyword_request
         }
 
         handler = requestHandler.get(request.requestType.upper())
@@ -46,7 +46,7 @@ class Master():
             return reponse
 
     
-    def handleClusteringRequest(self, request : DirectoryRequest) -> DirectoryResponse:
+    def handle_clustering_request(self, request : DirectoryRequest) -> DirectoryResponse:
         
         # List of map where map contains keywords, tags and metadata
         files = []
@@ -72,7 +72,7 @@ class Master():
             response = DirectoryResponse(response_code=400, response_msg="No file could be opened")
             return response
 
-    def handleMetadatRequest(self, request : DirectoryRequest) -> DirectoryResponse:
+    def handle_metadata_request(self, request : DirectoryRequest) -> DirectoryResponse:
         
         if self.extract_metadata(request.root, files=[], metadata_fn=self.scraper.get_standard_metadata, build_file_entry=False):
             response = DirectoryResponse(root=request.root, response_code=200, response_msg="Successfully extracted at least some metadata")
@@ -80,7 +80,7 @@ class Master():
         else:
             response = DirectoryResponse(root=request.root, response_code=400, response_msg="No file could be opened")
 
-    def handleKeywordRequest(self, request : DirectoryRequest) -> DirectoryResponse:
+    def handle_keyword_request(self, request : DirectoryRequest) -> DirectoryResponse:
 
         self.kw_extractor.set_n(1)        
 
