@@ -30,13 +30,8 @@ type TagsStruct struct {
 	Tags     []string `json:"tags"`
 }
 
-type Taggable interface {
-	AddTagToFile(path string, tag string) bool
-	GetFile(path string) *File
-}
-
 // BulkAddTags adds tags to files in bulk
-func BulkAddTags(item Taggable, bulkList []TagsStruct) error {
+func BulkAddTags(item *Folder, bulkList []TagsStruct) error {
 	for _, tagItem := range bulkList {
 		for _, tag := range tagItem.Tags {
 			item.AddTagToFile(tagItem.FilePath, tag)
@@ -46,7 +41,7 @@ func BulkAddTags(item Taggable, bulkList []TagsStruct) error {
 }
 
 // BulkRemoveTags removes tags from files in bulk
-func BulkRemoveTags(item Taggable, bulkList []TagsStruct) error {
+func BulkRemoveTags(item *Folder, bulkList []TagsStruct) error {
 	for _, tagItem := range bulkList {
 		file := item.GetFile(tagItem.FilePath)
 		if file == nil {
