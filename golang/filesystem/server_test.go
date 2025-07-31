@@ -271,11 +271,11 @@ func TestAPI_BulkAddTags(t *testing.T) {
 	}]`
 
 	// Create request with JSON body and query parameter ?name=bulkTest
-	req := httptest.NewRequest("POST", "/bulkTag?name=bulkTest", strings.NewReader(jsonBody))
+	req := httptest.NewRequest("POST", "/bulkAddTag?name=bulkTest", strings.NewReader(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
 
 	w := httptest.NewRecorder()
-	BulkTagHandler(w, req)
+	BulkAddTagHandler(w, req)
 
 	// Verify response code
 	if w.Code != http.StatusOK {

@@ -56,7 +56,7 @@ func BulkRemoveTags(item *Folder, bulkList []TagsStruct) error {
 	return nil
 }
 
-func BulkTagHandler(w http.ResponseWriter, r *http.Request) {
+func BulkAddTagHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	if name == "" {
 		http.Error(w, "Missing 'name' parameter", http.StatusBadRequest)
@@ -82,6 +82,39 @@ func BulkTagHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("Tags added successfully"))
+			return
+		}
+	}
+
+	http.Error(w, "Folder not found", http.StatusNotFound)
+}
+
+func BulkRemoveTagHandler(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		http.Error(w, "Missing 'name' parameter", http.StatusBadRequest)
+		return
+	}
+
+	// Decode JSON body
+	var bulkList []TagsStruct
+	if err := json.NewDecoder(r.Body).Decode(&bulkList); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	// Find the corresponding Folder by name
+	for _, folder := range composites {
+		if folder.Name == name {
+			if err := BulkRemoveTags(folder, bulkList); err != nil {
+				http.Error(w, fmt.Sprintf("Failed to remove tags: %v", err), http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("Tags removed successfully"))
 			return
 		}
 	}
