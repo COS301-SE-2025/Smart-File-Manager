@@ -50,6 +50,12 @@ python:
 python_test:
 	pytest -v -s --color=yes --tb=short python/testing/
 
+python_test_pyinstrument:
+	pyinstrument -r html -o profiling/profile_report.html -m pytest -v -s --color=yes --tb=short python/testing/
+
+python_test_clustering_request_pyinstrument:
+	pyinstrument -r html -o profiling/profile_report_clustering_request.html -m pytest -v -s --color=yes --tb=short python/testing/test_clustering_request.py
+
 proto_gen:
 	python3 -m grpc_tools.protoc \
 		-Iprotos \
