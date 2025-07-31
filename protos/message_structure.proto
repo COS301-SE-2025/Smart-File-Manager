@@ -13,6 +13,12 @@ message MetadataEntry {
   string value = 2;
 }
 
+// Keyword extracted from file along with the score it was given by yake
+message Keyword {
+  string keyword = 1;
+  float score = 2;
+}
+
 message File {
   string name = 1;
   string original_path = 2;
@@ -20,6 +26,7 @@ message File {
   repeated Tag tags = 4;
   repeated MetadataEntry metadata = 5;
   bool is_locked=6;
+  repeated Keyword keywords = 7;
 
 }
 
