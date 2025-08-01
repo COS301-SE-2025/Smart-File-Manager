@@ -32,7 +32,7 @@ func SetManagersFilePath(p string) {
 // api entry
 func startUpHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("setup called")
-	composites = nil
+	Composites = nil
 	recs, err := loadManagerRecords()
 
 	if err != nil {
@@ -51,14 +51,14 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("readingComposite error: %s", err.Error())
 			continue
 		}
-		composites = append(composites, composite)
+		Composites = append(Composites, composite)
 		managerNames = append(managerNames, composite.Name)
 	}
 
 	w.WriteHeader(http.StatusOK)
 
 	res := startUpResponse{
-		ResponseMessage: "Request successful!, composites: " + strconv.Itoa(len(recs)),
+		ResponseMessage: "Request successful!, Composites: " + strconv.Itoa(len(recs)),
 		ManagerNames:    managerNames,
 	}
 
@@ -108,26 +108,26 @@ func AddManager(name, path string) error {
 	if err != nil {
 		return err
 	}
-	composites = append(composites, composite)
+	Composites = append(Composites, composite)
 
 	// rebuild the small record slice
 	var recs []ManagerRecord
-	for _, f := range composites {
+	for _, f := range Composites {
 		recs = append(recs, ManagerRecord{Name: f.Name, Path: f.Path})
 	}
 	return saveManagerRecords(recs)
 }
 
 func RemoveManager(path string) error {
-	// remove from composites by Path, then rewrite file
+	// remove from Composites by Path, then rewrite file
 	var recs []ManagerRecord
-	for i, f := range composites {
+	for i, f := range Composites {
 		if f.Path == path {
-			composites = append(composites[:i], composites[i+1:]...)
+			Composites = append(Composites[:i], Composites[i+1:]...)
 			break
 		}
 	}
-	for _, f := range composites {
+	for _, f := range Composites {
 		recs = append(recs, ManagerRecord{Name: f.Name, Path: f.Path})
 	}
 	return saveManagerRecords(recs)

@@ -10,7 +10,7 @@ import (
 
 var (
 	//array of smartfile managers
-	composites []*Folder
+	Composites []*Folder
 	mu         sync.Mutex
 )
 
@@ -26,7 +26,7 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mu.Lock()
-	// composites = append(composites, composite)
+	// Composites = append(Composites, composite)
 	//appendng happens in this:
 	AddManager(managerName, filePath)
 	mu.Unlock()
@@ -41,9 +41,9 @@ func removeCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	convertedPath := ConvertToWSLPath(filePath)
 
 	mu.Lock()
-	for i, item := range composites {
+	for i, item := range Composites {
 		if item.Path == convertedPath {
-			composites = slices.Delete(composites, i, i+1)
+			Composites = slices.Delete(Composites, i, i+1)
 			break
 		}
 	}
@@ -62,7 +62,7 @@ func addTagHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		item := c.GetFile(convertedPath)
 		if item != nil {
 			c.AddTagToFile(convertedPath, tag)
@@ -85,7 +85,7 @@ func removeTagHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		// Check file
 		if file := c.GetFile(convertedPath); file != nil {
 			if file.RemoveTag(tag) {
@@ -119,7 +119,7 @@ func lockHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		if c.Name == name {
 			c.LockByPath(path)
 			fmt.Println("LOCKED FILE")
@@ -139,11 +139,12 @@ func unlockHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	mu.Lock()
 	defer mu.Unlock()
+
 	if path == "" || name == "" {
 		w.Write([]byte("Parameter missing"))
 		return
 	}
-	for _, c := range composites {
+	for _, c := range Composites {
 		if c.Name == name {
 			c.UnlockByPath(path)
 			w.Write([]byte("true"))
@@ -174,11 +175,13 @@ func HandleRequests() {
 	http.HandleFunc("/startUp", startUpHandler)
 	http.HandleFunc("/lock", lockHandler)
 	http.HandleFunc("/unlock", unlockHandler)
+	http.HandleFunc("/search", SearchHandler)
 	http.HandleFunc("/moveDirectory", moveDirectoryHandler)
 	http.HandleFunc("/findDuplicateFiles", findDuplicateFilesHandler)
 	http.HandleFunc("/bulkAddTag", BulkAddTagHandler)
 	http.HandleFunc("/bulkRemoveTag", BulkRemoveTagHandler)
 	fmt.Println("Server started on port 51000")
+
 	// http.ListenAndServe(":51000", nil)
 	http.ListenAndServe("0.0.0.0:51000", nil)
 
@@ -188,5 +191,5 @@ func HandleRequests() {
 func GetComposites() []*Folder {
 	mu.Lock()
 	defer mu.Unlock()
-	return composites
+	return Composites
 }
