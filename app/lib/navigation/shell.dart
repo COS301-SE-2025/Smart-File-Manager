@@ -7,6 +7,7 @@ import 'main_navigation.dart';
 import '../pages/manager_page.dart';
 import 'package:app/constants.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:app/models/file_tree_node.dart';
 
 class Shell extends StatefulWidget {
   const Shell({super.key});
@@ -18,6 +19,9 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   int _selectedIndex = 0; //index selected form the main menu (0 to 3)
   String? _selectedManager; //name of the Manager selected
+
+  final Map<String, FileTreeNode> _managerTreeData = {};
+
   final Uri _url = Uri.parse(
     'https://cos301-se-2025.github.io/Smart-File-Manager/',
   );
@@ -53,10 +57,22 @@ class _ShellState extends State<Shell> {
   }
 
   //select the manager by passed in name and deselect main navigation if selected
-  void _onManagerTap(String managerName) {
+  void _onManagerTap(String managerName, FileTreeNode? treeData) {
     setState(() {
       _selectedManager = managerName;
       _selectedIndex = -1;
+    });
+  }
+
+  void _onManagerTreeDataUpdate(String managerName, FileTreeNode treeData) {
+    setState(() {
+      _managerTreeData[managerName] = treeData;
+    });
+  }
+
+  void _updateManagerTreeData(String managerName, FileTreeNode treeData) {
+    setState(() {
+      _managerTreeData[managerName] = treeData;
     });
   }
 
@@ -66,6 +82,8 @@ class _ShellState extends State<Shell> {
       return ManagerPage(
         key: ValueKey(_selectedManager),
         name: _selectedManager!,
+        treeData: _managerTreeData[_selectedManager!],
+        onTreeDataUpdate: _updateManagerTreeData,
       );
     } else if (_selectedIndex >= 0 && _selectedIndex < _pages.length) {
       return _pages[_selectedIndex];
@@ -117,6 +135,7 @@ class _ShellState extends State<Shell> {
             selectedManager: _selectedManager,
             onTap: _onNavigationTap,
             onManagerTap: _onManagerTap,
+            onManagerTreeDataUpdate: _onManagerTreeDataUpdate,
           ),
           //Page that needs to be rendered depending on navigation index
           Expanded(child: _getCurrentPage()),

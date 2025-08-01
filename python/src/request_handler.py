@@ -15,7 +15,7 @@ class RequestHandler(message_structure_pb2_grpc.DirectoryServiceServicer):
         self.master = master.Master(10)
 
     def SendDirectoryStructure(self, request, context):
-        response = self.master.submitTask(request).result()
+        response = self.master.submit_task(request).result()
         return response
 
     def serve(self):

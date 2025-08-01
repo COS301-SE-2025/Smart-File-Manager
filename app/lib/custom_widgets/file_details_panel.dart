@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/file_tree_node.dart';
 import 'package:app/constants.dart';
 import 'package:app/api.dart';
+import 'package:app/custom_widgets/tag_dialog.dart';
 
 class FileDetailsPanel extends StatefulWidget {
   final String? managerName;
@@ -318,65 +319,21 @@ class _FileDetailsPanelState extends State<FileDetailsPanel>
     );
   }
 
-  void _showAddTagDialog() {
-    showDialog(
+  void _showAddTagDialog() async {
+    final addedTag = await showDialog<String>(
       context: context,
       builder:
-          (context) => AlertDialog(
-            backgroundColor: kScaffoldColor,
-            title: const Text('Add Tag', style: kTitle1),
-            content: TextField(
-              controller: _tagController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                hintText: 'Enter tag name',
-                hintStyle: TextStyle(color: Color(0xff9CA3AF)),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xff6B7280)),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xffFFB400)),
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(color: Color(0xff9CA3AF)),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  if (_tagController.text.isNotEmpty) {
-                    _addTag(_tagController.text);
-                    _tagController.clear();
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text(
-                  'Add',
-                  style: TextStyle(color: Color(0xffFFB400)),
-                ),
-              ),
-            ],
+          (context) => TagDialog(
+            node: widget.selectedFile!,
+            managerName: widget.managerName,
           ),
     );
-  }
 
-  void _addTag(String tag) async {
-    bool response = await Api.addTagToFile(
-      widget.managerName ?? '',
-      widget.selectedFile!.path ?? '',
-      tag,
-    );
-
-    setState(() {
-      if (response) {
-        widget.selectedFile!.tags?.add(tag);
-      }
-    });
+    if (addedTag != null && mounted) {
+      setState(() {
+        widget.selectedFile!.tags?.add(addedTag);
+      });
+    }
   }
 
   void _removeTag(String tag) async {

@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 class HoverableButton extends StatefulWidget {
   final VoidCallback? onTap;
   final String name;
+  final IconData icon;
 
-  const HoverableButton({super.key, this.onTap, required this.name});
+  const HoverableButton({
+    super.key,
+    this.onTap,
+    required this.name,
+    required this.icon,
+  });
 
   @override
   State<HoverableButton> createState() => _HoverableButtonState();
@@ -32,7 +38,7 @@ class _HoverableButtonState extends State<HoverableButton> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.account_tree_rounded,
+                widget.icon,
                 size: 16,
                 color: _isHovered ? Colors.black : const Color(0xff9CA3AF),
               ),

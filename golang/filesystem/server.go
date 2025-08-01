@@ -15,7 +15,7 @@ var (
 )
 
 func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("addDirectory called")
+	// fmt.Println("addDirectory called")
 	managerName := r.URL.Query().Get("name")
 	filePath := r.URL.Query().Get("path")
 	// fmt.Println("PATH", filePath)
@@ -72,7 +72,7 @@ func addTagHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fmt.Println("Item not found for path:", convertedPath)
+	// fmt.Println("Item not found for path:", convertedPath)
 	w.Write([]byte("false"))
 }
 
@@ -89,7 +89,7 @@ func removeTagHandler(w http.ResponseWriter, r *http.Request) {
 		// Check file
 		if file := c.GetFile(convertedPath); file != nil {
 			if file.RemoveTag(tag) {
-				fmt.Printf("Removed tag '%s' from file: %s\n", tag, convertedPath)
+				// fmt.Printf("Removed tag '%s' from file: %s\n", tag, convertedPath)
 				w.Write([]byte("true"))
 				return
 			}
@@ -97,41 +97,64 @@ func removeTagHandler(w http.ResponseWriter, r *http.Request) {
 		// Csheck folder
 		if folder := c.GetSubfolder(convertedPath); folder != nil {
 			if folder.RemoveTag(tag) {
-				fmt.Printf("Removed tag '%s' from folder: %s\n", tag, convertedPath)
+				// fmt.Printf("Removed tag '%s' from folder: %s\n", tag, convertedPath)
 				w.Write([]byte("true"))
 				return
 			}
 		}
 	}
 
-	fmt.Println("Tag or item not found for path:", convertedPath)
+	// fmt.Println("Tag or item not found for path:", convertedPath)
 	w.Write([]byte("false"))
 }
 
 // Locks a file or folder and its children
 func lockHandler(w http.ResponseWriter, r *http.Request) {
-	path := ConvertToWSLPath(r.URL.Query().Get("path"))
-
+	path := r.URL.Query().Get("path")
+	name := r.URL.Query().Get("name")
+	if path == "" || name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
+	}
 	mu.Lock()
 	defer mu.Unlock()
 
 	for _, c := range Composites {
-		c.LockByPath(path)
+		if c.Name == name {
+			c.LockByPath(path)
+			fmt.Println("LOCKED FILE")
+			w.Write([]byte("true"))
+			return
+		} else {
+			w.Write([]byte("false"))
+			return
+		}
 	}
-	w.Write([]byte("true"))
+
 }
 
 // Unlocks a file or folder and its children
 func unlockHandler(w http.ResponseWriter, r *http.Request) {
-	path := ConvertToWSLPath(r.URL.Query().Get("path"))
-
+	path := r.URL.Query().Get("path")
+	name := r.URL.Query().Get("name")
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range Composites {
-		c.UnlockByPath(path)
+	if path == "" || name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
 	}
-	w.Write([]byte("true"))
+	for _, c := range Composites {
+		if c.Name == name {
+			c.UnlockByPath(path)
+			w.Write([]byte("true"))
+			return
+		} else {
+			w.Write([]byte("false"))
+			return
+		}
+	}
+
 }
 
 func HandleRequests() {
@@ -152,9 +175,11 @@ func HandleRequests() {
 	http.HandleFunc("/startUp", startUpHandler)
 	http.HandleFunc("/lock", lockHandler)
 	http.HandleFunc("/unlock", unlockHandler)
-
 	http.HandleFunc("/search", SearchHandler)
-
+	http.HandleFunc("/moveDirectory", moveDirectoryHandler)
+	http.HandleFunc("/findDuplicateFiles", findDuplicateFilesHandler)
+	http.HandleFunc("/bulkAddTag", BulkAddTagHandler)
+	http.HandleFunc("/bulkRemoveTag", BulkRemoveTagHandler)
 	fmt.Println("Server started on port 51000")
 
 	// http.ListenAndServe(":51000", nil)

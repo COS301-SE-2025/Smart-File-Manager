@@ -6,19 +6,26 @@ import 'package:app/constants.dart';
 import 'dart:math' as math;
 import 'package:app/custom_widgets/breadcrumb_widget.dart';
 import 'package:open_file/open_file.dart';
+import 'package:app/api.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'dart:io';
+import 'package:app/custom_widgets/tag_dialog.dart';
 
 class GraphViewPage extends StatefulWidget {
   final FileTreeNode treeData;
   final List<String> currentPath;
   final Function(FileTreeNode) onFileSelected;
   final Function(List<String>) onNavigate;
+  final String? managerName;
+  final VoidCallback? onTagChanged;
 
   const GraphViewPage({
     required this.treeData,
     required this.currentPath,
     required this.onFileSelected,
     required this.onNavigate,
+    this.managerName,
+    this.onTagChanged,
     super.key,
   });
 
@@ -63,7 +70,8 @@ class _GraphViewPageState extends State<GraphViewPage> {
     controller = ForceDirectedGraphController<FileTreeNode>(
       graph: ForceDirectedGraph.generateNNodes(
         nodeCount: 0,
-        generator: () => FileTreeNode(name: "data", isFolder: false),
+        generator:
+            () => FileTreeNode(name: "data", isFolder: false, locked: false),
         config: GraphConfig(scaling: 0.1, elasticity: 0.8, repulsionRange: 200),
       ),
     );
@@ -192,11 +200,107 @@ class _GraphViewPageState extends State<GraphViewPage> {
     }
   }
 
-  void _handleNodeRightTap(FileTreeNode node) {
+  void _showAddTagDialog(FileTreeNode node) async {
+    final addedTag = await showDialog<String>(
+      context: context,
+      builder:
+          (context) => TagDialog(node: node, managerName: widget.managerName),
+    );
+
+    if (addedTag != null && mounted) {
+      setState(() {
+        node.tags?.add(addedTag);
+      });
+      // Notify parent that tags have changed
+      widget.onTagChanged?.call();
+    }
+  }
+
+  void _lockNode(FileTreeNode node) {
+    setState(() {
+      widget.treeData.lockItem(node.path ?? '');
+    });
+  }
+
+  void _unlockNode(FileTreeNode node) {
+    setState(() {
+      widget.treeData.unlockItem(node.path ?? '');
+    });
+  }
+
+  void _handleNodeRightTap(FileTreeNode node, Offset globalPosition) {
     if (node.isFolder) {
-      return;
+      final entries = <ContextMenuEntry>[
+        MenuItem(
+          label: 'Lock',
+          icon: Icons.lock,
+          onSelected: () async {
+            bool response = await Api.locking(node.path ?? '');
+            if (response == true) {
+              _lockNode(node);
+            }
+          },
+        ),
+        MenuItem(
+          label: 'Unlock',
+          icon: Icons.lock_open,
+          onSelected: () async {
+            bool response = await Api.unlocking(node.path ?? '');
+            if (response == true) {
+              _unlockNode(node);
+            }
+          },
+        ),
+      ];
+
+      final menu = ContextMenu(
+        entries: entries,
+        position: globalPosition,
+        padding: const EdgeInsets.all(8.0),
+      );
+
+      showContextMenu(context, contextMenu: menu);
     } else {
-      widget.onFileSelected(node);
+      final entries = <ContextMenuEntry>[
+        MenuItem(
+          label: 'Details',
+          icon: Icons.info_outline,
+          onSelected: () => widget.onFileSelected(node),
+        ),
+        MenuItem(
+          label: 'Add Tag',
+          icon: Icons.label,
+          onSelected: () => _showAddTagDialog(node),
+        ),
+        MenuItem(
+          label: 'Lock',
+          icon: Icons.lock,
+          onSelected: () async {
+            bool response = await Api.locking(node.path ?? '');
+            if (response == true) {
+              _lockNode(node);
+            }
+          },
+        ),
+        MenuItem(
+          label: 'Unlock',
+          icon: Icons.lock_open,
+          onSelected: () async {
+            bool response = await Api.unlocking(node.path ?? '');
+            if (response == true) {
+              _unlockNode(node);
+            }
+          },
+        ),
+      ];
+
+      final menu = ContextMenu(
+        entries: entries,
+        position: globalPosition,
+        padding: const EdgeInsets.all(8.0),
+      );
+
+      showContextMenu(context, contextMenu: menu);
     }
   }
 
@@ -300,7 +404,9 @@ class _GraphViewPageState extends State<GraphViewPage> {
 
             return GestureDetector(
               onDoubleTap: () => _handleNodeDoubleTap(data),
-              onSecondaryTap: () => _handleNodeRightTap(data),
+              onSecondaryTapUp:
+                  (details) =>
+                      _handleNodeRightTap(data, details.globalPosition),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -376,17 +482,35 @@ class _GraphViewPageState extends State<GraphViewPage> {
                         width: isHighlighted ? 1.0 : 0.5,
                       ),
                     ),
-                    child: Text(
-                      data.name,
-                      style: TextStyle(
-                        color: isHighlighted ? levelColor : Colors.white70,
-                        fontSize: math.max(9.0, 11.0 - (depth * 0.5)),
-                        fontWeight:
-                            isHighlighted ? FontWeight.w600 : FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        (data.locked == true)
+                            ? Icon(Icons.lock, size: 15, color: Colors.white70)
+                            : Icon(
+                              Icons.lock_open,
+                              size: 15,
+                              color: Colors.white70,
+                            ),
+                        const SizedBox(width: 2),
+                        Flexible(
+                          child: Text(
+                            data.name,
+                            style: TextStyle(
+                              color:
+                                  isHighlighted ? levelColor : Colors.white70,
+                              fontSize: math.max(9.0, 11.0 - (depth * 0.5)),
+                              fontWeight:
+                                  isHighlighted
+                                      ? FontWeight.w600
+                                      : FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
