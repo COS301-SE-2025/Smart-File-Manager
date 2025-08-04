@@ -4,6 +4,7 @@ class FileTreeNode {
   final List<FileTreeNode>? children;
   final List<String>? tags;
   final String? path;
+  final String? rootPath;
   final Map<String, String>? metadata;
   bool locked;
 
@@ -13,6 +14,7 @@ class FileTreeNode {
     this.children,
     this.tags,
     this.path,
+    this.rootPath,
     this.metadata,
     required this.locked,
   });
@@ -21,6 +23,7 @@ class FileTreeNode {
     return FileTreeNode(
       name: json['name'] ?? '',
       path: json['path'] ?? '',
+      rootPath: json['rootPath'] ?? '',
       isFolder: json['isFolder'] ?? false,
       children:
           json['children'] != null
@@ -41,6 +44,7 @@ class FileTreeNode {
     return {
       'name': name,
       'path': path,
+      'rootPath': rootPath,
       'isFolder': isFolder,
       'children': children?.map((child) => child.toJson()).toList(),
       'tags': tags,
