@@ -34,7 +34,7 @@ func TestRemoveFile(t *testing.T) {
 	r.AddFile(f)
 	// remove existing
 	removed := r.RemoveFile("/a.txt")
-	if !removed {
+	if removed != nil {
 		t.Errorf("RemoveFile returned false for existing file")
 	}
 	// ensure it's gone
@@ -42,7 +42,7 @@ func TestRemoveFile(t *testing.T) {
 		t.Errorf("file still found after removal")
 	}
 	// remove non-existing
-	if r.RemoveFile("/nonexistent.txt") {
+	if r.RemoveFile("/nonexistent.txt") == nil {
 		t.Errorf("RemoveFile returned true for non-existing file")
 	}
 }
