@@ -58,32 +58,34 @@ class _FolderViewSearchState extends State<FolderViewSearch> {
   Widget _buildFileGrid() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        child: Column(
-          children:
-              _currentItems.map((item) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: GestureDetector(
-                      onSecondaryTapDown:
-                          (details) => _handleItemRightTap(
-                            widget.managerName ?? "",
-                            item,
-                            details.globalPosition,
-                          ),
-                      child: SearchItemWidget(
-                        item: item,
-                        onTap: _handleItemTap,
-                        onDoubleTap: _handleNodeDoubleTap,
-                        managerPath: widget.managerPath,
+      child: SizedBox(
+        child: ListView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: _currentItems.length,
+          itemBuilder: (context, index) {
+            final item = _currentItems[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: GestureDetector(
+                  onSecondaryTapDown:
+                      (details) => _handleItemRightTap(
+                        widget.managerName ?? "",
+                        item,
+                        details.globalPosition,
                       ),
-                    ),
+                  child: SearchItemWidget(
+                    item: item,
+                    onTap: _handleItemTap,
+                    onDoubleTap: _handleNodeDoubleTap,
+                    managerPath: widget.managerPath,
                   ),
-                );
-              }).toList(),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
