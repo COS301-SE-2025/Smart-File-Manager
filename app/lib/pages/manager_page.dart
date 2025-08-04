@@ -36,7 +36,6 @@ class _ManagerPageState extends State<ManagerPage> {
   bool _disposed = false;
   late final ScrollController _scrollController;
   late final TextEditingController _searchController;
-  late final TextEditingController _searchController;
 
   @override
   void dispose() {
