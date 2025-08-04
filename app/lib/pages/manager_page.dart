@@ -6,6 +6,8 @@ import 'package:app/pages/manager_page_sub/graph_view_page.dart';
 import 'package:app/custom_widgets/file_details_panel.dart';
 import 'package:app/api.dart';
 import 'package:app/custom_widgets/hoverable_button.dart';
+import 'package:app/custom_widgets/custom_search_bar.dart';
+import 'package:app/pages/search_sub_page/folder_view_search.dart';
 
 class ManagerPage extends StatefulWidget {
   final String name;
@@ -25,14 +27,18 @@ class _ManagerPageState extends State<ManagerPage> {
   int _currentView = 0; // 0 = folder, 1 = graph
   List<String> _currentPath = [];
   FileTreeNode? _treeData;
+  FileTreeNode? _searchTreeData;
+  bool _searchHappened = false;
   FileTreeNode? _selectedFile;
   bool _isDetailsVisible = false;
   bool _isLoading = true;
   bool _isSorting = false;
   bool _disposed = false;
+  late final ScrollController _scrollController;
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _disposed = true;
     super.dispose();
   }
@@ -40,6 +46,7 @@ class _ManagerPageState extends State<ManagerPage> {
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
     if (widget.treeData != null) {
       setState(() {
         _treeData = widget.treeData;
@@ -173,25 +180,72 @@ class _ManagerPageState extends State<ManagerPage> {
     );
   }
 
+  void _callGoSearch(String query) async {
+    if (query.trim().isEmpty) {
+      setState(() {
+        _isLoading = false;
+        _searchHappened = false;
+        _searchTreeData = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _searchHappened = true;
+    });
+
+    try {
+      FileTreeNode response = await Api.searchGo(widget.name, query);
+      if (mounted) {
+        setState(() {
+          _searchTreeData = response;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _searchTreeData = null;
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _goToAdvancedSearch() {}
+
+  Widget mainContent() {
+    if (_searchHappened == true) {
+      return _buildFolderViewSearch();
+    } else {
+      return _currentView == 0
+          ? _buildFolderViewLayout()
+          : _buildGraphViewLayout();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildTopBar(),
       body: Column(
-        children: [
-          _buildSearchBar(),
-          Expanded(
-            child:
-                _currentView == 0
-                    ? _buildFolderViewLayout()
-                    : _buildGraphViewLayout(),
-          ),
-        ],
+        children: [_buildSearchBar(), Expanded(child: mainContent())],
       ),
     );
   }
 
   Widget _buildFolderViewLayout() {
+    return Row(
+      children: [
+        Expanded(flex: _isDetailsVisible ? 3 : 1, child: _buildMainContent()),
+        if (_isDetailsVisible)
+          SizedBox(width: 200, child: _buildDetailsPanel()),
+      ],
+    );
+  }
+
+  Widget _buildFolderViewSearch() {
     return Row(
       children: [
         Expanded(flex: _isDetailsVisible ? 3 : 1, child: _buildMainContent()),
@@ -259,25 +313,6 @@ class _ManagerPageState extends State<ManagerPage> {
                             color: Colors.white,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 4,
-                            horizontal: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            color: const Color(0xff094E3A),
-                          ),
-                          child: const Text(
-                            '75% organized',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Color(0xff6EE79B),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
                       ],
                     ),
                   ),
@@ -348,29 +383,54 @@ class _ManagerPageState extends State<ManagerPage> {
         color: Color(0xff2E2E2E),
         border: Border(bottom: BorderSide(color: Color(0xff3D3D3D), width: 1)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Row(
-          children: [
-            Row(
-              children: [
-                HoverableButton(
-                  onTap: () {
-                    _showDuplicateDialog(widget.name);
-                  },
-                  name: "Find Duplicates",
-                  icon: Icons.filter_none_rounded,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Row(
+        children: [
+          CustomSearchBar(
+            icon: Icons.search_rounded,
+            hint: "Search for files inside manager",
+            isActive: true,
+            onChanged: (s) => _callGoSearch(s),
+          ),
+          const SizedBox(width: 12),
+          HoverableButton(
+            onTap: () {
+              _goToAdvancedSearch();
+            },
+            name: "Advanced Search",
+            icon: Icons.manage_search_rounded,
+          ),
+          const VerticalDivider(color: Color(0xff3D3D3D)),
+          Expanded(
+            child: Scrollbar(
+              thickness: 2,
+              thumbVisibility: true,
+              interactive: true,
+              controller: _scrollController,
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    HoverableButton(
+                      onTap: _isSorting ? null : _handleSortManager,
+                      name: _isSorting ? "Sorting..." : "Sort Manager",
+                      icon: Icons.account_tree_rounded,
+                    ),
+                    const SizedBox(width: 12),
+                    HoverableButton(
+                      onTap: () {
+                        _showDuplicateDialog(widget.name);
+                      },
+                      name: "Find Duplicates",
+                      icon: Icons.filter_none_rounded,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                HoverableButton(
-                  onTap: _isSorting ? null : _handleSortManager,
-                  name: _isSorting ? "Sorting..." : "Sort Manager",
-                  icon: Icons.account_tree_rounded,
-                ),
-              ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -409,6 +469,26 @@ class _ManagerPageState extends State<ManagerPage> {
             ),
           ],
         ),
+      );
+    }
+
+    if (_searchHappened == true) {
+      return FolderViewSearch(
+        managerName: widget.name,
+        treeData:
+            _searchTreeData ??
+            FileTreeNode(
+              name: '',
+              path: '',
+              isFolder: false,
+              locked: false,
+              children: [],
+            ),
+        onFileSelected: _handleFileSelect,
+        onTagChanged: () {
+          // Trigger rebuild of details panel when tags change
+          if (mounted) setState(() {});
+        },
       );
     }
 
