@@ -10,14 +10,13 @@ from nltk import pos_tag
 from nltk.stem import WordNetLemmatizer
 
 #adding these imports could be slow
-from sentence_transformers import SentenceTransformer
 from typing import List, Tuple, Dict
 
 from collections import defaultdict
 
 
 class FolderNameCreator:
-    def __init__(self, model : SentenceTransformer):
+    def __init__(self, model):
         self.model = model
         self.max_keywords = 5000 # for folder name creation
         self.lemmatizer = WordNetLemmatizer()

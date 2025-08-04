@@ -2,7 +2,6 @@ import datetime
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from typing import List, Dict, Optional, Tuple
-from sentence_transformers import SentenceTransformer
 from sklearn.preprocessing import MultiLabelBinarizer
 
 class FullVector:

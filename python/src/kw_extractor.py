@@ -2,7 +2,8 @@ import time
 from typing import List, Tuple
 import docx
 from yake import KeywordExtractor
-from pypdf import PdfReader
+import fitz  # PyMuPDF
+# from pypdf import PdfReader
 from message_structure_pb2 import File
 
 # Keyword extractor class
@@ -84,19 +85,19 @@ class KWExtractor:
         
 
     #Open a PDF file
+
     def pdf_extraction(self, file_name, delimiter, max_duration_seconds=1):
         start_time = time.time()
         final_sentence = ""
-        reader = PdfReader(file_name)
-        for page in reader.pages:
-            text = page.extract_text()
-            if not text:
-                continue  # Skip pages with no extractable text
+        doc = fitz.open(file_name)
+        for page in doc:
+            text = page.get_text()
             for sentence in self.split_by_delimiter_pdf(text, delimiter):
                 if time.time() - start_time > max_duration_seconds:
                     return self.get_kw(final_sentence)
                 final_sentence += sentence + delimiter
         return self.get_kw(final_sentence)
+
 
         
     

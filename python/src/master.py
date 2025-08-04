@@ -7,7 +7,6 @@ from kw_extractor import KWExtractor
 from full_vector import FullVector
 import os
 from k_means import KMeansCluster 
-from collections import defaultdict
 
 # Master class
 # Allows submission of gRPC requests. 

@@ -139,31 +139,29 @@ def test_docx_extraction(mock_docx):
     assert result == expected_sentence
 
 #sentence extraction pdf
-@patch("src.kw_extractor.PdfReader")
-def test_pdf_extraction(mock_pdf_reader):
+@patch("src.kw_extractor.fitz.open")
+def test_pdf_extraction(mock_fitz_open):
     from src.kw_extractor import KWExtractor
     extractor = KWExtractor()
 
-    mock_reader_instance = MagicMock()
-    mock_pdf_reader.return_value = mock_reader_instance
-
+    # Mock document and pages
+    mock_doc = MagicMock()
     mock_page1 = MagicMock()
     mock_page2 = MagicMock()
-    mock_page1.extract_text.return_value = "Page 1 text."
-    mock_page2.extract_text.return_value = "Page 2 text."
 
-    mock_reader_instance.pages = [mock_page1, mock_page2]
+    mock_page1.get_text.return_value = "Page 1 text."
+    mock_page2.get_text.return_value = "Page 2 text."
 
-    def fake_split(text, delimiter):
-        if text == "Page 1 text.":
-            yield "Sentence1"
-            yield "Sentence2"
-        elif text == "Page 2 text.":
-            yield "Sentence3"
-            yield "Sentence4"
+    mock_doc.__iter__.return_value = iter([mock_page1, mock_page2])
+    mock_fitz_open.return_value = mock_doc
 
-    extractor.split_by_delimiter_pdf = fake_split
+    # Mock the sentence splitter per page
+    extractor.split_by_delimiter_pdf = MagicMock(side_effect=lambda text, delimiter: {
+        "Page 1 text.": ["Sentence1", "Sentence2"],
+        "Page 2 text.": ["Sentence3", "Sentence4"]
+    }[text])
 
+    # Mock the keyword extractor
     extractor.get_kw = MagicMock(side_effect=lambda s: s)
 
     result = extractor.pdf_extraction("fake_file.pdf", ".")
@@ -171,10 +169,9 @@ def test_pdf_extraction(mock_pdf_reader):
     expected_text = "Sentence1.Sentence2.Sentence3.Sentence4."
 
     extractor.get_kw.assert_called_once_with(expected_text)
-
     assert result == expected_text
 
-#open a file
+# #open a file
 def test_open_file():
     from src.kw_extractor import KWExtractor
     extractor = KWExtractor()

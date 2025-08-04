@@ -7,11 +7,12 @@ import master
 
 # Class for handling requests to gRPC python server
 # Assigns request to master for processing (currently assigns each request to a single master)
+
+transformer = SentenceTransformer('all-MiniLM-L6-v2', local_files_only=True)
 class RequestHandler(message_structure_pb2_grpc.DirectoryServiceServicer):
 
     def __init__(self):
         # Early initialize sentence transformer
-        transformer = SentenceTransformer('all-MiniLM-L6-v2', local_files_only=True)
 
         self.master = master.Master(1, transformer)
 
