@@ -174,7 +174,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 				panic(err)
 			}
 			c.RemoveFile(path)
-			c.Display(0)
+			// c.Display(0)
 			w.Write([]byte("true"))
 			return
 		} else {
@@ -200,7 +200,7 @@ func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
 				panic(err)
 			}
 			c.RemoveSubfolder(path)
-			c.Display(0)
+			// c.Display(0)
 			w.Write([]byte("true"))
 			return
 		} else {
