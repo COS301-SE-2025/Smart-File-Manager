@@ -50,7 +50,7 @@ class KMeansCluster:
         if depth > 0:
             # Assign directory name
             folder_name = self.folder_namer.generateFolderName(files)        
-            dir_name = os.path.join(dir_prefix, folder_name)
+            dir_name = folder_name
 
             if folder_name in dir_prefix:
                 return builder.buildDirectory(dir_prefix,files,[])
@@ -118,11 +118,11 @@ class KMeansCluster:
 
 
     def printDirectoryTree(self, directory, indent=""):
-       # print(f"{indent}{directory.name}/")
+        print(f"{indent}{directory.name}/")
         for file in directory.files:
            # print(f"{file.name} ")
-          #  print(f"{indent} - {file.original_path} ")
-            print(f'"{file.new_path}",')
+            print(f"{indent} - {file.name} ")
+            # print(f'"{file.new_path}",')
         for subdir in directory.directories:
             self.printDirectoryTree(subdir, indent + "  ")
 

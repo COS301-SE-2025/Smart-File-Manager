@@ -36,7 +36,6 @@ class DirectoryCreator:
         new_file_path = self.get_path(f"{dirName}/{filename}")
 
         my_tags = self.createTags(file_info)
-
         return File(
             name=filename,
             original_path=original_file_path,
