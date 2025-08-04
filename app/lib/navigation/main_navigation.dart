@@ -33,6 +33,7 @@ class MainNavigation extends StatefulWidget {
   final Function(int) onTap;
   final Function(String, FileTreeNode?)? onManagerTap;
   final Function(String, FileTreeNode)? onManagerTreeDataUpdate;
+  final Function(List<String>)? onManagerNamesUpdate;
   final String? selectedManager;
 
   const MainNavigation({
@@ -42,6 +43,7 @@ class MainNavigation extends StatefulWidget {
     required this.onTap,
     this.onManagerTap,
     this.onManagerTreeDataUpdate,
+    this.onManagerNamesUpdate,
     this.selectedManager,
   });
 
@@ -54,6 +56,8 @@ class _MainNavigationState extends State<MainNavigation> {
   final List<ManagerNavigationItem> _managers = [];
   bool _isInitialized = false;
   bool _disposed = false;
+  bool _isInitialLoading = true;
+  int _loadingManagersCount = 0;
 
   @override
   void dispose() {
@@ -147,7 +151,61 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeApp();
+    });
+  }
+
+  void _initializeApp() {
+    if (_isInitialLoading) {
+      _showBootupScreen();
+    }
     _loadExistingManagers();
+  }
+
+  void _showBootupScreen() {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return PopScope(
+          canPop: false,
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            color: kScaffoldColor,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('images/logo.png', width: 120, height: 120),
+                  const SizedBox(height: 40),
+                  Text(
+                    'SMART FILE MANAGER',
+                    style: TextStyle(
+                      color: kprimaryColor,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 60),
+                  CircularProgressIndicator(color: kYellowText, strokeWidth: 3),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _hideBootupScreen() {
+    if (!_disposed && mounted && _isInitialLoading) {
+      Navigator.of(context).pop();
+      setState(() {
+        _isInitialLoading = false;
+      });
+    }
   }
 
   void _loadExistingManagers() async {
@@ -170,11 +228,20 @@ class _MainNavigationState extends State<MainNavigation> {
             );
           }
           _isInitialized = true;
+          _loadingManagersCount = startupResponse.managerNames.length;
         });
 
-        // Load tree data for each manager in background
-        for (String managerName in startupResponse.managerNames) {
-          _loadTreeDataInBackground(managerName);
+        // Notify parent with manager names
+        widget.onManagerNamesUpdate?.call(startupResponse.managerNames);
+
+        // If no managers, hide bootup screen immediately
+        if (startupResponse.managerNames.isEmpty) {
+          _hideBootupScreen();
+        } else {
+          // Load tree data for each manager in background
+          for (String managerName in startupResponse.managerNames) {
+            _loadTreeDataInBackground(managerName);
+          }
         }
       }
     } catch (e) {
@@ -183,6 +250,7 @@ class _MainNavigationState extends State<MainNavigation> {
         setState(() {
           _isInitialized = true;
         });
+        _hideBootupScreen();
       }
     }
   }
@@ -203,9 +271,15 @@ class _MainNavigationState extends State<MainNavigation> {
               treeData: treeData,
             );
           }
+          _loadingManagersCount--;
         });
 
         widget.onManagerTreeDataUpdate?.call(managerName, treeData);
+
+        // Hide bootup screen when all managers are loaded
+        if (_loadingManagersCount <= 0) {
+          _hideBootupScreen();
+        }
       }
     } catch (e) {
       print('Error loading tree data for $managerName: $e');
@@ -224,7 +298,13 @@ class _MainNavigationState extends State<MainNavigation> {
               treeData: null,
             );
           }
+          _loadingManagersCount--;
         });
+
+        // Hide bootup screen even if loading failed
+        if (_loadingManagersCount <= 0) {
+          _hideBootupScreen();
+        }
       }
     }
   }
