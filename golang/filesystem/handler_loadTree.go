@@ -322,7 +322,7 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 				IsFolder: true,
 				Children: children,
 			}
-			PrettyPrintFolder(c, "")
+			// PrettyPrintFolder(c, "")
 
 			if err := json.NewEncoder(w).Encode(root); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
