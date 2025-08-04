@@ -13,11 +13,13 @@ class FolderViewSearch extends StatefulWidget {
   final FileTreeNode treeData;
   final Function(FileTreeNode) onFileSelected;
   final VoidCallback? onTagChanged;
-  final Function(String)? onGoToFolder;
+  final Function(List<String>)? onGoToFolder;
   final bool showGoToFolder;
-  final String currentBreadcrumbs;
+  List<String> currentBreadcrumbs;
+  String managerPath;
 
-  const FolderViewSearch({
+  FolderViewSearch({
+    super.key,
     required this.managerName,
     required this.treeData,
     required this.onFileSelected,
@@ -25,7 +27,7 @@ class FolderViewSearch extends StatefulWidget {
     this.onGoToFolder,
     this.showGoToFolder = true,
     required this.currentBreadcrumbs,
-    super.key,
+    required this.managerPath,
   });
 
   @override
@@ -75,6 +77,7 @@ class _FolderViewSearchState extends State<FolderViewSearch> {
                         item: item,
                         onTap: _handleItemTap,
                         onDoubleTap: _handleNodeDoubleTap,
+                        managerPath: widget.managerPath,
                       ),
                     ),
                   ),
@@ -224,69 +227,22 @@ class _FolderViewSearchState extends State<FolderViewSearch> {
   }
 
   void _goToFolder(FileTreeNode node) {
-    print(widget.currentBreadcrumbs);
-    if (widget.onGoToFolder != null) {
-      final filePath = node.path ?? '';
-      if (filePath.isNotEmpty) {
-        // Extract parent directory path from file path
-        final parts = filePath.split(RegExp(r'[/\\]'));
-        if (parts.length > 1) {
-          parts.removeLast(); // Remove file name
-          final parentDirPath = parts.join(
-            '/',
-          ); // Get full parent directory path
+    final fileFullPath = node.path ?? '';
 
-          // Get the root part from saved breadcrumbs (everything before the first '/')
-          final breadcrumbParts = widget.currentBreadcrumbs.split('/');
-          final rootPart =
-              breadcrumbParts.isNotEmpty ? breadcrumbParts.first : '';
+    //change full system path to path only from root
+    final RootPath = fileFullPath.replaceAll(widget.managerPath, "");
 
-          // Find the manager root path to determine where to start the relative path
-          final managerRootPath = _getManagerRootPath();
+    final parts = RootPath.split(RegExp(r'[/\\]'));
 
-          if (managerRootPath.isNotEmpty &&
-              parentDirPath.startsWith(managerRootPath)) {
-            // Get relative path from manager root
-            String relativePath = parentDirPath.substring(
-              managerRootPath.length,
-            );
-            if (relativePath.startsWith('/')) {
-              relativePath = relativePath.substring(1);
-            }
+    //remove file from path
+    parts.removeLast();
 
-            // Build new breadcrumbs: Root + relative path
-            final newBreadcrumbs =
-                relativePath.isEmpty ? rootPart : '$rootPart/$relativePath';
-            widget.onGoToFolder!(newBreadcrumbs);
-          } else {
-            // Fallback to just root if we can't determine relative path
-            widget.onGoToFolder!(rootPart);
-          }
-        } else {
-          // If no parent directory, go to manager root
-          final breadcrumbParts = widget.currentBreadcrumbs.split('/');
-          final rootPart =
-              breadcrumbParts.isNotEmpty ? breadcrumbParts.first : '';
-          widget.onGoToFolder!(rootPart);
-        }
-      }
+    //clear Breadcrumbs
+    widget.currentBreadcrumbs.clear();
+    for (String part in parts) {
+      widget.currentBreadcrumbs.add(part);
     }
-  }
-
-  String _getManagerRootPath() {
-    // If tree has children, use first child's path to determine manager root
-    if (widget.treeData.children != null &&
-        widget.treeData.children!.isNotEmpty) {
-      String firstChildPath = widget.treeData.children!.first.path ?? '';
-      if (firstChildPath.isNotEmpty) {
-        // Get parent directory of first child - that's the manager root
-        List<String> pathParts = firstChildPath.split(RegExp(r'[/\\]'));
-        pathParts.removeLast(); // Remove the child name
-        return pathParts.join('/');
-      }
-    }
-
-    // If no children, use the tree data's own path as manager root
-    return widget.treeData.path ?? '';
+    widget.currentBreadcrumbs.remove("");
+    widget.onGoToFolder!(widget.currentBreadcrumbs);
   }
 }
