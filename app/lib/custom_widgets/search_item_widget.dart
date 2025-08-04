@@ -5,11 +5,13 @@ class SearchItemWidget extends StatefulWidget {
   final FileTreeNode item;
   final Function(FileTreeNode) onTap;
   final Function(FileTreeNode) onDoubleTap;
+  final String managerPath;
 
   const SearchItemWidget({
     required this.item,
     required this.onTap,
     required this.onDoubleTap,
+    required this.managerPath,
     super.key,
   });
 
@@ -84,7 +86,10 @@ class _SearchItemWidgetState extends State<SearchItemWidget> {
                       Expanded(
                         flex: 3,
                         child: Text(
-                          _getTruncatedPath(widget.item.path ?? ""),
+                          _getTruncatedPath(
+                            widget.item.path ?? "",
+                            widget.managerPath,
+                          ),
                           style: const TextStyle(
                             color: Color(0xff6b7280),
                             fontSize: 12,
@@ -106,18 +111,33 @@ class _SearchItemWidgetState extends State<SearchItemWidget> {
     );
   }
 
-  String _getTruncatedPath(String path) {
-    if (path.isEmpty) return "";
+  String _getTruncatedPath(
+    String fullPath,
+    String managerPath, {
+    int maxVisibleSegments = 4,
+  }) {
+    if (fullPath.isEmpty) return "";
 
-    // Split path
-    final parts = path.split(RegExp(r'[/\\]'));
+    // Remove the managerPath
+    String relative = fullPath;
+    if (managerPath.isNotEmpty && fullPath.startsWith(managerPath)) {
+      relative = fullPath.substring(managerPath.length);
+      relative = relative.replaceFirst(RegExp(r'^[/\\]+'), '');
+    }
+    // Split into segments
+    final segments =
+        relative.split(RegExp(r'[/\\]')).where((s) => s.isNotEmpty).toList();
 
-    // If path is short ,retrun
-    if (parts.length <= 4) return path;
+    // Prepend a fixed root label
+    segments.insert(0, "Root");
 
-    // Show only the last 3
-    final lastParts = parts.sublist(parts.length - 4);
-    return ".../${lastParts.join('/')}";
+    if (segments.length <= maxVisibleSegments) {
+      return ".../${["Root", ...segments].skip(1).join('/')}";
+    } else {
+      final tailCount = maxVisibleSegments - 1;
+      final lastParts = segments.sublist(segments.length - tailCount);
+      return ".../${["Root", ...lastParts].skip(1).join('/')}";
+    }
   }
 
   Color _getFileColor() {
