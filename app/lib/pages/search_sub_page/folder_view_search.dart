@@ -2,36 +2,31 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/custom_widgets/file_item_widget.dart';
-import 'package:app/custom_widgets/breadcrumb_widget.dart';
 import 'package:app/custom_widgets/tag_dialog.dart';
 import 'package:app/api.dart';
 import 'package:open_file/open_file.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'dart:io';
 
-class FolderViewPage extends StatefulWidget {
+class FolderViewSearch extends StatefulWidget {
+  final String managerName;
   final FileTreeNode treeData;
-  final List<String> currentPath;
   final Function(FileTreeNode) onFileSelected;
-  final Function(List<String>) onNavigate;
-  final String? managerName;
   final VoidCallback? onTagChanged;
 
-  const FolderViewPage({
+  const FolderViewSearch({
+    required this.managerName,
     required this.treeData,
-    required this.currentPath,
     required this.onFileSelected,
-    required this.onNavigate,
-    this.managerName,
     this.onTagChanged,
     super.key,
   });
 
   @override
-  State<FolderViewPage> createState() => _FolderViewPageState();
+  State<FolderViewSearch> createState() => _FolderViewSearchState();
 }
 
-class _FolderViewPageState extends State<FolderViewPage> {
+class _FolderViewSearchState extends State<FolderViewSearch> {
   List<FileTreeNode> _currentItems = [];
 
   @override
@@ -40,45 +35,16 @@ class _FolderViewPageState extends State<FolderViewPage> {
     _updateCurrentItems();
   }
 
-  @override
-  void didUpdateWidget(FolderViewPage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentPath != widget.currentPath) {
-      _updateCurrentItems();
-    }
-  }
 
   void _updateCurrentItems() {
-    FileTreeNode currentFolder = widget.treeData;
-
-    for (String pathSegment in widget.currentPath) {
-      final foundFolder = currentFolder.children?.firstWhere(
-        (child) => child.name == pathSegment && child.isFolder,
-        orElse: () => currentFolder,
-      );
-      if (foundFolder != null && foundFolder != currentFolder) {
-        currentFolder = foundFolder;
-      }
-    }
-
     setState(() {
-      _currentItems = List.from(currentFolder.children ?? []);
+      _currentItems = List.from(widget.treeData.children ?? []);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        BreadcrumbWidget(
-          currentPath: widget.currentPath,
-          onNavigate: widget.onNavigate,
-        ),
-        Expanded(
-          child: _currentItems.isEmpty ? _buildEmptyState() : _buildFileGrid(),
-        ),
-      ],
-    );
+    return _currentItems.isEmpty ? _buildEmptyState() : _buildFileGrid();
   }
 
   Widget _buildFileGrid() {
@@ -149,8 +115,6 @@ class _FolderViewPageState extends State<FolderViewPage> {
   void _handleNodeDoubleTap(FileTreeNode item) {
     if (!item.isFolder) {
       _openDocument(item.path ?? '');
-    } else {
-      widget.onNavigate([...widget.currentPath, item.name]);
     }
   }
 
