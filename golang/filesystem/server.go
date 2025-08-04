@@ -182,7 +182,32 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
 
+func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Query().Get("path")
+	name := r.URL.Query().Get("name")
+	mu.Lock()
+	defer mu.Unlock()
+	if path == "" || name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
+	}
+	for _, c := range Composites {
+		if c.Name == name {
+			err := os.RemoveAll(path)
+			if err != nil {
+				panic(err)
+			}
+			c.RemoveSubfolder(path)
+			c.Display(0)
+			w.Write([]byte("true"))
+			return
+		} else {
+			w.Write([]byte("false"))
+			return
+		}
+	}
 }
 
 func HandleRequests() {
@@ -217,6 +242,7 @@ func HandleRequests() {
 	http.HandleFunc("/bulkRemoveTag", BulkRemoveTagHandler)
 
 	http.HandleFunc("/deleteFile", deleteFileHandler)
+	http.HandleFunc("/deleteFolder", deleteFolderHandler)
 	fmt.Println("Server started on port 51000")
 
 	// http.ListenAndServe(":51000", nil)
