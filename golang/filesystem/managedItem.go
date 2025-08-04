@@ -46,15 +46,48 @@ func (f *Folder) AddSubfolder(folder *Folder) {
 	f.Subfolders = append(f.Subfolders, folder)
 }
 
-// RemoveFile removes a file by path
-func (f *Folder) RemoveFile(filePath string) bool {
+func (f *Folder) RemoveFile(filePath string) error {
+	if f.Locked {
+		return fmt.Errorf("cannot remove file: folder '%s' is locked", f.Name)
+	}
+
 	for i, file := range f.Files {
 		if file.Path == filePath {
-			f.Files = append(f.Files[:i], f.Files[i+1:]...)
-			return true
+			f.Files[i] = f.Files[len(f.Files)-1]
+			f.Files[len(f.Files)-1] = nil
+			f.Files = f.Files[:len(f.Files)-1]
+			return nil
 		}
 	}
-	return false
+
+	for _, subfolder := range f.Subfolders {
+		if err := subfolder.RemoveFile(filePath); err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("file not found: %s", filePath)
+}
+
+func (f *Folder) RemoveFileOrderPreserving(filePath string) error {
+
+	for i, file := range f.Files {
+		if file.Path == filePath {
+
+			copy(f.Files[i:], f.Files[i+1:])
+			f.Files[len(f.Files)-1] = nil
+			f.Files = f.Files[:len(f.Files)-1]
+			return nil
+		}
+	}
+
+	for _, subfolder := range f.Subfolders {
+		if err := subfolder.RemoveFileOrderPreserving(filePath); err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("file not found: %s", filePath)
 }
 
 // RemoveSubfolder removes a folder by path
