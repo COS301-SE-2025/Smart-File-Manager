@@ -159,27 +159,14 @@ class _ManagerPageState extends State<ManagerPage> {
     }
   }
 
-  void _handleGoToFolder(String folderPath) {
+  void _handleGoToFolder(List<String> folderPath) {
     if (!_disposed && mounted) {
       setState(() {
-        // Clear search
         _searchHappened = false;
         _searchTreeData = null;
         _searchController.clear();
-
-        // Navigate to the folder using folder names path
-        List<String> pathParts;
-        if (folderPath.isEmpty) {
-          pathParts = [];
-        } else {
-          pathParts =
-              folderPath.split('/').where((part) => part.isNotEmpty).toList();
-        }
-
-        _currentPath = pathParts;
-        _currentView = 0; // Switch to folder view
-
-        // Clear selected file
+        _currentPath = folderPath;
+        _currentView = 0;
         _selectedFile = null;
         _isDetailsVisible = false;
       });
@@ -524,7 +511,8 @@ class _ManagerPageState extends State<ManagerPage> {
         },
         onGoToFolder: _handleGoToFolder,
         showGoToFolder: true,
-        currentBreadcrumbs: _currentPath.join('/'),
+        currentBreadcrumbs: _currentPath,
+        managerPath: widget.treeData!.rootPath ?? "",
       );
     }
 
