@@ -29,6 +29,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     //Basic structure, calls the Shell wich creates structure of top Appbar and Navigation
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Smart File Manager',
       theme: ThemeData(
         primaryColor: kprimaryColor,
