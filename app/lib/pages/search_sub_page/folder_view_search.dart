@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/custom_widgets/search_item_widget.dart';
+import 'package:app/custom_widgets/search_item_widget.dart';
 import 'package:app/custom_widgets/tag_dialog.dart';
 import 'package:app/api.dart';
 import 'package:open_file/open_file.dart';
