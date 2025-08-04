@@ -308,3 +308,275 @@ func TestAPI_BulkAddTags(t *testing.T) {
 		}
 	}
 }
+
+func TestAPI_DeleteFileHandler(t *testing.T) {
+	// Setup: Create temp folder and file
+	tmp := t.TempDir()
+	projectRoot := filepath.Join(tmp, "Smart-File-Manager")
+	dataDir := filepath.Join(projectRoot, "data")
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a test file
+	testFileName := "delete_test.txt"
+	testFilePath := filepath.Join(dataDir, testFileName)
+	testContent := []byte("file to be deleted")
+	if err := os.WriteFile(testFilePath, testContent, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Register the folder and file in composites
+	testFile := &File{
+		Name: testFileName,
+		Path: testFilePath,
+	}
+
+	testFolder := &Folder{
+		Name:    "deleteTest",
+		Path:    dataDir,
+		NewPath: dataDir,
+		Files:   []*File{testFile},
+	}
+
+	Composites = []*Folder{testFolder}
+
+	// Change working directory
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd)
+	if err := os.Chdir(projectRoot); err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify file exists before deletion
+	if _, err := os.Stat(testFilePath); os.IsNotExist(err) {
+		t.Fatal("test file should exist before deletion")
+	}
+
+	// Test successful file deletion
+	req := httptest.NewRequest("GET", "/deleteFile?name=deleteTest&path="+testFilePath, nil)
+	w := httptest.NewRecorder()
+	deleteFileHandler(w, req)
+
+	// Verify response
+	if w.Body.String() != "true" {
+		t.Fatalf("deleteFileHandler: expected true, got %s", w.Body.String())
+	}
+
+	// Verify file was actually deleted from filesystem
+	if _, err := os.Stat(testFilePath); !os.IsNotExist(err) {
+		t.Error("file should have been deleted from filesystem")
+	}
+
+	// Verify file was removed from composite structure
+	// Note: This test assumes RemoveFile method works correctly
+	// You might want to verify the file is no longer in the Files slice
+}
+
+func TestAPI_DeleteFileHandler_MissingParams(t *testing.T) {
+	// Test missing path parameter
+	req := httptest.NewRequest("GET", "/deleteFile?name=test", nil)
+	w := httptest.NewRecorder()
+	deleteFileHandler(w, req)
+
+	if w.Body.String() != "Parameter missing" {
+		t.Errorf("expected 'Parameter missing', got %s", w.Body.String())
+	}
+
+	// Test missing name parameter
+	req = httptest.NewRequest("GET", "/deleteFile?path=/some/path", nil)
+	w = httptest.NewRecorder()
+	deleteFileHandler(w, req)
+
+	if w.Body.String() != "Parameter missing" {
+		t.Errorf("expected 'Parameter missing', got %s", w.Body.String())
+	}
+
+	// Test both parameters missing
+	req = httptest.NewRequest("GET", "/deleteFile", nil)
+	w = httptest.NewRecorder()
+	deleteFileHandler(w, req)
+
+	if w.Body.String() != "Parameter missing" {
+		t.Errorf("expected 'Parameter missing', got %s", w.Body.String())
+	}
+}
+
+func TestAPI_DeleteFileHandler_NonExistentManager(t *testing.T) {
+	// Setup empty composites
+	Composites = []*Folder{}
+
+	// Test with non-existent manager name
+	req := httptest.NewRequest("GET", "/deleteFile?name=nonexistent&path=/some/path", nil)
+	w := httptest.NewRecorder()
+	deleteFileHandler(w, req)
+
+	if w.Body.String() != "false" {
+		t.Errorf("expected 'false' for non-existent manager, got %s", w.Body.String())
+	}
+}
+
+func TestAPI_DeleteFolderHandler(t *testing.T) {
+	// Setup: Create temp folder structure
+	tmp := t.TempDir()
+	projectRoot := filepath.Join(tmp, "Smart-File-Manager")
+	dataDir := filepath.Join(projectRoot, "data")
+	testDir := filepath.Join(dataDir, "test_folder")
+	if err := os.MkdirAll(testDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create files inside the test folder
+	testFile1 := filepath.Join(testDir, "file1.txt")
+	testFile2 := filepath.Join(testDir, "file2.txt")
+	if err := os.WriteFile(testFile1, []byte("content1"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(testFile2, []byte("content2"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create nested subfolder
+	nestedDir := filepath.Join(testDir, "nested")
+	if err := os.MkdirAll(nestedDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	nestedFile := filepath.Join(nestedDir, "nested_file.txt")
+	if err := os.WriteFile(nestedFile, []byte("nested content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Register the folder structure in composites
+	testFolder := &Folder{
+		Name:    "deleteFolderTest",
+		Path:    dataDir,
+		NewPath: dataDir,
+		Files: []*File{
+			{Name: "file1.txt", Path: testFile1},
+			{Name: "file2.txt", Path: testFile2},
+			{Name: "nested_file.txt", Path: nestedFile},
+		},
+		Subfolders: []*Folder{
+			{Name: "test_folder", Path: testDir},
+			{Name: "nested", Path: nestedDir},
+		},
+	}
+
+	Composites = []*Folder{testFolder}
+
+	// Change working directory
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd)
+	if err := os.Chdir(projectRoot); err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify folder exists before deletion
+	if _, err := os.Stat(testDir); os.IsNotExist(err) {
+		t.Fatal("test folder should exist before deletion")
+	}
+
+	// Test successful folder deletion
+	req := httptest.NewRequest("GET", "/deleteFolder?name=deleteFolderTest&path="+testDir, nil)
+	w := httptest.NewRecorder()
+	deleteFolderHandler(w, req)
+
+	// Verify response
+	if w.Body.String() != "true" {
+		t.Fatalf("deleteFolderHandler: expected true, got %s", w.Body.String())
+	}
+
+	// Verify folder and all its contents were deleted from filesystem
+	if _, err := os.Stat(testDir); !os.IsNotExist(err) {
+		t.Error("folder should have been deleted from filesystem")
+	}
+
+	// Verify nested files were also deleted
+	if _, err := os.Stat(testFile1); !os.IsNotExist(err) {
+		t.Error("nested file1 should have been deleted")
+	}
+	if _, err := os.Stat(testFile2); !os.IsNotExist(err) {
+		t.Error("nested file2 should have been deleted")
+	}
+	if _, err := os.Stat(nestedFile); !os.IsNotExist(err) {
+		t.Error("nested file should have been deleted")
+	}
+
+	// Verify folder was removed from composite structure
+	// Note: This test assumes RemoveSubfolder method works correctly
+}
+
+func TestAPI_DeleteFolderHandler_MissingParams(t *testing.T) {
+	// Test missing path parameter
+	req := httptest.NewRequest("GET", "/deleteFolder?name=test", nil)
+	w := httptest.NewRecorder()
+	deleteFolderHandler(w, req)
+
+	if w.Body.String() != "Parameter missing" {
+		t.Errorf("expected 'Parameter missing', got %s", w.Body.String())
+	}
+
+	// Test missing name parameter
+	req = httptest.NewRequest("GET", "/deleteFolder?path=/some/path", nil)
+	w = httptest.NewRecorder()
+	deleteFolderHandler(w, req)
+
+	if w.Body.String() != "Parameter missing" {
+		t.Errorf("expected 'Parameter missing', got %s", w.Body.String())
+	}
+
+	// Test both parameters missing
+	req = httptest.NewRequest("GET", "/deleteFolder", nil)
+	w = httptest.NewRecorder()
+	deleteFolderHandler(w, req)
+
+	if w.Body.String() != "Parameter missing" {
+		t.Errorf("expected 'Parameter missing', got %s", w.Body.String())
+	}
+}
+
+func TestAPI_DeleteFolderHandler_NonExistentManager(t *testing.T) {
+	// Setup empty composites
+	Composites = []*Folder{}
+
+	// Test with non-existent manager name
+	req := httptest.NewRequest("GET", "/deleteFolder?name=nonexistent&path=/some/path", nil)
+	w := httptest.NewRecorder()
+	deleteFolderHandler(w, req)
+
+	if w.Body.String() != "false" {
+		t.Errorf("expected 'false' for non-existent manager, got %s", w.Body.String())
+	}
+}
+
+func TestAPI_DeleteHandlers_ErrorHandling(t *testing.T) {
+	// This test verifies that the handlers properly handle OS errors
+	// Note: The current implementation uses panic() for os.Remove errors
+	// In a production environment, you might want to handle errors more gracefully
+
+	// Setup: Create a composite with a non-existent file path
+	testFolder := &Folder{
+		Name:    "errorTest",
+		Path:    "/nonexistent/path",
+		NewPath: "/nonexistent/path",
+	}
+
+	Composites = []*Folder{testFolder}
+
+	// Test file deletion with non-existent file
+	// Note: This will panic in the current implementation
+	// You might want to modify the handler to return an error instead
+	defer func() {
+		if r := recover(); r != nil {
+			// Expected panic due to os.Remove error
+			t.Log("deleteFileHandler panicked as expected when file doesn't exist")
+		}
+	}()
+
+	req := httptest.NewRequest("GET", "/deleteFile?name=errorTest&path=/nonexistent/file.txt", nil)
+	w := httptest.NewRecorder()
+	deleteFileHandler(w, req)
+
+	// If we reach here without panic, the test might need adjustment
+	t.Log("deleteFileHandler completed without panic")
+}

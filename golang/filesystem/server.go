@@ -126,11 +126,9 @@ func lockHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("LOCKED FILE")
 			w.Write([]byte("true"))
 			return
-		} else {
-			w.Write([]byte("false"))
-			return
 		}
 	}
+	w.Write([]byte("false"))
 
 }
 
@@ -150,11 +148,9 @@ func unlockHandler(w http.ResponseWriter, r *http.Request) {
 			c.UnlockByPath(path)
 			w.Write([]byte("true"))
 			return
-		} else {
-			w.Write([]byte("false"))
-			return
 		}
 	}
+	w.Write([]byte("false"))
 
 }
 
@@ -177,11 +173,10 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 			// c.Display(0)
 			w.Write([]byte("true"))
 			return
-		} else {
-			w.Write([]byte("false"))
-			return
 		}
 	}
+	w.Write([]byte("false"))
+
 }
 
 func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
@@ -203,11 +198,10 @@ func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
 			// c.Display(0)
 			w.Write([]byte("true"))
 			return
-		} else {
-			w.Write([]byte("false"))
-			return
 		}
 	}
+	w.Write([]byte("false"))
+
 }
 
 func HandleRequests() {
