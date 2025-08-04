@@ -21,6 +21,7 @@ import (
 type DirectoryTreeJson struct {
 	Name     string     `json:"name"`
 	IsFolder bool       `json:"isFolder"`
+	RootPath string     `json:"rootPath"`
 	Children []FileNode `json:"children"`
 }
 
@@ -320,6 +321,7 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 			root := DirectoryTreeJson{
 				Name:     c.Name,
 				IsFolder: true,
+				RootPath: c.Path,
 				Children: children,
 			}
 			// PrettyPrintFolder(c, "")
@@ -358,6 +360,7 @@ func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
 			root := DirectoryTreeJson{
 				Name:     c.Name,
 				IsFolder: true,
+				RootPath: c.Path,
 				Children: children,
 			}
 
