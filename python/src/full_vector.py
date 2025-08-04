@@ -6,10 +6,11 @@ from sentence_transformers import SentenceTransformer
 from sklearn.preprocessing import MultiLabelBinarizer
 
 class FullVector:
-    def __init__(self):
-        self.model = SentenceTransformer('all-MiniLM-L6-v2', local_files_only=True)
+    def __init__(self, transformer):
+        # self.model = SentenceTransformer('all-MiniLM-L6-v2', local_files_only=True)
         self.scaler_size = MinMaxScaler()
         self.scaler_created = MinMaxScaler()
+        self.model = transformer
 
     def create_full_vector(self, files: List[Dict]) -> None:
 

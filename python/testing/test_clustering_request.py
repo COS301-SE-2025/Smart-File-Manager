@@ -3,6 +3,7 @@ import pytest
 from concurrent import futures
 import sys
 import os
+import time
 
 # Add src to path temporarily so the generated grpc file can find message_structure_pb2
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -14,7 +15,7 @@ from src.request_handler import RequestHandler
 # Create a fixture to automatically setup and tear down a grpc_test_server
 @pytest.fixture(scope="module")
 def grpc_test_server():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=2))
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
     message_structure_pb2_grpc.add_DirectoryServiceServicer_to_server(RequestHandler(), server)
     port = server.add_insecure_port("localhost:0")  # OS assigns free port
     server.start()
@@ -114,7 +115,17 @@ def responseSizeChecker(curDir : Directory) -> int:
 # Sends an actual directory and checks if metadata was correctly attached to files
 def test_send_real_dir(grpc_test_server, createDirectoryRequest):
     req = createDirectoryRequest  # Accessing req from the fixture
+
+    start_first = time.time()
     response = grpc_test_server.SendDirectoryStructure(req)
+    end_first = time.time()
+
+    # start_second = time.time()
+    # response2 = grpc_test_server.SendDirectoryStructure(req)
+    # end_second = time.time()
+
+    print("First took: " + str(end_first - start_first))
+    # print("Second took: " + str(end_second - start_second))
 
     # Check if response contains all files
     assert responseSizeChecker(response.root) == 43

@@ -1,8 +1,6 @@
 from concurrent import futures
-import logging
-
+from sentence_transformers import SentenceTransformer
 import grpc
-import message_structure_pb2
 import message_structure_pb2_grpc
 
 import master
@@ -12,7 +10,11 @@ import master
 class RequestHandler(message_structure_pb2_grpc.DirectoryServiceServicer):
 
     def __init__(self):
-        self.master = master.Master(10)
+        # Early initialize sentence transformer
+        transformer = SentenceTransformer('all-MiniLM-L6-v2', local_files_only=True)
+
+        self.master = master.Master(1, transformer)
+
 
     def SendDirectoryStructure(self, request, context):
         response = self.master.submit_task(request).result()
