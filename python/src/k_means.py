@@ -151,20 +151,18 @@ class KMeansCluster:
     def buildLockedDirs(self, files, builder):
         def add_to_tree(tree, parts, file):
             current = tree
-            for part in parts:
-                current = current.setdefault(part, {})
+            current = current.setdefault(os.path.join(*parts), {})
             current.setdefault("_files", []).append(file)
-            tree = current
 
         def build_dirs_from_tree(tree):
-            dir = []
+            dirs = []
             for name, subtree in tree.items():
                 if name == "_files":
                     continue
                 subdirs = build_dirs_from_tree(subtree) 
                 files = subtree.get("_files", [])
-                dir.append(builder.buildDirectory(name, files, subdirs))
-            return dir
+                dirs.append(builder.buildDirectory(name, files, subdirs))
+            return dirs
 
         dir_tree = {}
         for f in files:
@@ -185,22 +183,4 @@ class KMeansCluster:
 
 
 
-   #     grouped = defaultdict(list)
-   #     for f in files:
-   #        path_parts = os.path.normpath(f["original_path"]).split(os.sep)
-   #        try:
-   #            parent_index = path_parts.index(self.parent_folder)
-   #            group_name = path_parts[parent_index+1]
-   #        except (ValueError, IndexError):
-   #            group_name = "Unkown"
-
-   #        grouped[group_name].append(f)
-
-   #    subdirs = []
-   #    for dir_name, f in grouped.items():
-   #        subdir = builder.buildDirectory(dir_name, f, [])
-   #        subdirs.append(subdir)
-
-   #    
-   #    return builder.buildDirectory(self.parent_folder, [], subdirs)
         
