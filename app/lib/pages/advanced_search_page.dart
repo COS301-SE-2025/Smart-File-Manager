@@ -34,7 +34,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     }
   }
 
-  void _handleGoToFolder(String folderPath) {
+  void _handleGoToFolder(List<String> folderPath) {
     Navigator.pop(context, {'action': 'navigate', 'path': folderPath});
   }
 
@@ -257,7 +257,8 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
       },
       onGoToFolder: _handleGoToFolder,
       showGoToFolder: false,
-      currentBreadcrumbs: '',
+      currentBreadcrumbs: [],
+      managerPath: "",
     );
   }
 
