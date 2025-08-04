@@ -4,6 +4,7 @@ import (
 	// "encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"slices"
 	"sync"
 )
@@ -157,6 +158,33 @@ func unlockHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Query().Get("path")
+	name := r.URL.Query().Get("name")
+	mu.Lock()
+	defer mu.Unlock()
+	if path == "" || name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
+	}
+	for _, c := range Composites {
+		if c.Name == name {
+			err := os.Remove(path)
+			if err != nil {
+				panic(err)
+			}
+			c.RemoveFile(path)
+			c.Display(0)
+			w.Write([]byte("true"))
+			return
+		} else {
+			w.Write([]byte("false"))
+			return
+		}
+	}
+
+}
+
 func HandleRequests() {
 
 	// path, _ := os.Getwd()
@@ -167,19 +195,28 @@ func HandleRequests() {
 
 	http.HandleFunc("/addDirectory", addCompositeHandler)
 	http.HandleFunc("/removeDirectory", removeCompositeHandler)
+
 	http.HandleFunc("/addTag", addTagHandler)
 	http.HandleFunc("/removeTag", removeTagHandler)
+
 	http.HandleFunc("/loadTreeData", loadTreeDataHandlerGoOnly)
 	// http.HandleFunc("/loadTreeData", loadTreeDataHandler)
 	http.HandleFunc("/sortTree", sortTreeHandler)
 	http.HandleFunc("/startUp", startUpHandler)
+
 	http.HandleFunc("/lock", lockHandler)
 	http.HandleFunc("/unlock", unlockHandler)
+
 	http.HandleFunc("/search", SearchHandler)
+
 	http.HandleFunc("/moveDirectory", moveDirectoryHandler)
+
 	http.HandleFunc("/findDuplicateFiles", findDuplicateFilesHandler)
+
 	http.HandleFunc("/bulkAddTag", BulkAddTagHandler)
 	http.HandleFunc("/bulkRemoveTag", BulkRemoveTagHandler)
+
+	http.HandleFunc("/deleteFile", deleteFileHandler)
 	fmt.Println("Server started on port 51000")
 
 	// http.ListenAndServe(":51000", nil)
