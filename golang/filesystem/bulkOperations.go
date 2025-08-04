@@ -74,7 +74,7 @@ func BulkAddTagHandler(w http.ResponseWriter, r *http.Request) {
 	defer mu.Unlock()
 
 	// Find the corresponding Folder by name
-	for _, folder := range composites {
+	for _, folder := range Composites {
 		if folder.Name == name {
 			if err := BulkAddTags(folder, bulkList); err != nil {
 				http.Error(w, fmt.Sprintf("Failed to add tags: %v", err), http.StatusInternalServerError)
@@ -107,7 +107,7 @@ func BulkRemoveTagHandler(w http.ResponseWriter, r *http.Request) {
 	defer mu.Unlock()
 
 	// Find the corresponding Folder by name
-	for _, folder := range composites {
+	for _, folder := range Composites {
 		if folder.Name == name {
 			if err := BulkRemoveTags(folder, bulkList); err != nil {
 				http.Error(w, fmt.Sprintf("Failed to remove tags: %v", err), http.StatusInternalServerError)

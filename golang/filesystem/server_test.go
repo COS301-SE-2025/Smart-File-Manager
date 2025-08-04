@@ -115,7 +115,7 @@ func TestAPI_MoveDirectoryHandler(t *testing.T) {
 	}
 
 	// 3) Prepare the composite list with exactly one Folder
-	composites = []*Folder{{
+	Composites = []*Folder{{
 		Name:    "testmgr",
 		Path:    "src", // used by CreateDirectoryStructureRecursive
 		NewPath: "src", // unused here
@@ -185,7 +185,7 @@ func TestAPI_FindDuplicateFilesHandler(t *testing.T) {
 	}
 
 	// Register composite
-	composites = []*Folder{{
+	Composites = []*Folder{{
 		Name:    "dupTest",
 		Path:    "data",
 		NewPath: "data",
@@ -247,7 +247,7 @@ func TestAPI_BulkAddTags(t *testing.T) {
 	}
 
 	// Register the folder and file in composites
-	composites = []*Folder{{
+	Composites = []*Folder{{
 		Name:    "bulkTest",
 		Path:    "data",
 		NewPath: "data",
@@ -287,7 +287,7 @@ func TestAPI_BulkAddTags(t *testing.T) {
 
 	// Check if tags were actually added to the file
 	var file *File
-	for _, f := range composites[0].Files {
+	for _, f := range Composites[0].Files {
 		if f.Path == filePath {
 			file = f
 			break

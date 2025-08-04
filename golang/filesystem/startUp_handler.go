@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 )
 
 type ManagerRecord struct {
@@ -31,6 +32,7 @@ func SetManagersFilePath(p string) {
 
 // api entry
 func startUpHandler(w http.ResponseWriter, r *http.Request) {
+
 	fmt.Println("setup called")
 	Composites = nil
 	recs, err := loadManagerRecords()
@@ -40,32 +42,39 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errMsg, http.StatusBadRequest)
 		return
 	}
-
-	var managerNames []string
+	var (
+		managerNames []string
+		mu           sync.Mutex
+		wg           sync.WaitGroup
+	)
 
 	for _, r := range recs {
-		// Convert the record back into your in‑memory Folder
-		// using exactly the same logic as getCompositeHandler
-		composite, err := ConvertToObject(r.Name, r.Path)
-		if err != nil {
-			fmt.Printf("readingComposite error: %s", err.Error())
-			continue
-		}
-		Composites = append(Composites, composite)
-		managerNames = append(managerNames, composite.Name)
+		wg.Add(1)
+		go func(rec ManagerRecord) {
+			defer wg.Done()
+			composite, err := ConvertToObject(rec.Name, rec.Path)
+			if err != nil {
+				fmt.Printf("readingComposite error: %s\n", err.Error())
+				return
+			}
+			mu.Lock()
+			Composites = append(Composites, composite)
+			managerNames = append(managerNames, composite.Name)
+			mu.Unlock()
+		}(r)
 	}
 
-	w.WriteHeader(http.StatusOK)
+	wg.Wait()
 
+	w.WriteHeader(http.StatusOK)
 	res := startUpResponse{
-		ResponseMessage: "Request successful!, Composites: " + strconv.Itoa(len(recs)),
+		ResponseMessage: "Request successful!, Composites: " + strconv.Itoa(len(managerNames)),
 		ManagerNames:    managerNames,
 	}
 
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
-
 }
 
 func loadManagerRecords() ([]ManagerRecord, error) {

@@ -86,7 +86,7 @@ func findDuplicateFilesHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		if c.Name == name {
 			duplicates := FindDuplicateFiles(c)
 			w.Header().Set("Content-Type", "application/json")
