@@ -19,6 +19,7 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   int _selectedIndex = 0; //index selected form the main menu (0 to 3)
   String? _selectedManager; //name of the Manager selected
+  List<String> _managerNames = []; //list of manager names from startup
 
   final Map<String, FileTreeNode> _managerTreeData = {};
 
@@ -26,11 +27,11 @@ class _ShellState extends State<Shell> {
     'https://cos301-se-2025.github.io/Smart-File-Manager/',
   );
 
-  //pages are stored in a Widget List to send the correct widget(content) given the selected Index
-  final List<Widget> _pages = [
+  //pages are created dynamically to pass manager names to AdvancedSearchPage
+  List<Widget> get _pages => [
     const DashboardPage(),
     const SmartManagersPage(),
-    const AdvancedSearchPage(),
+    AdvancedSearchPage(managerNames: _managerNames),
     const SettingsPage(),
   ];
 
@@ -67,6 +68,12 @@ class _ShellState extends State<Shell> {
   void _onManagerTreeDataUpdate(String managerName, FileTreeNode treeData) {
     setState(() {
       _managerTreeData[managerName] = treeData;
+    });
+  }
+
+  void _onManagerNamesUpdate(List<String> managerNames) {
+    setState(() {
+      _managerNames = managerNames;
     });
   }
 
@@ -136,6 +143,7 @@ class _ShellState extends State<Shell> {
             onTap: _onNavigationTap,
             onManagerTap: _onManagerTap,
             onManagerTreeDataUpdate: _onManagerTreeDataUpdate,
+            onManagerNamesUpdate: _onManagerNamesUpdate,
           ),
           //Page that needs to be rendered depending on navigation index
           Expanded(child: _getCurrentPage()),

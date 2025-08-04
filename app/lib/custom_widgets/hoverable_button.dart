@@ -48,7 +48,6 @@ class _HoverableButtonState extends State<HoverableButton> {
                 style: TextStyle(
                   fontSize: 12,
                   color: _isHovered ? Colors.black : const Color(0xff9CA3AF),
-                  fontWeight: _isHovered ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),
             ],
