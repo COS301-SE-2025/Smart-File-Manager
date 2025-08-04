@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
-import 'package:app/custom_widgets/file_item_widget.dart';
+import 'package:app/custom_widgets/search_item_widget.dart';
 import 'package:app/custom_widgets/tag_dialog.dart';
 import 'package:app/api.dart';
 import 'package:open_file/open_file.dart';
@@ -13,12 +13,16 @@ class FolderViewSearch extends StatefulWidget {
   final FileTreeNode treeData;
   final Function(FileTreeNode) onFileSelected;
   final VoidCallback? onTagChanged;
+  final Function(String)? onGoToFolder;
+  final bool showGoToFolder;
 
   const FolderViewSearch({
     required this.managerName,
     required this.treeData,
     required this.onFileSelected,
     this.onTagChanged,
+    this.onGoToFolder,
+    this.showGoToFolder = true,
     super.key,
   });
 
@@ -35,7 +39,6 @@ class _FolderViewSearchState extends State<FolderViewSearch> {
     _updateCurrentItems();
   }
 
-
   void _updateCurrentItems() {
     setState(() {
       _currentItems = List.from(widget.treeData.children ?? []);
@@ -50,42 +53,32 @@ class _FolderViewSearchState extends State<FolderViewSearch> {
   Widget _buildFileGrid() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final itemWidth = 100.0;
-          final spacing = 12.0;
-          final availableWidth =
-              constraints.maxWidth - 32.0; // Account for padding
-          final crossAxisCount = ((availableWidth + spacing) /
-                  (itemWidth + spacing))
-              .floor()
-              .clamp(1, 10);
-
-          return GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              childAspectRatio: 1.0,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: _currentItems.length,
-            itemBuilder: (context, index) {
-              return GestureDetector(
-                onSecondaryTapDown:
-                    (details) => _handleItemRightTap(
-                      widget.managerName ?? "",
-                      _currentItems[index],
-                      details.globalPosition,
+      child: SingleChildScrollView(
+        child: Column(
+          children:
+              _currentItems.map((item) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 60,
+                    child: GestureDetector(
+                      onSecondaryTapDown:
+                          (details) => _handleItemRightTap(
+                            widget.managerName ?? "",
+                            item,
+                            details.globalPosition,
+                          ),
+                      child: SearchItemWidget(
+                        item: item,
+                        onTap: _handleItemTap,
+                        onDoubleTap: _handleNodeDoubleTap,
+                      ),
                     ),
-                child: FileItemWidget(
-                  item: _currentItems[index],
-                  onTap: _handleItemTap,
-                  onDoubleTap: _handleNodeDoubleTap,
-                ),
-              );
-            },
-          );
-        },
+                  ),
+                );
+              }).toList(),
+        ),
       ),
     );
   }
@@ -157,79 +150,47 @@ class _FolderViewSearchState extends State<FolderViewSearch> {
     FileTreeNode node,
     Offset globalPosition,
   ) {
-    if (node.isFolder) {
-      final entries = <ContextMenuEntry>[
+    final entries = <ContextMenuEntry>[
+      if (widget.showGoToFolder)
         MenuItem(
-          label: 'Lock',
-          icon: Icons.lock,
-          onSelected: () async {
-            bool response = await Api.locking(managerName, node.path ?? '');
-            if (response == true) {
-              _lockNode(node);
-            }
-          },
+          label: 'Go to Folder',
+          icon: Icons.drive_file_move_rounded,
+          onSelected: () => _goToFolder(node),
         ),
-        MenuItem(
-          label: 'Unlock',
-          icon: Icons.lock_open,
-          onSelected: () async {
-            bool response = await Api.unlocking(managerName, node.path ?? '');
-            if (response == true) {
-              _unlockNode(node);
-            }
-          },
-        ),
-      ];
+      MenuItem(
+        label: 'Add Tag',
+        icon: Icons.label,
+        onSelected: () => _showAddTagDialog(node),
+      ),
+      MenuItem(
+        label: 'Lock',
+        icon: Icons.lock,
+        onSelected: () async {
+          bool response = await Api.locking(managerName, node.path ?? '');
+          if (response == true) {
+            _lockNode(node);
+          }
+        },
+      ),
+      MenuItem(
+        label: 'Unlock',
+        icon: Icons.lock_open,
+        onSelected: () async {
+          bool response = await Api.unlocking(managerName, node.path ?? '');
+          if (response == true) {
+            _unlockNode(node);
+          }
+        },
+      ),
+    ];
 
-      final menu = ContextMenu(
-        entries: entries,
-        position: globalPosition,
-        padding: const EdgeInsets.all(8.0),
-      );
+    final menu = ContextMenu(
+      entries: entries,
+      position: globalPosition,
+      padding: const EdgeInsets.all(8.0),
+    );
 
-      showContextMenu(context, contextMenu: menu);
-    } else {
-      final entries = <ContextMenuEntry>[
-        MenuItem(
-          label: 'Details',
-          icon: Icons.info_outline,
-          onSelected: () => widget.onFileSelected(node),
-        ),
-        MenuItem(
-          label: 'Add Tag',
-          icon: Icons.label,
-          onSelected: () => _showAddTagDialog(node),
-        ),
-        MenuItem(
-          label: 'Lock',
-          icon: Icons.lock,
-          onSelected: () async {
-            bool response = await Api.locking(managerName, node.path ?? '');
-            if (response == true) {
-              _lockNode(node);
-            }
-          },
-        ),
-        MenuItem(
-          label: 'Unlock',
-          icon: Icons.lock_open,
-          onSelected: () async {
-            bool response = await Api.unlocking(managerName, node.path ?? '');
-            if (response == true) {
-              _unlockNode(node);
-            }
-          },
-        ),
-      ];
-
-      final menu = ContextMenu(
-        entries: entries,
-        position: globalPosition,
-        padding: const EdgeInsets.all(8.0),
-      );
-
-      showContextMenu(context, contextMenu: menu);
-    }
+    showContextMenu(context, contextMenu: menu);
   }
 
   void _showAddTagDialog(FileTreeNode node) async {
@@ -258,5 +219,107 @@ class _FolderViewSearchState extends State<FolderViewSearch> {
     setState(() {
       widget.treeData.unlockItem(node.path ?? '');
     });
+  }
+
+  void _goToFolder(FileTreeNode node) {
+    if (widget.onGoToFolder != null) {
+      final filePath = node.path ?? '';
+      if (filePath.isNotEmpty) {
+        // Extract parent directory path
+        final parts = filePath.split(RegExp(r'[/\\]'));
+        if (parts.length > 1) {
+          // Remove the file name, keep the directory path
+          parts.removeLast();
+          final parentPath = parts.join('/');
+          
+          // Find the folder path within the tree structure
+          final folderPath = _findFolderPathInTree(parentPath);
+          widget.onGoToFolder!(folderPath);
+        }
+      }
+    }
+  }
+
+  String _findFolderPathInTree(String targetPath) {
+    // Get the manager root path from the first child's path
+    String managerRootPath = _getManagerRootPath();
+    
+    if (managerRootPath.isEmpty) {
+      return ''; // Go to root if we can't determine manager root
+    }
+    
+    // Normalize paths
+    String normalizedTarget = targetPath.replaceAll('\\', '/');
+    String normalizedManagerRoot = managerRootPath.replaceAll('\\', '/');
+    
+    // Remove manager root from target path to get relative path
+    if (normalizedTarget.startsWith(normalizedManagerRoot)) {
+      String relativePath = normalizedTarget.substring(normalizedManagerRoot.length);
+      
+      // Remove leading slash
+      if (relativePath.startsWith('/')) {
+        relativePath = relativePath.substring(1);
+      }
+      
+      // Convert file system path to folder names by traversing the tree
+      return _convertPathToFolderNames(relativePath);
+    }
+    
+    return ''; // Go to root if path doesn't match
+  }
+
+  String _getManagerRootPath() {
+    // If tree has children, use first child's path to determine manager root
+    if (widget.treeData.children != null && widget.treeData.children!.isNotEmpty) {
+      String firstChildPath = widget.treeData.children!.first.path ?? '';
+      if (firstChildPath.isNotEmpty) {
+        // Get parent directory of first child - that's the manager root
+        List<String> pathParts = firstChildPath.split(RegExp(r'[/\\]'));
+        pathParts.removeLast(); // Remove the child name
+        return pathParts.join('/');
+      }
+    }
+    
+    // If no children, use the tree data's own path as manager root
+    return widget.treeData.path ?? '';
+  }
+
+  String _convertPathToFolderNames(String relativePath) {
+    if (relativePath.isEmpty) {
+      return '';
+    }
+    
+    // Split the relative path into segments
+    List<String> pathSegments = relativePath.split('/').where((segment) => segment.isNotEmpty).toList();
+    
+    // Find the corresponding folder names in the tree structure
+    List<String> folderNames = [];
+    FileTreeNode currentNode = widget.treeData;
+    
+    for (String segment in pathSegments) {
+      if (currentNode.children != null) {
+        // Find the child folder with this path segment
+        FileTreeNode? matchingChild;
+        for (FileTreeNode child in currentNode.children!) {
+          if (child.isFolder && child.path != null) {
+            String childPath = child.path!.replaceAll('\\', '/');
+            if (childPath.endsWith('/$segment') || childPath.endsWith(segment)) {
+              matchingChild = child;
+              break;
+            }
+          }
+        }
+        
+        if (matchingChild != null) {
+          folderNames.add(matchingChild.name);
+          currentNode = matchingChild;
+        } else {
+          // If we can't find matching child, return what we have so far
+          break;
+        }
+      }
+    }
+    
+    return folderNames.join('/');
   }
 }
