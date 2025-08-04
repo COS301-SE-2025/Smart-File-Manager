@@ -35,10 +35,12 @@ class _ManagerPageState extends State<ManagerPage> {
   bool _isSorting = false;
   bool _disposed = false;
   late final ScrollController _scrollController;
+  late final TextEditingController _searchController;
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     _disposed = true;
     super.dispose();
   }
@@ -47,6 +49,7 @@ class _ManagerPageState extends State<ManagerPage> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    _searchController = TextEditingController();
     if (widget.treeData != null) {
       setState(() {
         _treeData = widget.treeData;
@@ -156,10 +159,38 @@ class _ManagerPageState extends State<ManagerPage> {
     }
   }
 
+  void _handleGoToFolder(String folderPath) {
+    if (!_disposed && mounted) {
+      setState(() {
+        // Clear search
+        _searchHappened = false;
+        _searchTreeData = null;
+        _searchController.clear();
+
+        // Navigate to the folder using folder names path
+        List<String> pathParts;
+        if (folderPath.isEmpty) {
+          pathParts = [];
+        } else {
+          pathParts =
+              folderPath.split('/').where((part) => part.isNotEmpty).toList();
+        }
+
+        _currentPath = pathParts;
+        _currentView = 0; // Switch to folder view
+
+        // Clear selected file
+        _selectedFile = null;
+        _isDetailsVisible = false;
+      });
+    }
+  }
+
   void _handleNavigation(List<String> newPath) {
     if (!_disposed && mounted) {
       setState(() {
         _currentPath = newPath;
+        print(_currentPath);
       });
     }
   }
@@ -291,6 +322,7 @@ class _ManagerPageState extends State<ManagerPage> {
     return PreferredSize(
       preferredSize: const Size.fromHeight(50),
       child: AppBar(
+        scrolledUnderElevation: 0,
         backgroundColor: const Color(0xff2E2E2E),
         automaticallyImplyLeading: false,
         shape: const Border(
@@ -390,6 +422,7 @@ class _ManagerPageState extends State<ManagerPage> {
             icon: Icons.search_rounded,
             hint: "Search for files inside manager",
             isActive: true,
+            controller: _searchController,
             onChanged: (s) => _callGoSearch(s),
           ),
           const SizedBox(width: 12),
@@ -489,6 +522,9 @@ class _ManagerPageState extends State<ManagerPage> {
           // Trigger rebuild of details panel when tags change
           if (mounted) setState(() {});
         },
+        onGoToFolder: _handleGoToFolder,
+        showGoToFolder: true,
+        currentBreadcrumbs: _currentPath.join('/'),
       );
     }
 
