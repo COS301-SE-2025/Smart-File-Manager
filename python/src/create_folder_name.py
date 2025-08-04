@@ -11,7 +11,7 @@ from nltk.stem import WordNetLemmatizer
 
 #adding these imports could be slow
 from sentence_transformers import SentenceTransformer
-from typing import List, Tuple, Dict
+from typing import List, Dict
 
 from collections import defaultdict
 
