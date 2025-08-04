@@ -90,15 +90,25 @@ func (f *Folder) RemoveFileOrderPreserving(filePath string) error {
 	return fmt.Errorf("file not found: %s", filePath)
 }
 
-// RemoveSubfolder removes a folder by path
-func (f *Folder) RemoveSubfolder(folderPath string) bool {
-	for i, folder := range f.Subfolders {
-		if folder.Path == folderPath {
-			f.Subfolders = append(f.Subfolders[:i], f.Subfolders[i+1:]...)
-			return true
+func (f *Folder) RemoveSubfolder(folderPath string) error {
+
+	for i, subfolder := range f.Subfolders {
+		if subfolder.Path == folderPath {
+
+			f.Subfolders[i] = f.Subfolders[len(f.Subfolders)-1]
+			f.Subfolders[len(f.Subfolders)-1] = nil
+			f.Subfolders = f.Subfolders[:len(f.Subfolders)-1]
+			return nil
 		}
 	}
-	return false
+
+	for _, subfolder := range f.Subfolders {
+		if err := subfolder.RemoveSubfolder(folderPath); err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("folder not found: %s", folderPath)
 }
 
 // GetFile returns a file by path, searching recursively

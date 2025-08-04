@@ -67,14 +67,14 @@ func TestRemoveSubfolder(t *testing.T) {
 	r := newFolder("root", "/")
 	sub := newFolder("x", "/x")
 	r.AddSubfolder(sub)
-	if !r.RemoveSubfolder("/x") {
+	if r.RemoveSubfolder("/x") != nil {
 		t.Errorf("RemoveSubfolder failed on existing folder")
 	}
 	if r.GetSubfolder("/x") != nil {
 		t.Errorf("subfolder still found after removal")
 	}
 	// non existing
-	if r.RemoveSubfolder("/y") {
+	if r.RemoveSubfolder("/y") == nil {
 		t.Errorf("RemoveSubfolder returned true for non-existing folder")
 	}
 }
