@@ -176,6 +176,7 @@ func HandleRequests() {
 	http.HandleFunc("/lock", lockHandler)
 	http.HandleFunc("/unlock", unlockHandler)
 	http.HandleFunc("/search", SearchHandler)
+	http.HandleFunc("/keywordSearch", keywordSearchHadler)
 	http.HandleFunc("/moveDirectory", moveDirectoryHandler)
 	http.HandleFunc("/findDuplicateFiles", findDuplicateFilesHandler)
 	http.HandleFunc("/bulkAddTag", BulkAddTagHandler)
