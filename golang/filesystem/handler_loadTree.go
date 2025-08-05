@@ -85,10 +85,8 @@ func printFolderDetails(folder *Folder, indent int) {
 }
 
 func grpcFunc(c *Folder, requestType string) error {
-	// fmt.Println("+++++pretty print start+++++")
-	// printFolderDetails(c, 0)
-	// fmt.Println("+++++pretty print end+++++")
-	if requestType != "METADATA" && requestType != "CLUSTERING" {
+
+	if requestType != "METADATA" && requestType != "CLUSTERING" && requestType != "KEYWORDS" {
 		return fmt.Errorf("invalid requestType: %s", requestType)
 	}
 
@@ -117,6 +115,7 @@ func grpcFunc(c *Folder, requestType string) error {
 
 	// convertProtoToFolder(resp.Root)
 	mergeProtoToFolder(resp.Root, c)
+	PrettyPrintFolder(c, "")
 
 	return nil
 }
@@ -141,6 +140,7 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 			Metadata: metadataConverter(file.Metadata),
 			Locked:   file.IsLocked,
 			NewPath:  file.NewPath,
+			Keywords: file.Keywords,
 		})
 	}
 
@@ -205,46 +205,6 @@ func convertFolderToProto(f Folder) *pb.Directory {
 	return protoDir
 }
 
-// takes in grpc's response and converts it back to composite
-func convertProtoToFolder(dir *pb.Directory) *Folder {
-	if dir == nil {
-		fmt.Println("===di empty ====")
-		// return an empty Folder (or you could return nil here—but then
-		// callers need to nil‐check too)
-		return &Folder{
-			Name:       "",
-			Path:       "",
-			Files:      nil,
-			Subfolders: nil,
-		}
-	}
-
-	compositeResult := &Folder{
-		Name: dir.Name, // make sure ItemName is exported
-		Path: dir.Path,
-	}
-
-	for _, file := range dir.Files {
-		compositeResult.Files = append(compositeResult.Files, &File{
-			Name:     file.Name,
-			Path:     file.OriginalPath,
-			Tags:     tagsToStrings(file.Tags),
-			Metadata: metadataConverter(file.Metadata),
-			Locked:   file.IsLocked,
-			NewPath:  file.NewPath,
-		})
-		// case *fs.Folder:
-		// 	protoDir.Directories = append(protoDir.Directories, convertFolderToProto(v))
-
-	}
-	for _, subFolder := range dir.Directories {
-		// fmt.Println(subFolder.Name)
-		compositeResult.Subfolders = append(compositeResult.Subfolders, convertProtoToFolder(subFolder))
-
-	}
-	return compositeResult
-}
-
 // pb.metadataentry[] to the filesystem metadataEntry[]
 func metadataConverter(metaDataArr []*pb.MetadataEntry) []*MetadataEntry {
 	// preallocate a slice of the correct length
@@ -291,9 +251,11 @@ func printDirectoryWithMetadata(dir *pb.Directory, num int) {
 
 	for _, file := range dir.Files {
 		fmt.Println(space + "File name: " + file.Name)
-		fmt.Println(space + "File original path: " + file.OriginalPath)
-		fmt.Println(space + "File new path: " + file.NewPath)
+		fmt.Println("keywords: ")
+		for _, i := range file.Keywords {
+			fmt.Println("keyword: " + i.Keyword + "with score: " + strconv.FormatFloat(float64(i.Score), 'f', 5, 32))
 
+		}
 		fmt.Println("----")
 	}
 
