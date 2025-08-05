@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/custom_widgets/file_item_widget.dart';
