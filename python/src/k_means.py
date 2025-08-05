@@ -1,127 +1,91 @@
-# the actual clustering that will make a directory to send back to go
 import os
-
-from sklearn.cluster import KMeans
 import numpy as np
+from collections import defaultdict
+from sklearn.cluster import KMeans
 
 from directory_builder import DirectoryCreator
-from collections import defaultdict
-
 from create_folder_name import FolderNameCreator
 
+
 class KMeansCluster:
-    def __init__(self, numClusters, depth, model, parent_folder):
-        self.kmeans = KMeans(
-            n_clusters=numClusters,
-            n_init=50, 
-            init="k-means++",
-            max_iter=500,
-            tol=1e-5           
-            )
-        self.n_clusters = numClusters
-        self.min_size = 2 # hardcoded for now # even numbers are good
-        self.max_depth = depth
-        self.folder_namer = FolderNameCreator(model)
+    def __init__(self, num_clusters, max_depth, model, parent_folder):
+        self.base_clusters = num_clusters
+        self.max_depth = max_depth
+        self.min_size = 2  # Minimum cluster size
         self.parent_folder = parent_folder
 
+        self.kmeans = None
+        self.folder_namer = FolderNameCreator(model)
 
-    def cluster(self,files):
-        self.kmeans.fit(files)
+    def fit_kmeans(self, vectors, num_clusters):
+        # Only reinitialize the model when necessary
+        if self.kmeans is None or self.kmeans.n_clusters != num_clusters:
+            self.kmeans = KMeans(
+                n_clusters=num_clusters,
+                init="k-means++",
+                n_init="auto",
+                max_iter=500,
+                tol=1e-5,
+                random_state=42
+            )
+        self.kmeans.fit(vectors)
         return self.kmeans.labels_
 
     def predict(self, points):
-        predictions = self.kmeans.predict(points)
-        centers = self.kmeans.cluster_centers_
-        centers_rounded = np.round(centers, 4) # rounded to get mostly matching        
-        return predictions, centers_rounded
-    
-    def dirCluster(self,full_vecs,files):
-        builder = DirectoryCreator(self.parent_folder,files) # instead of root it should be the parent folder
-        root_dir = self.recDirCluster(full_vecs, files, 0, self.parent_folder, builder)
-        #print(root_dir)
-        #self.printMetaData(root_dir)
-        return root_dir
-        
-    
+        preds = self.kmeans.predict(points)
+        centers = np.round(self.kmeans.cluster_centers_, 4)
+        return preds, centers
 
+    def cluster(self, vectors):
+        return self.kmeans.fit_predict(vectors)
 
-    def recDirCluster(self,full_vecs,files, depth, dir_prefix, builder):
+    def dirCluster(self, full_vecs, files):
+        builder = DirectoryCreator(self.parent_folder, files)
+        return self._recursive_clustering(full_vecs, files, depth=0, dir_prefix=self.parent_folder, builder=builder)
 
+    def _recursive_clustering(self, vectors, files, depth, dir_prefix, builder):
+        # Base condition: shallow depth or too few vectors
+        if len(vectors) < self.min_size or depth > self.max_depth:
+            return builder.buildDirectory(dir_prefix, files, [])
+
+        # Assign new directory name at deeper levels
         if depth > 0:
-            # Assign directory name
-            folder_name = self.folder_namer.generateFolderName(files)        
-            dir_name = os.path.join(dir_prefix, folder_name)
-
+            folder_name = self.folder_namer.generateFolderName(files)
             if folder_name in dir_prefix:
-                return builder.buildDirectory(dir_prefix,files,[])
+                return builder.buildDirectory(dir_prefix, files, [])
+            dir_name = os.path.join(dir_prefix, folder_name)
         else:
             dir_name = dir_prefix
-                    
 
-        # Quit if not enough folders
-        if len(full_vecs) < self.min_size or depth > self.max_depth: # depth can be changed on init of kmeans
-            return builder.buildDirectory(dir_name, files, []) 
-        
-        # if there are too many clusters reduce it 
-        if len(full_vecs) < self.n_clusters:
-            self.n_clusters = len(full_vecs)
+        # Determine the number of clusters to use
+        n_clusters = min(len(vectors), self.base_clusters)
+        if n_clusters <= self.min_size:
+            return builder.buildDirectory(dir_name, files, [])
 
-        # Min clusters (x leaves, x dirs per level)
-        if self.n_clusters <= self.min_size:
-            self.n_clusters = self.min_size
-        else:
-            self.n_clusters -= 1
+        labels = self.fit_kmeans(vectors, n_clusters)
 
-        # create the clustering
-        self.kmeans = KMeans(
-            n_clusters=self.n_clusters,
-            random_state=42,
-            n_init="auto",
-        )
-
-        # cluster and get labels
-        labels = self.cluster(full_vecs)
-
-        # label -> files
-        label_to_entries = {}
+        # Organize files by cluster label
+        label_to_entries = defaultdict(list)
         for i, label in enumerate(labels):
-            label_to_entries.setdefault(label, []).append(files[i])
- 
+            label_to_entries[label].append(files[i])
 
         subdirs = []
         retained_files = []
 
-
-        for label, entries in label_to_entries.items():
-            # if a label has one entry then clustering is pretty good
-            # To avoid having files in leaves we return all of the files used in this clustering
-            # -> can defnitely backfire but lets hope the clustering is goated
+        for entries in label_to_entries.values():
             if len(entries) <= 1:
-                # Flavour 1 (millions of dirs)
-                # sub_vecs = [e["full_vector"] for e in entries]
-                # sub_dir = self.recDirCluster(sub_vecs,entries,depth,f"{dir_name}_{label}", builder)
-                # subdirs.append(sub_dir)
-                # Flavour 2 (More files per dir)
-                return builder.buildDirectory(dir_name, files, [])                
-            # Good number of entries, atleast minsize so recursively check (if exactly minsize it will make a dir of these two folders)
-            elif len(entries) >= self.min_size:                  
-                sub_vecs = [e["full_vector"] for e in entries]
-                sub_dir = self.recDirCluster(sub_vecs,entries,depth+1,f"{dir_name}", builder)
+                return builder.buildDirectory(dir_name, files, [])  # Too small, flatten
+            elif len(entries) >= self.min_size:
+                sub_vecs = [entry["full_vector"] for entry in entries]
+                sub_dir = self._recursive_clustering(sub_vecs, entries, depth + 1, dir_name, builder)
                 subdirs.append(sub_dir)
-            # Not quite enough files to recluster so keep them together   
             else:
                 retained_files.extend(entries)
 
         return builder.buildDirectory(dir_name, retained_files, subdirs)
-   
-
-
 
     def printDirectoryTree(self, directory, indent=""):
-       # print(f"{indent}{directory.name}/")
         for file in directory.files:
-           # print(f"{file.name} ")
-          #  print(f"{indent} - {file.original_path} ")
             print(f'"{file.new_path}",')
         for subdir in directory.directories:
             self.printDirectoryTree(subdir, indent + "  ")
