@@ -67,7 +67,8 @@ class KWExtractor:
             keywords = handler(file_name, '.', max_duration_seconds)
             result.append((file_name, keywords))
         except Exception as e:
-            print(f"Could not extract keywords from {file_name} | error {e}")
+            # print(f"Could not extract keywords from {file_name} | error {e}")
+            pass
         
         return result
 

@@ -8,10 +8,11 @@ import unittest
 class TestFullVector(unittest.TestCase):
 
     def setUp(self):
-        # Patch a minimal transformer mock for all tests
         self.mock_transformer = MagicMock()
-        self.mock_transformer.encode.return_value = np.array([1.0, 2.0, 3.0])
         self.mock_transformer.get_sentence_embedding_dimension.return_value = 3
+        self.mock_transformer.encode.side_effect = lambda *args, **kwargs: [
+            np.array([1.0, 2.0, 3.0]) for _ in args[0]
+        ]
 
     def test_create_full_vector(self):
         files = [
