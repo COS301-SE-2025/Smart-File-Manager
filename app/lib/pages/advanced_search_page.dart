@@ -34,6 +34,10 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
     }
   }
 
+  void _handleGoToFolder(List<String> folderPath) {
+    Navigator.pop(context, {'action': 'navigate', 'path': folderPath});
+  }
+
   void _handleDetailPanelClose() {
     if (!_disposed && mounted) {
       setState(() {
@@ -45,7 +49,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
 
   void _callGoSearch(String query) async {
     if (query.trim().isEmpty) return;
-    
+
     setState(() {
       _isLoading = true;
       _searchHappened = true;
@@ -251,6 +255,10 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
         // Trigger rebuild of details panel when tags change
         if (mounted) setState(() {});
       },
+      onGoToFolder: _handleGoToFolder,
+      showGoToFolder: false,
+      currentBreadcrumbs: [],
+      managerPath: "",
     );
   }
 

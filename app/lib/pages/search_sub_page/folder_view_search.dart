@@ -1,7 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
-import 'package:app/custom_widgets/file_item_widget.dart';
+import 'package:app/custom_widgets/search_item_widget.dart';
+import 'package:app/custom_widgets/search_item_widget.dart';
 import 'package:app/custom_widgets/tag_dialog.dart';
 import 'package:app/api.dart';
 import 'package:open_file/open_file.dart';
@@ -13,13 +14,21 @@ class FolderViewSearch extends StatefulWidget {
   final FileTreeNode treeData;
   final Function(FileTreeNode) onFileSelected;
   final VoidCallback? onTagChanged;
+  final Function(List<String>)? onGoToFolder;
+  final bool showGoToFolder;
+  List<String> currentBreadcrumbs;
+  String managerPath;
 
-  const FolderViewSearch({
+  FolderViewSearch({
+    super.key,
     required this.managerName,
     required this.treeData,
     required this.onFileSelected,
     this.onTagChanged,
-    super.key,
+    this.onGoToFolder,
+    this.showGoToFolder = true,
+    required this.currentBreadcrumbs,
+    required this.managerPath,
   });
 
   @override
@@ -35,7 +44,6 @@ class _FolderViewSearchState extends State<FolderViewSearch> {
     _updateCurrentItems();
   }
 
-
   void _updateCurrentItems() {
     setState(() {
       _currentItems = List.from(widget.treeData.children ?? []);
@@ -50,42 +58,35 @@ class _FolderViewSearchState extends State<FolderViewSearch> {
   Widget _buildFileGrid() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final itemWidth = 100.0;
-          final spacing = 12.0;
-          final availableWidth =
-              constraints.maxWidth - 32.0; // Account for padding
-          final crossAxisCount = ((availableWidth + spacing) /
-                  (itemWidth + spacing))
-              .floor()
-              .clamp(1, 10);
-
-          return GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              childAspectRatio: 1.0,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: _currentItems.length,
-            itemBuilder: (context, index) {
-              return GestureDetector(
-                onSecondaryTapDown:
-                    (details) => _handleItemRightTap(
-                      widget.managerName ?? "",
-                      _currentItems[index],
-                      details.globalPosition,
-                    ),
-                child: FileItemWidget(
-                  item: _currentItems[index],
-                  onTap: _handleItemTap,
-                  onDoubleTap: _handleNodeDoubleTap,
+      child: SizedBox(
+        child: ListView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: _currentItems.length,
+          itemBuilder: (context, index) {
+            final item = _currentItems[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: GestureDetector(
+                  onSecondaryTapDown:
+                      (details) => _handleItemRightTap(
+                        widget.managerName ?? "",
+                        item,
+                        details.globalPosition,
+                      ),
+                  child: SearchItemWidget(
+                    item: item,
+                    onTap: _handleItemTap,
+                    onDoubleTap: _handleNodeDoubleTap,
+                    managerPath: widget.managerPath,
+                  ),
                 ),
-              );
-            },
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -157,79 +158,47 @@ class _FolderViewSearchState extends State<FolderViewSearch> {
     FileTreeNode node,
     Offset globalPosition,
   ) {
-    if (node.isFolder) {
-      final entries = <ContextMenuEntry>[
+    final entries = <ContextMenuEntry>[
+      if (widget.showGoToFolder)
         MenuItem(
-          label: 'Lock',
-          icon: Icons.lock,
-          onSelected: () async {
-            bool response = await Api.locking(managerName, node.path ?? '');
-            if (response == true) {
-              _lockNode(node);
-            }
-          },
+          label: 'Go to Folder',
+          icon: Icons.drive_file_move_rounded,
+          onSelected: () => _goToFolder(node),
         ),
-        MenuItem(
-          label: 'Unlock',
-          icon: Icons.lock_open,
-          onSelected: () async {
-            bool response = await Api.unlocking(managerName, node.path ?? '');
-            if (response == true) {
-              _unlockNode(node);
-            }
-          },
-        ),
-      ];
+      MenuItem(
+        label: 'Add Tag',
+        icon: Icons.label,
+        onSelected: () => _showAddTagDialog(node),
+      ),
+      MenuItem(
+        label: 'Lock',
+        icon: Icons.lock,
+        onSelected: () async {
+          bool response = await Api.locking(managerName, node.path ?? '');
+          if (response == true) {
+            _lockNode(node);
+          }
+        },
+      ),
+      MenuItem(
+        label: 'Unlock',
+        icon: Icons.lock_open,
+        onSelected: () async {
+          bool response = await Api.unlocking(managerName, node.path ?? '');
+          if (response == true) {
+            _unlockNode(node);
+          }
+        },
+      ),
+    ];
 
-      final menu = ContextMenu(
-        entries: entries,
-        position: globalPosition,
-        padding: const EdgeInsets.all(8.0),
-      );
+    final menu = ContextMenu(
+      entries: entries,
+      position: globalPosition,
+      padding: const EdgeInsets.all(8.0),
+    );
 
-      showContextMenu(context, contextMenu: menu);
-    } else {
-      final entries = <ContextMenuEntry>[
-        MenuItem(
-          label: 'Details',
-          icon: Icons.info_outline,
-          onSelected: () => widget.onFileSelected(node),
-        ),
-        MenuItem(
-          label: 'Add Tag',
-          icon: Icons.label,
-          onSelected: () => _showAddTagDialog(node),
-        ),
-        MenuItem(
-          label: 'Lock',
-          icon: Icons.lock,
-          onSelected: () async {
-            bool response = await Api.locking(managerName, node.path ?? '');
-            if (response == true) {
-              _lockNode(node);
-            }
-          },
-        ),
-        MenuItem(
-          label: 'Unlock',
-          icon: Icons.lock_open,
-          onSelected: () async {
-            bool response = await Api.unlocking(managerName, node.path ?? '');
-            if (response == true) {
-              _unlockNode(node);
-            }
-          },
-        ),
-      ];
-
-      final menu = ContextMenu(
-        entries: entries,
-        position: globalPosition,
-        padding: const EdgeInsets.all(8.0),
-      );
-
-      showContextMenu(context, contextMenu: menu);
-    }
+    showContextMenu(context, contextMenu: menu);
   }
 
   void _showAddTagDialog(FileTreeNode node) async {
@@ -258,5 +227,25 @@ class _FolderViewSearchState extends State<FolderViewSearch> {
     setState(() {
       widget.treeData.unlockItem(node.path ?? '');
     });
+  }
+
+  void _goToFolder(FileTreeNode node) {
+    final fileFullPath = node.path ?? '';
+
+    //change full system path to path only from root
+    final RootPath = fileFullPath.replaceAll(widget.managerPath, "");
+
+    final parts = RootPath.split(RegExp(r'[/\\]'));
+
+    //remove file from path
+    parts.removeLast();
+
+    //clear Breadcrumbs
+    widget.currentBreadcrumbs.clear();
+    for (String part in parts) {
+      widget.currentBreadcrumbs.add(part);
+    }
+    widget.currentBreadcrumbs.remove("");
+    widget.onGoToFolder!(widget.currentBreadcrumbs);
   }
 }

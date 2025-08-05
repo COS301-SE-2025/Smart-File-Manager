@@ -105,6 +105,7 @@ class _ShellState extends State<Shell> {
       backgroundColor: kScaffoldColor,
       //Main Appbar with app title and login button
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         leading: Padding(
           padding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
           child: Image.asset("images/logo.png"),
