@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
 )
 
 // MetadataEntry holds file metadata key and value
@@ -20,6 +22,7 @@ type File struct {
 	Metadata []*MetadataEntry
 	Tags     []string
 	Locked   bool // Lock status for file
+	Keywords []*pb.Keyword
 }
 
 // Folder represents a directory in the filesystem
