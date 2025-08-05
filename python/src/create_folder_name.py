@@ -18,9 +18,8 @@ from collections import defaultdict
 class FolderNameCreator:
     def __init__(self, model):
         self.model = model
-        self.max_keywords = 200 
+        self.max_keywords = 5000 # for folder name creation
         self.lemmatizer = WordNetLemmatizer()
-        _ = wordnet.synset("dog.n.01")
         # Weighting of different vars
         self.weights = {
             "keywords":0.7, # If there are keywords they should really be different to not be together

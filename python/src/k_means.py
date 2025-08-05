@@ -6,8 +6,6 @@ from sklearn.cluster import KMeans
 from directory_builder import DirectoryCreator
 from create_folder_name import FolderNameCreator
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
-
 
 class KMeansCluster:
     def __init__(self, num_clusters, max_depth, model, parent_folder):
@@ -19,7 +17,6 @@ class KMeansCluster:
         self.kmeans = None
         self.folder_namer = FolderNameCreator(model)
 
-    """
     def fit_kmeans(self, vectors, num_clusters):
         # Only reinitialize the model when necessary
         if self.kmeans is None or self.kmeans.n_clusters != num_clusters:
@@ -33,11 +30,6 @@ class KMeansCluster:
             )
         self.kmeans.fit(vectors)
         return self.kmeans.labels_
-    """
-    def fit_kmeans(self, vectors, n_clusters):
-        kmeans = KMeans(n_clusters=n_clusters, n_init='auto', random_state=42)
-        kmeans.fit(vectors)
-        return kmeans.labels_
 
     def predict(self, points):
         preds = self.kmeans.predict(points)
@@ -51,7 +43,6 @@ class KMeansCluster:
         builder = DirectoryCreator(self.parent_folder, files)
         return self._recursive_clustering(full_vecs, files, depth=0, dir_prefix=self.parent_folder, builder=builder)
 
-    """
     def _recursive_clustering(self, vectors, files, depth, dir_prefix, builder):
         # Base condition: shallow depth or too few vectors
         if len(vectors) < self.min_size or depth > self.max_depth:
@@ -92,54 +83,6 @@ class KMeansCluster:
                 retained_files.extend(entries)
 
         return builder.buildDirectory(dir_name, retained_files, subdirs)
-    """
-
-
-
-    def _recursive_clustering(self, vectors, files, depth, dir_prefix, builder):
-        if len(vectors) < self.min_size or depth > self.max_depth:
-            return builder.buildDirectory(dir_prefix, files, [])
-
-        if depth > 0:
-            folder_name = self.folder_namer.generateFolderName(files)
-            if folder_name in dir_prefix:
-                return builder.buildDirectory(dir_prefix, files, [])
-            dir_name = os.path.join(dir_prefix, folder_name)
-        else:
-            dir_name = dir_prefix
-
-        n_clusters = min(len(vectors), self.base_clusters)
-        if n_clusters <= self.min_size:
-            return builder.buildDirectory(dir_name, files, [])
-
-        labels = self.fit_kmeans(vectors, n_clusters)
-
-        label_to_entries = defaultdict(list)
-        for i, label in enumerate(labels):
-            label_to_entries[label].append(files[i])
-
-        subdirs = []
-        retained_files = []
-
-        def process_cluster(entries):
-            if len(entries) <= 1:
-                return None  # too small
-            sub_vecs = [entry["full_vector"] for entry in entries]
-            return self._recursive_clustering(sub_vecs, entries, depth + 1, dir_name, builder)
-
-        with ThreadPoolExecutor() as executor:
-            futures = {executor.submit(process_cluster, entries): entries for entries in label_to_entries.values()}
-
-            for future in as_completed(futures):
-                entries = futures[future]
-                result = future.result()
-                if result is not None:
-                    subdirs.append(result)
-                else:
-                    retained_files.extend(entries)
-
-        return builder.buildDirectory(dir_name, retained_files, subdirs)
-
 
     def printDirectoryTree(self, directory, indent=""):
         for file in directory.files:
