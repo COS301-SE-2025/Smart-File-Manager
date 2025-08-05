@@ -33,7 +33,9 @@ class DirectoryCreator:
     def createFile(self, filename, dirName):
         file_info = self.file_map[filename]
         original_file_path = file_info["absolute_path"]
-        new_file_path = self.get_path(f"{dirName}/{filename}")
+        # new_file_path = self.get_path(f"{dirName}/{filename}")
+        new_file_path = os.path.join(dirName, filename)
+
 
         my_tags = self.createTags(file_info)
 
