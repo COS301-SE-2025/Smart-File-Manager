@@ -77,7 +77,7 @@ class Master():
             response_directory = kmeans.dirCluster(full_vecs,files)
             self.clustering_time = time.time()
             print("Clustering complete: " + str(self.clustering_time - self.start_time))
-            kmeans.printDirectoryTree(response_directory) 
+            # kmeans.printDirectoryTree(response_directory) 
             response = DirectoryResponse(root=response_directory, response_code=200, response_msg="Files successfully clustered")
             self.response_time = time.time()
             print("Sending response: " + str(self.response_time - self.start_time))
