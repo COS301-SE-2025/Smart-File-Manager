@@ -758,3 +758,164 @@ func TestAPI_BulkDeleteFolderHandler_EmptyList(t *testing.T) {
 		t.Errorf("expected status 200 for empty list, got %d", w.Code)
 	}
 }
+
+func TestAPI_BulkDeleteFileHandler(t *testing.T) {
+	// Setup: Create temp folder and multiple test files
+	tmp := t.TempDir()
+	projectRoot := filepath.Join(tmp, "Smart-File-Manager")
+	dataDir := filepath.Join(projectRoot, "data")
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create multiple test files
+	file1 := filepath.Join(dataDir, "file1.txt")
+	file2 := filepath.Join(dataDir, "file2.txt")
+	file3 := filepath.Join(dataDir, "file3.txt")
+
+	if err := os.WriteFile(file1, []byte("content1"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file2, []byte("content2"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file3, []byte("content3"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Register the files in composites
+	testFolder := &Folder{
+		Name:    "bulkDeleteFileTest",
+		Path:    dataDir,
+		NewPath: dataDir,
+		Files: []*File{
+			{Name: "file1.txt", Path: file1},
+			{Name: "file2.txt", Path: file2},
+			{Name: "file3.txt", Path: file3},
+		},
+	}
+
+	Composites = []*Folder{testFolder}
+
+	// Change working directory
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd)
+	if err := os.Chdir(projectRoot); err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify files exist before deletion
+	if _, err := os.Stat(file1); os.IsNotExist(err) {
+		t.Fatal("file1 should exist before deletion")
+	}
+	if _, err := os.Stat(file2); os.IsNotExist(err) {
+		t.Fatal("file2 should exist before deletion")
+	}
+	if _, err := os.Stat(file3); os.IsNotExist(err) {
+		t.Fatal("file3 should exist before deletion")
+	}
+
+	// Create JSON payload for bulk deletion (delete file1 and file3)
+	jsonBody := `[
+		{"file_path": "` + file1 + `"},
+		{"file_path": "` + file3 + `"}
+	]`
+
+	// Test successful bulk file deletion
+	req := httptest.NewRequest("POST", "/bulkDeleteFiles?name=bulkDeleteFileTest", strings.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	BulkDeleteFileHandler(w, req)
+
+	// Verify response
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+	if got := w.Body.String(); !strings.Contains(got, "Files removed successfully") {
+		t.Errorf("expected success message, got %s", got)
+	}
+
+	// Verify deleted files no longer exist
+	if _, err := os.Stat(file1); !os.IsNotExist(err) {
+		t.Error("file1 should have been deleted")
+	}
+	if _, err := os.Stat(file3); !os.IsNotExist(err) {
+		t.Error("file3 should have been deleted")
+	}
+
+	// Verify file2 still exists (wasn't in deletion list)
+	if _, err := os.Stat(file2); os.IsNotExist(err) {
+		t.Error("file2 should still exist")
+	}
+}
+
+func TestAPI_BulkDeleteFileHandler_MissingName(t *testing.T) {
+	jsonBody := `[{"file_path": "/some/path"}]`
+
+	req := httptest.NewRequest("POST", "/bulkDeleteFiles", strings.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	BulkDeleteFileHandler(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", w.Code)
+	}
+	if got := w.Body.String(); !strings.Contains(got, "Missing 'name' parameter") {
+		t.Errorf("expected missing name error, got %s", got)
+	}
+}
+
+func TestAPI_BulkDeleteFileHandler_InvalidJSON(t *testing.T) {
+	invalidJSON := `{"invalid": json}`
+
+	req := httptest.NewRequest("POST", "/bulkDeleteFiles?name=test", strings.NewReader(invalidJSON))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	BulkDeleteFileHandler(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", w.Code)
+	}
+	if got := w.Body.String(); !strings.Contains(got, "Invalid request body") {
+		t.Errorf("expected invalid request body error, got %s", got)
+	}
+}
+
+func TestAPI_BulkDeleteFileHandler_NonExistentManager(t *testing.T) {
+	Composites = []*Folder{}
+
+	jsonBody := `[{"file_path": "/some/path"}]`
+
+	req := httptest.NewRequest("POST", "/bulkDeleteFiles?name=nonexistent", strings.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	BulkDeleteFileHandler(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected status 404, got %d", w.Code)
+	}
+	if got := w.Body.String(); !strings.Contains(got, "Files not found") {
+		t.Errorf("expected files not found error, got %s", got)
+	}
+}
+
+func TestAPI_BulkDeleteFileHandler_EmptyList(t *testing.T) {
+	// Setup minimal composite
+	testFolder := &Folder{
+		Name:    "emptyTest",
+		Path:    "/test",
+		NewPath: "/test",
+	}
+	Composites = []*Folder{testFolder}
+
+	jsonBody := `[]`
+
+	req := httptest.NewRequest("POST", "/bulkDeleteFiles?name=emptyTest", strings.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	BulkDeleteFileHandler(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status 200 for empty list, got %d", w.Code)
+	}
+}
