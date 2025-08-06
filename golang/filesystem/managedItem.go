@@ -111,24 +111,23 @@ func (f *Folder) RemoveSubfolder(folderPath string) error {
 	return fmt.Errorf("folder not found: %s", folderPath)
 }
 
-func (f *Folder) RemoveMultipleFiles(filePaths []string) map[string]error {
-	results := make(map[string]error)
+func (f *Folder) RemoveMultipleFiles(filePaths []string) error {
 
 	for _, path := range filePaths {
 		err := f.RemoveFile(path)
 		if err != nil {
-			results[path] = err
+			return err
 		}
 	}
 
-	return results
+	return nil
 }
 
 func (f *Folder) RemoveMultipleSubfolders(folderPaths []string) error {
 	for _, path := range folderPaths {
 		err := f.RemoveSubfolder(path)
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
 

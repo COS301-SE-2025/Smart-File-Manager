@@ -187,3 +187,49 @@ func BulkDeleteFolderHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.Error(w, "Folder not found", http.StatusNotFound)
 }
+
+func BulkDeleteFileHandler(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		http.Error(w, "Missing 'name' parameter", http.StatusBadRequest)
+		return
+	}
+
+	// Decode JSON body
+	var bulkList []DeleteStruct
+	if err := json.NewDecoder(r.Body).Decode(&bulkList); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	var filePaths []string
+	for _, item := range bulkList {
+		filePaths = append(filePaths, item.FilePath)
+		// fmt.Println("File path to delete:", item.FilePath)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	//delete all folders in list
+	for _, folder := range Composites {
+		if folder.Name == name {
+			if err := folder.RemoveMultipleFiles(filePaths); err != nil {
+				http.Error(w, fmt.Sprintf("Failed to remove files: %v", err), http.StatusInternalServerError)
+				return
+			}
+			for _, path := range filePaths {
+				err := os.RemoveAll(path)
+				if err != nil {
+					http.Error(w, fmt.Sprintf("Failed to remove files %s: %v", path, err), http.StatusInternalServerError)
+					return
+				}
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("Files removed successfully"))
+			return
+		}
+	}
+
+	http.Error(w, "Files not found", http.StatusNotFound)
+}
