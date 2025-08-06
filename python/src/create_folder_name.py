@@ -10,7 +10,8 @@ from nltk import pos_tag
 from nltk.stem import WordNetLemmatizer
 
 #adding these imports could be slow
-from typing import List, Tuple, Dict
+from typing import Dict
+from collections import Counter
 
 from collections import defaultdict
 
@@ -18,11 +19,11 @@ from collections import defaultdict
 class FolderNameCreator:
     def __init__(self, model):
         self.model = model
-        self.max_keywords = 5000 # for folder name creation
+        self.max_keywords = 200 # for folder name creation
         self.lemmatizer = WordNetLemmatizer()
         # Weighting of different vars
         self.weights = {
-            "keywords":0.7, # If there are keywords they should really be different to not be together
+            "keywords":0.9, # If there are keywords they should really be different to not be together
             "filename":0.002, # Should only make a small difference compared to keywrods (when they are used)
             "tags":1.5, # Even though they should already be weighted significantly
             "original_parent":0.01,
@@ -57,46 +58,40 @@ class FolderNameCreator:
                 break
         return filename
     
-    def generateFolderName(self, files : List[Dict]) -> str:
-            # No files no name
-            if not files:
-                return "Untitled"           
 
-            # Reset the vals
-            self.filename_scores = {}
-            self.parent_name_scores = {}
-            self.keyword_scores = {}
-            # Assign scores with weightings
-            for file in files:
-                # file name
-                fn = self.remove_all_extensions(file["filename"]).lower()
-                if not (fn.startswith("~") or fn.endswith(".tmp")):
-                    if fn not in self.filename_scores:
-                        self.filename_scores[fn] = 0
-                    self.filename_scores[fn] += (self.weights["filename"])
+    def generateFolderName(self, files):
+        # Try to generate name based on most common tag or keyword
+        tags = []
+        keywords = []
 
+        for file in files:
+            tags.extend(file.get("tags", []))
+            keywords.extend([kw for kw, _ in file.get("keywords", [])])
 
-                # parent name assigned
-                self.assignParentScores(file["absolute_path"], self.parent_name_scores)
+        # Use most common tag if available
+        if tags:
+            tag_names = [tag.lower().strip() for tag in tags if isinstance(tag, str)]
+            most_common_tag, _ = Counter(tag_names).most_common(1)[0]
+            return self._clean_name(most_common_tag)
 
-                # Assign keywords scores
-                for kw,score in file["keywords"]:
-                    if kw.lower() not in self.keyword_scores:
-                        self.keyword_scores[kw.lower()] = 0
-                    self.keyword_scores[kw.lower()] += (score * self.weights["keywords"])
+        # Else, fallback to most common keyword
+        if keywords:
+            keyword_names = [kw.lower().strip() for kw in keywords if isinstance(kw, str)]
+            most_common_kw, _ = Counter(keyword_names).most_common(1)[0]
+            return self._clean_name(most_common_kw)
 
-            # Extend by adding metadata as another arg
-            combined = self.combine_lists(
-                self.getRepresentativeKeywords(self.keyword_scores),
-                self.getRepresentativeKeywords(self.filename_scores),
-                self.getRepresentativeKeywords(self.parent_name_scores)
-            )
-            lemmatized = self.lemmatize_with_scores(combined)
-            folder_name = "_".join([word for word, _ in lemmatized[:self.foldername_length]])
-            folder_name = re.sub(r'[^\w\d_]+', '', folder_name)  # remove any accidental punct
-            folder_name = folder_name.strip("_")
+        # Final fallback
+        return "Group"
 
-            return folder_name
+    def _clean_name(self, name: str) -> str:
+        # Remove non-alphanumeric characters and collapse spaces
+        name = re.sub(r'[^a-zA-Z0-9\s]', '', name)
+        name = re.sub(r'\s+', '_', name).strip('_')
+        name = name.lower()
+
+        # Truncate to avoid absurdly long names
+        return name[:30] if name else "Group"
+
 
     def assignParentScores(self, absolute_path : str, parent_name_scores : Dict[str,float]) -> None:
         path = Path(absolute_path)
@@ -115,7 +110,6 @@ class FolderNameCreator:
             depth += 1
 
 
-
     def combine_lists(self, keywords : Dict[str, float], filenames : Dict[str,float], parent_names:Dict[str,float]) -> Dict[str,float]:
         scores = defaultdict(float)
 
@@ -129,6 +123,7 @@ class FolderNameCreator:
             scores[pn] += score
 
         return sorted(scores.items(), key=lambda x: -x[1])
+
 
     def getRepresentativeKeywords(self, scores : Dict[str, float]):
         if not scores:
@@ -165,6 +160,7 @@ class FolderNameCreator:
         else:
             return wordnet.NOUN  # fallback to noun
 
+
     def lemmatize(self, folder_keyword):
         seen = set()
         normalized_keywords = []
@@ -179,6 +175,7 @@ class FolderNameCreator:
                     seen.add(lemma)
                     normalized_keywords.append(lemma)
         return normalized_keywords
+
 
     def lemmatize_with_scores(self, folder_keywords_with_scores):
         seen = {}

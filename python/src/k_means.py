@@ -23,7 +23,6 @@ class KMeansCluster:
             self.kmeans = KMeans(
                 n_clusters=num_clusters,
                 init="k-means++",
-                n_init="auto",
                 max_iter=500,
                 tol=1e-5,
                 random_state=42
@@ -73,16 +72,17 @@ class KMeansCluster:
         retained_files = []
 
         for entries in label_to_entries.values():
-            if len(entries) <= 1:
-                return builder.buildDirectory(dir_name, files, [])  # Too small, flatten
-            elif len(entries) >= self.min_size:
-                sub_vecs = [entry["full_vector"] for entry in entries]
-                sub_dir = self._recursive_clustering(sub_vecs, entries, depth + 1, dir_name, builder)
-                subdirs.append(sub_dir)
-            else:
+            if len(entries) < self.min_size:
+                # Keep small clusters in the current directory
                 retained_files.extend(entries)
+                continue
+
+            sub_vecs = [entry["full_vector"] for entry in entries]
+            sub_dir = self._recursive_clustering(sub_vecs, entries, depth + 1, dir_name, builder)
+            subdirs.append(sub_dir)
 
         return builder.buildDirectory(dir_name, retained_files, subdirs)
+
 
     def printDirectoryTree(self, directory, indent=""):
         for file in directory.files:
