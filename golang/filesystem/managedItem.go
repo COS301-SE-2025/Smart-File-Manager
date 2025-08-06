@@ -124,17 +124,15 @@ func (f *Folder) RemoveMultipleFiles(filePaths []string) map[string]error {
 	return results
 }
 
-func (f *Folder) RemoveMultipleSubfolders(folderPaths []string) map[string]error {
-	results := make(map[string]error)
-
+func (f *Folder) RemoveMultipleSubfolders(folderPaths []string) error {
 	for _, path := range folderPaths {
 		err := f.RemoveSubfolder(path)
 		if err != nil {
-			results[path] = err
+			panic(err)
 		}
 	}
 
-	return results
+	return nil
 }
 
 // GetFile returns a file by path, searching recursively

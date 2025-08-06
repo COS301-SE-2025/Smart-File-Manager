@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 )
 
 // this file will contain bulk operations for the filesystem such as bulk add, delete of files, folders and adding tags
@@ -28,6 +29,24 @@ import (
 type TagsStruct struct {
 	FilePath string   `json:"file_path"`
 	Tags     []string `json:"tags"`
+}
+
+// expected json for bulk delete
+// [
+//
+//	{
+//	  "file_path": "/home/user/documents,
+//	},
+//	{
+//	  "file_path": "/home/user/photos,
+//	},
+//	{
+//	  "file_path": "/home/user/music,
+//	}
+//
+// ]
+type DeleteStruct struct {
+	FilePath string `json:"file_path"`
 }
 
 // BulkAddTags adds tags to files in bulk
@@ -115,6 +134,53 @@ func BulkRemoveTagHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("Tags removed successfully"))
+			return
+		}
+	}
+
+	http.Error(w, "Folder not found", http.StatusNotFound)
+}
+
+// DO NOT DELETE SUBFOLDERS ALONG WITH FOLDER THIS FUNCTION HANDLES IT
+func BulkDeleteFolderHandler(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		http.Error(w, "Missing 'name' parameter", http.StatusBadRequest)
+		return
+	}
+
+	// Decode JSON body
+	var bulkList []DeleteStruct
+	if err := json.NewDecoder(r.Body).Decode(&bulkList); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	var filePaths []string
+	for _, item := range bulkList {
+		filePaths = append(filePaths, item.FilePath)
+		// fmt.Println("File path to delete:", item.FilePath)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	//delete all folders in list
+	for _, folder := range Composites {
+		if folder.Name == name {
+			if err := folder.RemoveMultipleSubfolders(filePaths); err != nil {
+				http.Error(w, fmt.Sprintf("Failed to remove folders: %v", err), http.StatusInternalServerError)
+				return
+			}
+			for _, path := range filePaths {
+				err := os.RemoveAll(path)
+				if err != nil {
+					http.Error(w, fmt.Sprintf("Failed to remove folder %s: %v", path, err), http.StatusInternalServerError)
+					return
+				}
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("Folders removed successfully"))
 			return
 		}
 	}
