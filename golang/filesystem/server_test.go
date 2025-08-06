@@ -580,3 +580,181 @@ func TestAPI_DeleteHandlers_ErrorHandling(t *testing.T) {
 	// If we reach here without panic, the test might need adjustment
 	t.Log("deleteFileHandler completed without panic")
 }
+
+func TestAPI_BulkDeleteFolderHandler(t *testing.T) {
+	// Setup: Create temp folder structure with multiple subfolders
+	tmp := t.TempDir()
+	projectRoot := filepath.Join(tmp, "Smart-File-Manager")
+	dataDir := filepath.Join(projectRoot, "data")
+
+	// Create multiple test folders
+	folder1 := filepath.Join(dataDir, "folder1")
+	folder2 := filepath.Join(dataDir, "folder2")
+	folder3 := filepath.Join(dataDir, "folder3")
+
+	if err := os.MkdirAll(folder1, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(folder2, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(folder3, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Add some files to the folders
+	file1 := filepath.Join(folder1, "test1.txt")
+	file2 := filepath.Join(folder2, "test2.txt")
+	file3 := filepath.Join(folder3, "test3.txt")
+
+	if err := os.WriteFile(file1, []byte("content1"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file2, []byte("content2"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file3, []byte("content3"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Register the folder structure in composites
+	testFolder := &Folder{
+		Name:    "bulkDeleteFolderTest",
+		Path:    dataDir,
+		NewPath: dataDir,
+		Files: []*File{
+			{Name: "test1.txt", Path: file1},
+			{Name: "test2.txt", Path: file2},
+			{Name: "test3.txt", Path: file3},
+		},
+		Subfolders: []*Folder{
+			{Name: "folder1", Path: folder1},
+			{Name: "folder2", Path: folder2},
+			{Name: "folder3", Path: folder3},
+		},
+	}
+
+	Composites = []*Folder{testFolder}
+
+	// Change working directory
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd)
+	if err := os.Chdir(projectRoot); err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify folders exist before deletion
+	if _, err := os.Stat(folder1); os.IsNotExist(err) {
+		t.Fatal("folder1 should exist before deletion")
+	}
+	if _, err := os.Stat(folder2); os.IsNotExist(err) {
+		t.Fatal("folder2 should exist before deletion")
+	}
+	if _, err := os.Stat(folder3); os.IsNotExist(err) {
+		t.Fatal("folder3 should exist before deletion")
+	}
+
+	// Create JSON payload for bulk deletion (delete folder1 and folder3)
+	jsonBody := `[
+		{"file_path": "` + folder1 + `"},
+		{"file_path": "` + folder3 + `"}
+	]`
+
+	// Test successful bulk folder deletion
+	req := httptest.NewRequest("POST", "/bulkDeleteFolder?name=bulkDeleteFolderTest", strings.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	BulkDeleteFolderHandler(w, req)
+
+	// Verify response
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+	if got := w.Body.String(); !strings.Contains(got, "Folders removed successfully") {
+		t.Errorf("expected success message, got %s", got)
+	}
+
+	// Verify deleted folders no longer exist
+	if _, err := os.Stat(folder1); !os.IsNotExist(err) {
+		t.Error("folder1 should have been deleted")
+	}
+	if _, err := os.Stat(folder3); !os.IsNotExist(err) {
+		t.Error("folder3 should have been deleted")
+	}
+
+	// Verify folder2 still exists (wasn't in deletion list)
+	if _, err := os.Stat(folder2); os.IsNotExist(err) {
+		t.Error("folder2 should still exist")
+	}
+}
+
+func TestAPI_BulkDeleteFolderHandler_MissingName(t *testing.T) {
+	jsonBody := `[{"file_path": "/some/path"}]`
+
+	req := httptest.NewRequest("POST", "/bulkDeleteFolder", strings.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	BulkDeleteFolderHandler(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", w.Code)
+	}
+	if got := w.Body.String(); !strings.Contains(got, "Missing 'name' parameter") {
+		t.Errorf("expected missing name error, got %s", got)
+	}
+}
+
+func TestAPI_BulkDeleteFolderHandler_InvalidJSON(t *testing.T) {
+	invalidJSON := `{"invalid": json}`
+
+	req := httptest.NewRequest("POST", "/bulkDeleteFolder?name=test", strings.NewReader(invalidJSON))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	BulkDeleteFolderHandler(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", w.Code)
+	}
+	if got := w.Body.String(); !strings.Contains(got, "Invalid request body") {
+		t.Errorf("expected invalid request body error, got %s", got)
+	}
+}
+
+func TestAPI_BulkDeleteFolderHandler_NonExistentManager(t *testing.T) {
+	Composites = []*Folder{}
+
+	jsonBody := `[{"file_path": "/some/path"}]`
+
+	req := httptest.NewRequest("POST", "/bulkDeleteFolder?name=nonexistent", strings.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	BulkDeleteFolderHandler(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected status 404, got %d", w.Code)
+	}
+	if got := w.Body.String(); !strings.Contains(got, "Folder not found") {
+		t.Errorf("expected folder not found error, got %s", got)
+	}
+}
+
+func TestAPI_BulkDeleteFolderHandler_EmptyList(t *testing.T) {
+	// Setup minimal composite
+	testFolder := &Folder{
+		Name:    "emptyTest",
+		Path:    "/test",
+		NewPath: "/test",
+	}
+	Composites = []*Folder{testFolder}
+
+	jsonBody := `[]`
+
+	req := httptest.NewRequest("POST", "/bulkDeleteFolder?name=emptyTest", strings.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	BulkDeleteFolderHandler(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status 200 for empty list, got %d", w.Code)
+	}
+}
