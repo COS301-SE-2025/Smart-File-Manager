@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"testing"
 )
@@ -178,8 +179,8 @@ func TestStartUpHandler_Success(t *testing.T) {
 		t.Errorf("got message %q; want %q", resp.ResponseMessage, expectedMsg)
 	}
 	if len(resp.ManagerNames) != 2 ||
-		resp.ManagerNames[0] != "M1" ||
-		resp.ManagerNames[1] != "M2" {
+		!slices.Contains(resp.ManagerNames, "M1") ||
+		!slices.Contains(resp.ManagerNames, "M2") {
 		t.Errorf("got names %v; want [M1 M2]", resp.ManagerNames)
 	}
 }

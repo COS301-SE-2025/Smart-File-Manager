@@ -33,21 +33,21 @@ func SetManagersFilePath(p string) {
 
 // api entry
 func startUpHandler(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
+	// start := time.Now()
 	fmt.Println("setup called")
 
 	Composites = nil
 
-	loadStart := time.Now()
+	// loadStart := time.Now()
 	recs, err := loadManagerRecords()
-	loadDuration := time.Since(loadStart)
+	// loadDuration := time.Since(loadStart)
 
 	if err != nil {
 		errMsg := "Internal error: " + err.Error()
 		http.Error(w, errMsg, http.StatusBadRequest)
 		return
 	}
-	fmt.Printf("📁 Loaded %d manager records in %s\n", len(recs), loadDuration)
+	// fmt.Printf("📁 Loaded %d manager records in %s\n", len(recs), loadDuration)
 
 	var (
 		managerNames []string
@@ -55,7 +55,7 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 		wg           sync.WaitGroup
 	)
 
-	convertStart := time.Now()
+	// convertStart := time.Now()
 
 	for _, r := range recs {
 		wg.Add(1)
@@ -70,7 +70,7 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 				fmt.Printf("⚠️ ConvertToObject failed for %s (%s) in %s: %v\n", rec.Name, rec.Path, duration, err)
 				return
 			}
-			fmt.Printf("✅ Converted manager '%s' in %s\n", rec.Name, duration)
+			// fmt.Printf("✅ Converted manager '%s' in %s\n", rec.Name, duration)
 
 			mu.Lock()
 			Composites = append(Composites, composite)
@@ -81,12 +81,12 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	wg.Wait()
 
-	convertDuration := time.Since(convertStart)
-	fmt.Printf("🔄 Total conversion time: %s\n", convertDuration)
+	// convertDuration := time.Since(convertStart)
+	// fmt.Printf("🔄 Total conversion time: %s\n", convertDuration)
 
 	w.WriteHeader(http.StatusOK)
 
-	encodeStart := time.Now()
+	// encodeStart := time.Now()
 	res := startUpResponse{
 		ResponseMessage: "Request successful!, Composites: " + strconv.Itoa(len(managerNames)),
 		ManagerNames:    managerNames,
@@ -94,10 +94,10 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
-	encodeDuration := time.Since(encodeStart)
-	fmt.Printf("📤 Response encoding took %s\n", encodeDuration)
+	// encodeDuration := time.Since(encodeStart)
+	// fmt.Printf("📤 Response encoding took %s\n", encodeDuration)
 
-	fmt.Printf("✅ Total /startUp request handled in %s\n", time.Since(start))
+	// fmt.Printf("✅ Total /startUp request handled in %s\n", time.Since(start))
 }
 
 func loadManagerRecords() ([]ManagerRecord, error) {
