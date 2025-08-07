@@ -34,6 +34,7 @@ class MainNavigation extends StatefulWidget {
   final Function(String, FileTreeNode?)? onManagerTap;
   final Function(String, FileTreeNode)? onManagerTreeDataUpdate;
   final Function(List<String>)? onManagerNamesUpdate;
+  final Function(String)? onManagerAdded;
   final String? selectedManager;
 
   const MainNavigation({
@@ -44,6 +45,7 @@ class MainNavigation extends StatefulWidget {
     this.onManagerTap,
     this.onManagerTreeDataUpdate,
     this.onManagerNamesUpdate,
+    this.onManagerAdded,
     this.selectedManager,
   });
 
@@ -405,7 +407,7 @@ class _MainNavigationState extends State<MainNavigation> {
                     );
 
                     if (success) {
-                      // Update manager to remove loading state
+                      // Update manager to remove loading state and load treedata
                       setState(() {
                         final index = _managers.indexWhere(
                           (m) => m.label == result.name,
@@ -419,6 +421,12 @@ class _MainNavigationState extends State<MainNavigation> {
                           );
                         }
                       });
+
+                      //load data
+                      loadTreeDataForManager(result.name);
+
+                      // Notify parent that a new manager was added
+                      widget.onManagerAdded?.call(result.name);
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

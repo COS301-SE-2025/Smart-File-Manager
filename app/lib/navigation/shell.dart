@@ -30,7 +30,12 @@ class _ShellState extends State<Shell> {
   //pages are created dynamically to pass manager names to AdvancedSearchPage
   List<Widget> get _pages => [
     const DashboardPage(),
-    const SmartManagersPage(),
+    SmartManagersPage(
+      managerTreeData: _managerTreeData,
+      managerNames: _managerNames,
+      onManagerDelete: _onManagerDelete,
+      onManagerSort: _onManagerSort,
+    ),
     AdvancedSearchPage(managerNames: _managerNames),
     const SettingsPage(),
   ];
@@ -50,6 +55,12 @@ class _ShellState extends State<Shell> {
       _selectedManager = null;
     });
   }
+
+  //when manager is deleted updated values here:
+  void _onManagerDelete(String managerName) {}
+
+  //when manager is sorted(move directory is called, update treedata for manager)
+  void _onManagerSort(String managerName, FileTreeNode managerData) {}
 
   Future<void> _launchUrl() async {
     if (!await launchUrl(_url, mode: LaunchMode.externalApplication)) {
@@ -80,6 +91,14 @@ class _ShellState extends State<Shell> {
   void _updateManagerTreeData(String managerName, FileTreeNode treeData) {
     setState(() {
       _managerTreeData[managerName] = treeData;
+    });
+  }
+
+  void _onManagerAdded(String managerName) {
+    setState(() {
+      if (!_managerNames.contains(managerName)) {
+        _managerNames.add(managerName);
+      }
     });
   }
 
@@ -145,6 +164,7 @@ class _ShellState extends State<Shell> {
             onManagerTap: _onManagerTap,
             onManagerTreeDataUpdate: _onManagerTreeDataUpdate,
             onManagerNamesUpdate: _onManagerNamesUpdate,
+            onManagerAdded: _onManagerAdded,
           ),
           //Page that needs to be rendered depending on navigation index
           Expanded(child: _getCurrentPage()),
