@@ -81,7 +81,9 @@ def createDirectoryRequest():
         File(name="Taiichi ohno", original_path=get_path("Taiichi ohno.jpeg"), tags=[]),
         File(name="Week 3_Tutorial_2024_with Answers", original_path=get_path("Week 3_Tutorial_2024_with Answers.pdf"), tags=[]),
         File(name="Week 4_Tutorial_with answers", original_path=get_path("Week 4_Tutorial_with answers.pdf"), tags=[]),
-        File(name="Week 5_Tutorial_2024_with answers", original_path=get_path("Week 5_Tutorial_2024_with answers.pdf"), tags=[])
+        File(name="Week 5_Tutorial_2024_with answers", original_path=get_path("Week 5_Tutorial_2024_with answers.pdf"), tags=[]),
+        File(name="Form", original_path=get_path("Main.form"), tags=[]),
+        File(name="Main", original_path=get_path("Main.java"), tags=[])
     ]
 
     # Some tags for the files
@@ -128,7 +130,7 @@ def test_send_real_dir(grpc_test_server, createDirectoryRequest):
     # print("Second took: " + str(end_second - start_second))
 
     # Check if response contains all files
-    assert responseSizeChecker(response.root) == 43
+    assert responseSizeChecker(response.root) == 45
 
     # Check if response is well formed
     assert response.response_code == 200

@@ -21,6 +21,8 @@ class KWExtractor:
         "text/plain": self.def_extraction
         }
         self.confidence_threshold = 0.085
+        self.supported_mime_types = set(self.mime_handlers.keys())
+
 
     def set_n(self, new_val : int):
         if new_val > 0:
@@ -28,14 +30,10 @@ class KWExtractor:
 
     #Main extractor function
     def extract_kw(self, input: File) -> List[Tuple[str, float]]:
-
         file_name = input.original_path
         mime_type = next((entry.value for entry in input.metadata if entry.key == "mime_type"), None)
 
-        # Fallback cause for some reason pdf and docx mime was not working
-
         if mime_type is None:
-
             if file_name.endswith(".pdf"):
                 mime_type = "application/pdf"
             elif file_name.endswith(".docx") or file_name.endswith(".doc"):
@@ -43,18 +41,21 @@ class KWExtractor:
             elif file_name.endswith(".txt"):
                 mime_type = "text/plain"
             else:
-                mime_type = "text/plain"  
+                return []  
 
-        result = self.open_file(file_name, mime_type, 1)  # List of (filename, keywords)
+        if mime_type not in self.supported_mime_types:
+            return []  
+
+        result = self.open_file(file_name, mime_type, 1)
         if not result:
             return []
 
-        # Extract kw. Take all that meets threshold. If we barely get kw, take random 3. 
         _, keywords = result[0]
         filtered = [(kw, score) for kw, score in keywords if score < self.confidence_threshold]
-        if len(filtered) < 3:  
+        if len(filtered) < 3:
             filtered = keywords[:3]
         return filtered
+
     
 
     #Open a file (check which type and send to be opened in the correct way)
