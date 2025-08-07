@@ -52,7 +52,7 @@ class KMeansCluster:
             folder_name = self.folder_namer.generateFolderName(files)
             if folder_name in dir_prefix:
                 return builder.buildDirectory(dir_prefix, files, [])
-            dir_name = os.path.join(dir_prefix, folder_name)
+            dir_name = folder_name
         else:
             dir_name = dir_prefix
 

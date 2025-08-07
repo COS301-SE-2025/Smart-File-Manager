@@ -100,7 +100,7 @@ func grpcFunc(c *Folder, requestType string) error {
 
 	client := pb.NewDirectoryServiceClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 	defer cancel()
 
 	req := &pb.DirectoryRequest{
