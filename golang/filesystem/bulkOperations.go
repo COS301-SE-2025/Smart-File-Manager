@@ -168,11 +168,12 @@ func BulkDeleteFolderHandler(w http.ResponseWriter, r *http.Request) {
 	//delete all folders in list
 	for _, folder := range Composites {
 		if folder.Name == name {
-			if err := folder.RemoveMultipleSubfolders(filePaths); err != nil {
-				http.Error(w, fmt.Sprintf("Failed to remove folders: %v", err), http.StatusInternalServerError)
-				return
-			}
+			err := folder.RemoveMultipleSubfolders(filePaths)
 			for _, path := range filePaths {
+				if err[path] != nil {
+					fmt.Println("Error removing file:", path, "Error:", err[path])
+					continue
+				}
 				err := os.RemoveAll(path)
 				if err != nil {
 					http.Error(w, fmt.Sprintf("Failed to remove folder %s: %v", path, err), http.StatusInternalServerError)
