@@ -1,6 +1,11 @@
 package filesystem
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -407,5 +412,115 @@ func BenchmarkBulkRemoveTags(b *testing.B) {
 		b.StartTimer()
 
 		BulkRemoveTags(folder, bulkList)
+	}
+}
+
+func TestAPI_BulkDeleteFileHandler_MixedExistentNonExistent(t *testing.T) {
+	// Setup: Create temp folder and one test file
+	tmp := t.TempDir()
+	projectRoot := filepath.Join(tmp, "Smart-File-Manager")
+	dataDir := filepath.Join(projectRoot, "data")
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create only one file
+	existingFile := filepath.Join(dataDir, "existing.txt")
+	if err := os.WriteFile(existingFile, []byte("content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Register the file in composites
+	testFolder := &Folder{
+		Name:    "mixedTest",
+		Path:    dataDir,
+		NewPath: dataDir,
+		Files: []*File{
+			{Name: "existing.txt", Path: existingFile},
+		},
+	}
+
+	Composites = []*Folder{testFolder}
+
+	// Change working directory
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd)
+	if err := os.Chdir(projectRoot); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create JSON payload with both existing and non-existing files
+	nonExistentFile := filepath.Join(dataDir, "nonexistent.txt")
+	jsonBody := `[
+		{"file_path": "` + existingFile + `"},
+		{"file_path": "` + nonExistentFile + `"}
+	]`
+
+	req := httptest.NewRequest("POST", "/bulkDeleteFile?name=mixedTest", strings.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	BulkDeleteFileHandler(w, req)
+
+	// The handler should handle this gracefully - os.RemoveAll won't fail on non-existent files
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", w.Code)
+	}
+
+	// Verify existing file was deleted
+	if _, err := os.Stat(existingFile); !os.IsNotExist(err) {
+		t.Error("existing file should have been deleted")
+	}
+}
+
+func TestAPI_BulkDeleteFolderHandler_MixedExistentNonExistent(t *testing.T) {
+	// Setup: Create temp folder and one test folder
+	tmp := t.TempDir()
+	projectRoot := filepath.Join(tmp, "Smart-File-Manager")
+	dataDir := filepath.Join(projectRoot, "data")
+	existingFolder := filepath.Join(dataDir, "existing")
+
+	if err := os.MkdirAll(existingFolder, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Register the folder in composites
+	testFolder := &Folder{
+		Name:    "mixedFolderTest",
+		Path:    dataDir,
+		NewPath: dataDir,
+		Subfolders: []*Folder{
+			{Name: "existing", Path: existingFolder},
+		},
+	}
+
+	Composites = []*Folder{testFolder}
+
+	// Change working directory
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd)
+	if err := os.Chdir(projectRoot); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create JSON payload with both existing and non-existing folders
+	nonExistentFolder := filepath.Join(dataDir, "nonexistent")
+	jsonBody := `[
+		{"file_path": "` + existingFolder + `"},
+		{"file_path": "` + nonExistentFolder + `"}
+	]`
+
+	req := httptest.NewRequest("POST", "/bulkDeleteFolder?name=mixedFolderTest", strings.NewReader(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	BulkDeleteFolderHandler(w, req)
+
+	// The handler should handle this gracefully - os.RemoveAll won't fail on non-existent folders
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", w.Code)
+	}
+
+	// Verify existing folder was deleted
+	if _, err := os.Stat(existingFolder); !os.IsNotExist(err) {
+		t.Error("existing folder should have been deleted")
 	}
 }
