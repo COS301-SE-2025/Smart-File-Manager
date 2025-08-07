@@ -97,7 +97,7 @@ def recHelper(curDir : Directory, kws : Dict[str, List[str]]):
     # Check response contains at least some keywords 
     for curFile in curDir.files:
         
-        if not curFile.original_path.endswith(".png") and not curFile.original_path.endswith(".jpeg"):
+        if not curFile.original_path.endswith(".png") and not curFile.original_path.endswith(".jpeg") and not curFile.original_path.endswith(".md"):
             assert len(curFile.keywords) > 0
             words = []
             for w in curFile.keywords:
