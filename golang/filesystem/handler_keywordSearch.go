@@ -4,15 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
+
+	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
 )
+
+var wg sync.WaitGroup
 
 func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -21,7 +25,7 @@ func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
 
 	for _, c := range Composites {
 		if c.Name == name {
-			// build the nested []FileNode
+
 			grpcStart := time.Now()
 			err := grpcFunc(c, "KEYWORDS")
 			if err != nil {
@@ -42,21 +46,13 @@ func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
 			grpcElapsed := time.Since(grpcStart)
 
 			goStart := time.Now()
-			for _, file := range c.Files {
 
-				keywords, err := ExtractKeywordsRAKE(ConvertToWSLPath(file.Path), 20, 50*1024*1024)
-				// keywords, err := ExtractKeywordsRAKE("document.txt", 20)
-
-				if err != nil {
-					fmt.Fprintln(os.Stderr, "Error:", err)
-					os.Exit(1)
-				}
-				for _, kw := range keywords {
-					fmt.Printf("%-15s %.2f\n", kw.Word, kw.Score)
-				}
-			}
-
+			wg.Add(1)
+			go getKeywords(c)
+			wg.Wait()
 			goElapsed := time.Since(goStart)
+
+			PrettyPrintFolder(c, "")
 
 			fmt.Printf("grpc Code block executed in %s\n", grpcElapsed)
 			fmt.Printf("go Code block executed in %s\n", goElapsed)
@@ -67,6 +63,25 @@ func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
 
 	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
 }
+func getKeywords(c *Folder) {
+	defer wg.Done()
+
+	for _, file := range c.Files {
+
+		keywords, err := ExtractKeywordsRAKE(ConvertToWSLPath(file.Path), 20, 50*1024*1024)
+		if err != nil {
+			fmt.Printf("err")
+		}
+		mu.Lock()
+		file.Keywords = keywords
+		mu.Unlock()
+	}
+
+	for _, folder := range c.Subfolders {
+		wg.Add(1)
+		go getKeywords(folder)
+	}
+}
 
 var stopwords = map[string]struct{}{
 	"and": {}, "the": {}, "is": {}, "in": {}, "at": {}, "of": {}, "a": {}, "an": {},
@@ -74,13 +89,9 @@ var stopwords = map[string]struct{}{
 }
 
 // Keyword holds a word and its RAKE score
-type Keyword struct {
-	Word  string
-	Score float64
-}
 
 // ExtractKeywordsFromText runs RAKE on the given text and returns topN words.
-func ExtractKeywordsFromText(text string, topN int) []Keyword {
+func ExtractKeywordsFromText(text string, topN int) []*pb.Keyword {
 	re := regexp.MustCompile(`[A-Za-z0-9]+`)
 	words := re.FindAllString(strings.ToLower(text), -1)
 
@@ -100,24 +111,24 @@ func ExtractKeywordsFromText(text string, topN int) []Keyword {
 		phrases = append(phrases, cur)
 	}
 
-	freq := map[string]float64{}
-	degree := map[string]float64{}
+	freq := map[string]float32{}
+	degree := map[string]float32{}
 	for _, p := range phrases {
-		L := float64(len(p))
+		L := float32(len(p))
 		for _, w := range p {
 			freq[w]++
 			degree[w] += L
 		}
 	}
 
-	score := map[string]float64{}
+	score := map[string]float32{}
 	for w, f := range freq {
 		score[w] = degree[w] / f
 	}
 
-	var kws []Keyword
+	var kws []*pb.Keyword
 	for w, sc := range score {
-		kws = append(kws, Keyword{Word: w, Score: sc})
+		kws = append(kws, &pb.Keyword{Keyword: w, Score: sc})
 	}
 	sort.Slice(kws, func(i, j int) bool {
 		return kws[i].Score > kws[j].Score
@@ -130,7 +141,7 @@ func ExtractKeywordsFromText(text string, topN int) []Keyword {
 
 // ExtractKeywordsRAKE reads filePath (limit maxSize), but only if it's a text/* file.
 // Otherwise it returns an empty slice.
-func ExtractKeywordsRAKE(filePath string, topN int, maxSize int64) ([]Keyword, error) {
+func ExtractKeywordsRAKE(filePath string, topN int, maxSize int64) ([]*pb.Keyword, error) {
 	fi, err := os.Stat(filePath)
 	if err != nil || fi.IsDir() || fi.Size() > maxSize {
 		return nil, nil
@@ -152,7 +163,7 @@ func ExtractKeywordsRAKE(filePath string, topN int, maxSize int64) ([]Keyword, e
 		return nil, nil
 	}
 
-	data, err := ioutil.ReadAll(io.LimitReader(f, maxSize))
+	data, err := io.ReadAll(io.LimitReader(f, maxSize))
 	if err != nil {
 		return nil, nil
 	}
