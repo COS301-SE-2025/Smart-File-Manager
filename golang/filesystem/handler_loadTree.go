@@ -128,7 +128,7 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 		return
 	}
 	existing.Name = dir.Name
-	existing.Path = dir.Path
+	// existing.Path = dir.Path
 
 	existing.Files = nil
 	existing.Subfolders = nil
