@@ -219,7 +219,7 @@ func HandleRequests() {
 	http.HandleFunc("/removeTag", removeTagHandler)
 
 	http.HandleFunc("/loadTreeData", loadTreeDataHandlerGoOnly)
-	// http.HandleFunc("/loadTreeData", loadTreeDataHandler)
+	
 	http.HandleFunc("/sortTree", sortTreeHandler)
 	http.HandleFunc("/startUp", startUpHandler)
 

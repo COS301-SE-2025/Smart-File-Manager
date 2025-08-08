@@ -44,46 +44,6 @@ type Metadata struct {
 	LastModified string `json:"lastModified"`
 }
 
-func printFolderDetails(folder *Folder, indent int) {
-	if folder == nil {
-		return
-	}
-
-	prefix := strings.Repeat("  ", indent)
-
-	fmt.Printf("%sFolder: %s\n", prefix, folder.Name)
-	fmt.Printf("%sPath: %s\n", prefix, folder.Path)
-	fmt.Printf("%sNewPath: %s\n", prefix, folder.NewPath)
-	fmt.Printf("%sCreationDate: %s\n", prefix, folder.CreationDate.Format(time.RFC3339))
-	fmt.Printf("%sLocked: %v\n", prefix, folder.Locked)
-	if len(folder.Tags) > 0 {
-		fmt.Printf("%sTags: %v\n", prefix, folder.Tags)
-	} else {
-		fmt.Println("NO TGS")
-	}
-	fmt.Println()
-
-	for _, file := range folder.Files {
-		fmt.Printf("%s  File: %s\n", prefix, file.Name)
-		fmt.Printf("%s  Path: %s\n", prefix, file.Path)
-		fmt.Printf("%s  NewPath: %s\n", prefix, file.NewPath)
-		if len(file.Tags) > 0 {
-			fmt.Printf("%s  Tags: %v\n", prefix, file.Tags)
-		}
-		if len(file.Metadata) > 0 {
-			fmt.Printf("%s  Metadata:\n", prefix)
-			for _, md := range file.Metadata {
-				fmt.Printf("%s    %s: %s\n", prefix, md.Key, md.Value)
-			}
-		}
-		fmt.Println()
-	}
-
-	// for _, sub := range folder.Subfolders {
-	// 	printFolderDetails(sub, indent+1)
-	// }
-}
-
 func grpcFunc(c *Folder, requestType string) error {
 	// fmt.Println("+++++pretty print start+++++")
 	// printFolderDetails(c, 0)
@@ -236,46 +196,6 @@ func convertFolderToProto(f Folder) *pb.Directory {
 	return protoDir
 }
 
-// takes in grpc's response and converts it back to composite
-func convertProtoToFolder(dir *pb.Directory) *Folder {
-	if dir == nil {
-		fmt.Println("===di empty ====")
-		// return an empty Folder (or you could return nil here—but then
-		// callers need to nil‐check too)
-		return &Folder{
-			Name:       "",
-			Path:       "",
-			Files:      nil,
-			Subfolders: nil,
-		}
-	}
-
-	compositeResult := &Folder{
-		Name: dir.Name, // make sure ItemName is exported
-		Path: dir.Path,
-	}
-
-	for _, file := range dir.Files {
-		compositeResult.Files = append(compositeResult.Files, &File{
-			Name:     file.Name,
-			Path:     file.OriginalPath,
-			Tags:     tagsToStrings(file.Tags),
-			Metadata: metadataConverter(file.Metadata),
-			Locked:   file.IsLocked,
-			NewPath:  file.NewPath,
-		})
-		// case *fs.Folder:
-		// 	protoDir.Directories = append(protoDir.Directories, convertFolderToProto(v))
-
-	}
-	for _, subFolder := range dir.Directories {
-		// fmt.Println(subFolder.Name)
-		compositeResult.Subfolders = append(compositeResult.Subfolders, convertProtoToFolder(subFolder))
-
-	}
-	return compositeResult
-}
-
 // pb.metadataentry[] to the filesystem metadataEntry[]
 func metadataConverter(metaDataArr []*pb.MetadataEntry) []*MetadataEntry {
 	// preallocate a slice of the correct length
@@ -367,43 +287,6 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 
 	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
 
-}
-
-// actual api endpoint function
-func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("loadTree called")
-	w.Header().Set("Content-Type", "application/json")
-
-	name := r.URL.Query().Get("name")
-	mu.Lock()
-	defer mu.Unlock()
-
-	for _, c := range Composites {
-		if c.Name == name {
-			// build the nested []FileNode
-			err := grpcFunc(c, "METADATA")
-			if err != nil {
-				log.Fatalf("grpcFunc failed: %v", err)
-				http.Error(w, "internal server error, GRPC CALLED WRONG", http.StatusInternalServerError)
-			}
-			children := createDirectoryJSONStructure(c)
-
-			root := DirectoryTreeJson{
-				Name:     c.Name,
-				IsFolder: true,
-				RootPath: c.Path,
-				Children: children,
-			}
-
-			if err := json.NewEncoder(w).Encode(root); err != nil {
-				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-			}
-
-			return
-		}
-	}
-
-	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
 }
 
 // helper recursive function
