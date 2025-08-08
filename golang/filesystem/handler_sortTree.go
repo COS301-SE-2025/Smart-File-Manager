@@ -28,6 +28,7 @@ func sortTreeHandler(w http.ResponseWriter, r *http.Request) {
 			root := DirectoryTreeJson{
 				Name:     c.Name,
 				IsFolder: true,
+				RootPath: c.Path,
 				Children: children,
 			}
 
