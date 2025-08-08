@@ -106,7 +106,7 @@ func PrettyPrintFolder(f *Folder, indent string) {
 		fmt.Printf("%s  📄 %s (locked=%v)\n", indent, file.Name, file.Locked)
 		fmt.Println("keywords: ")
 		for _, i := range file.Keywords {
-			fmt.Println("keyword: " + i.Keyword + " with score: " + strconv.FormatFloat(float64(i.Score), 'f', 5, 32))
+			fmt.Println(indent, "keyword: "+i.Keyword+" with score: "+strconv.FormatFloat(float64(i.Score), 'f', 5, 32))
 
 		}
 		fmt.Println("----")
