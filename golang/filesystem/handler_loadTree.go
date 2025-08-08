@@ -115,7 +115,6 @@ func grpcFunc(c *Folder, requestType string) error {
 
 	fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
 
-	// convertProtoToFolder(resp.Root)
 	mergeProtoToFolder(resp.Root, c)
 
 	return nil
@@ -127,8 +126,6 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 		fmt.Println("mergeProtoToFolder called with nil")
 		return
 	}
-	existing.Name = dir.Name
-	// existing.Path = dir.Path
 
 	existing.Files = nil
 	existing.Subfolders = nil
@@ -150,7 +147,41 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 			Path:   sub.Path,
 			Locked: sub.IsLocked,
 		}
-		mergeProtoToFolder(sub, child)
+		mergeProtoToFolderHelper(sub, child)
+		existing.Subfolders = append(existing.Subfolders, child)
+	}
+}
+
+func mergeProtoToFolderHelper(dir *pb.Directory, existing *Folder) {
+	if dir == nil || existing == nil {
+
+		fmt.Println("mergeProtoToFolderHelper called with nil")
+		return
+	}
+	existing.Name = dir.Name
+	existing.Path = dir.Path
+
+	existing.Files = nil
+	existing.Subfolders = nil
+
+	for _, file := range dir.Files {
+		existing.Files = append(existing.Files, &File{
+			Name:     file.Name,
+			Path:     file.OriginalPath,
+			Tags:     tagsToStrings(file.Tags),
+			Metadata: metadataConverter(file.Metadata),
+			Locked:   file.IsLocked,
+			NewPath:  file.NewPath,
+		})
+	}
+
+	for _, sub := range dir.Directories {
+		child := &Folder{
+			Name:   sub.Name,
+			Path:   sub.Path,
+			Locked: sub.IsLocked,
+		}
+		mergeProtoToFolderHelper(sub, child)
 		existing.Subfolders = append(existing.Subfolders, child)
 	}
 }
