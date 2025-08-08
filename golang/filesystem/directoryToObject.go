@@ -12,6 +12,7 @@ import (
 func ConvertToObject(managerName, folderPath string) (*Folder, error) {
 	// Convert Windows path to WSL format if needed
 	cleanPath := ConvertToWSLPath(folderPath)
+	// cleanPath := folderPath
 
 	root := &Folder{
 		Name:         managerName,
