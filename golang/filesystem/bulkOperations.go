@@ -180,8 +180,20 @@ func BulkDeleteFolderHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
+			children := GoSidecreateDirectoryJSONStructure(folder)
+
+			root := DirectoryTreeJson{
+				Name:     folder.Name,
+				IsFolder: true,
+				RootPath: folder.Path,
+				Children: children,
+			}
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("Folders removed successfully"))
+			w.Header().Set("Content-Type", "application/json")
+			// Encode the response as JSON
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
 			return
 		}
 	}
@@ -228,8 +240,20 @@ func BulkDeleteFileHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
+			children := GoSidecreateDirectoryJSONStructure(folder)
+
+			root := DirectoryTreeJson{
+				Name:     folder.Name,
+				IsFolder: true,
+				RootPath: folder.Path,
+				Children: children,
+			}
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("Files removed successfully"))
+			w.Header().Set("Content-Type", "application/json")
+			// Encode the response as JSON
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
 			return
 		}
 	}
