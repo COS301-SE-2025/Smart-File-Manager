@@ -164,8 +164,23 @@ class _ManagerPageState extends State<ManagerPage> {
   void _showDuplicateDialog(String name) async {
     showDialog<String>(
       context: context,
-      builder: (context) => DuplicateDialog(name: name),
+      builder:
+          (context) => DuplicateDialog(
+            name: name,
+            updateOnDuplicateDelete: _updateOnDuplicateDelete,
+          ),
     );
+  }
+
+  void _updateOnDuplicateDelete(String managerName, FileTreeNode treeData) {
+    if (!_disposed && mounted) {
+      setState(() {
+        _treeData = treeData;
+      });
+      
+      // Update the parent shell's tree data
+      widget.onTreeDataUpdate?.call(managerName, treeData);
+    }
   }
 
   void _callGoSearch(String query) async {
