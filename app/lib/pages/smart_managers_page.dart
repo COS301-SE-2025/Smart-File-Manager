@@ -1,20 +1,29 @@
 import 'package:app/constants.dart';
 import 'package:app/custom_widgets/hoverable_button.dart';
+import 'package:app/custom_widgets/sort_preview_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
 
 class SmartManagersPage extends StatefulWidget {
   Map<String, FileTreeNode> managerTreeData = {};
   List<String> managerNames;
+  Map<String, bool> pendingSorts = {};
+  Map<String, FileTreeNode> sortResults = {};
   final Function(String) onManagerDelete;
   final Function(String, FileTreeNode) onManagerSort;
+  final Function(String, FileTreeNode) onSortApprove;
+  final Function(String) onSortDecline;
 
   SmartManagersPage({
     super.key,
     required this.managerTreeData,
     required this.managerNames,
+    required this.pendingSorts,
+    required this.sortResults,
     required this.onManagerDelete,
     required this.onManagerSort,
+    required this.onSortApprove,
+    required this.onSortDecline,
   });
 
   @override
@@ -23,12 +32,46 @@ class SmartManagersPage extends StatefulWidget {
 
 class _SmartManagersPageState extends State<SmartManagersPage> {
   List<FileTreeNode> _currentItems = [];
-  final Map<String, bool> _isSorting = {};
 
   @override
   void initState() {
     super.initState();
     _updateCurrentItems();
+  }
+
+  @override
+  void didUpdateWidget(SmartManagersPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.managerTreeData != oldWidget.managerTreeData ||
+        widget.pendingSorts != oldWidget.pendingSorts ||
+        widget.sortResults != oldWidget.sortResults) {
+      _updateCurrentItems();
+    }
+  }
+
+  void _handleSortManager(String managerName) {
+    // Get the tree data for this manager (we don't actually use it for the API call)
+    final treeData = widget.managerTreeData[managerName];
+    if (treeData != null) {
+      widget.onManagerSort(managerName, treeData);
+    }
+  }
+
+  void _showSortPreview(String managerName) {
+    final sortResult = widget.sortResults[managerName];
+    if (sortResult != null) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (context) => SortPreviewDialog(
+              managerName: managerName,
+              sortedData: sortResult,
+              onApprove: widget.onSortApprove,
+              onDecline: widget.onSortDecline,
+            ),
+      );
+    }
   }
 
   void _updateCurrentItems() {
@@ -50,7 +93,7 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
       child: SizedBox(
         child: ListView.builder(
           padding: EdgeInsets.zero,
-          itemCount: widget.managerTreeData.length,
+          itemCount: _currentItems.length,
           itemBuilder: (context, index) {
             final item = _currentItems[index];
             return LayoutBuilder(
@@ -88,12 +131,7 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
                         Column(
                           //crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            HoverableButton(
-                              onTap: _isSorting ? null : _handleSortManager,
-                              name: _isSorting ? "Sorting..." : "Sort Manager",
-                              icon: Icons.filter_tilt_shift_rounded,
-                              expanded: true,
-                            ),
+                            _buildSortButton(item.name),
                             SizedBox(height: 8),
                             HoverableButton(
                               name: "Delete Manager",
@@ -128,5 +166,36 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildSortButton(String managerName) {
+    final isPending = widget.pendingSorts[managerName] ?? false;
+    final hasSortResult = widget.sortResults.containsKey(managerName);
+
+    if (hasSortResult) {
+      // Show "View Sorted" button when results are ready
+      return HoverableButton(
+        onTap: () => _showSortPreview(managerName),
+        name: "View Sorted",
+        icon: Icons.preview_rounded,
+        expanded: true,
+      );
+    } else if (isPending) {
+      // Show "Sorting..." when in progress
+      return HoverableButton(
+        onTap: null,
+        name: "Sorting...",
+        icon: Icons.filter_tilt_shift_rounded,
+        expanded: true,
+      );
+    } else {
+      // Show "Sort Manager" when idle
+      return HoverableButton(
+        onTap: () => _handleSortManager(managerName),
+        name: "Sort Manager",
+        icon: Icons.filter_tilt_shift_rounded,
+        expanded: true,
+      );
+    }
   }
 }

@@ -1,7 +1,5 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
-import 'package:app/custom_widgets/search_item_widget.dart';
 import 'package:app/custom_widgets/search_item_widget.dart';
 import 'package:app/custom_widgets/tag_dialog.dart';
 import 'package:app/api.dart';
@@ -231,15 +229,16 @@ class _FolderViewSearchState extends State<FolderViewSearch> {
 
   void _goToFolder(FileTreeNode node) {
     final fileFullPath = node.path ?? '';
-
+    print(fileFullPath);
+    print(widget.managerPath);
     //change full system path to path only from root
-    final RootPath = fileFullPath.replaceAll(widget.managerPath, "");
-
-    final parts = RootPath.split(RegExp(r'[/\\]'));
-
+    final rootPath = fileFullPath.replaceAll(widget.managerPath, "");
+    print(rootPath);
+    final parts = rootPath.split(RegExp(r'[/\\]'));
+    print(parts);
     //remove file from path
     parts.removeLast();
-
+    print(parts);
     //clear Breadcrumbs
     widget.currentBreadcrumbs.clear();
     for (String part in parts) {

@@ -242,4 +242,25 @@ class Api {
       rethrow;
     }
   }
+
+  static Future<bool> deleteSingleFile(String managerName, String path) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/deleteFile?name=$managerName&path=$path"),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.body == "true") {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        throw Exception('Failed to delete File: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error deleting file: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
 }
