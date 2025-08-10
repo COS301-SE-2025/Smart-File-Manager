@@ -17,7 +17,7 @@ class DuplicateModel {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {'name': name, 'original': originalPath, 'duplicate': duplicatePath};
+  Map<String, dynamic> toJsonForDeleteDuplicate() {
+    return {'filepath': duplicatePath};
   }
 }

@@ -2,6 +2,7 @@ package filesystem
 
 import (
 	// "encoding/json"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -165,16 +166,30 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, c := range Composites {
 		if c.Name == name {
-			err := os.Remove(path)
-			if err != nil {
-				panic(err)
+			err := os.RemoveAll(path)
+			if err == nil {
+				c.RemoveFile(path)
+			} else {
+				fmt.Println("Error removing folder:", path, "Error:", err)
 			}
-			c.RemoveFile(path)
-			// c.Display(0)
-			w.Write([]byte("true"))
+			children := GoSidecreateDirectoryJSONStructure(c)
+
+			root := DirectoryTreeJson{
+				Name:     c.Name,
+				IsFolder: true,
+				RootPath: c.Path,
+				Children: children,
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			// Encode the response as JSON
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
 			return
 		}
 	}
+
 	w.Write([]byte("false"))
 
 }
@@ -191,12 +206,25 @@ func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
 	for _, c := range Composites {
 		if c.Name == name {
 			err := os.RemoveAll(path)
-			if err != nil {
-				panic(err)
+			if err == nil {
+				c.RemoveSubfolder(path)
+			} else {
+				fmt.Println("Error removing folder:", path, "Error:", err)
 			}
-			c.RemoveSubfolder(path)
-			// c.Display(0)
-			w.Write([]byte("true"))
+			children := GoSidecreateDirectoryJSONStructure(c)
+
+			root := DirectoryTreeJson{
+				Name:     c.Name,
+				IsFolder: true,
+				RootPath: c.Path,
+				Children: children,
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			// Encode the response as JSON
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
 			return
 		}
 	}

@@ -242,4 +242,50 @@ class Api {
       rethrow;
     }
   }
+
+  static Future<FileTreeNode> deleteSingleFile(
+    String managerName,
+    String path,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/deleteFile?name=$managerName&path=$path"),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return FileTreeNode.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to delete File: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error deleting file: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<FileTreeNode> bulkDeleteFiles(
+    String managerName,
+    String jsonPaths,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/bulkDeleteFiles?name=$managerName"),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonPaths,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return FileTreeNode.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to delete files: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error deleting files: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
 }

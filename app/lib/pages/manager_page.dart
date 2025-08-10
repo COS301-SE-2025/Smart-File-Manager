@@ -13,10 +13,12 @@ class ManagerPage extends StatefulWidget {
   final String name;
   final FileTreeNode? treeData;
   final Function(String, FileTreeNode)? onTreeDataUpdate;
+  final Function(String)? onGoToAdvancedSearch;
   const ManagerPage({
     required this.name,
     this.treeData,
     this.onTreeDataUpdate,
+    this.onGoToAdvancedSearch,
     super.key,
   });
   @override
@@ -32,7 +34,6 @@ class _ManagerPageState extends State<ManagerPage> {
   FileTreeNode? _selectedFile;
   bool _isDetailsVisible = false;
   bool _isLoading = true;
-  bool _isSorting = false;
   bool _disposed = false;
   late final ScrollController _scrollController;
   late final TextEditingController _searchController;
@@ -109,37 +110,6 @@ class _ManagerPageState extends State<ManagerPage> {
     }
   }
 
-  Future<void> _handleSortManager() async {
-    if (!_disposed && mounted) {
-      setState(() {
-        _isLoading = true;
-        _isSorting = true;
-      });
-    }
-
-    try {
-      FileTreeNode response = await Api.sortManager(widget.name);
-
-      if (!_disposed && mounted) {
-        setState(() {
-          _treeData = response;
-          _isLoading = false;
-          _isSorting = false;
-        });
-
-        widget.onTreeDataUpdate?.call(widget.name, response);
-      }
-    } catch (e) {
-      if (!_disposed && mounted) {
-        setState(() {
-          _isLoading = false;
-          _isSorting = false;
-        });
-      }
-      print('Error sorting manager: $e');
-    }
-  }
-
   void _handleViewChange(int index) {
     if (!_disposed && mounted) {
       setState(() {
@@ -194,8 +164,23 @@ class _ManagerPageState extends State<ManagerPage> {
   void _showDuplicateDialog(String name) async {
     showDialog<String>(
       context: context,
-      builder: (context) => DuplicateDialog(name: name),
+      builder:
+          (context) => DuplicateDialog(
+            name: name,
+            updateOnDuplicateDelete: _updateOnDuplicateDelete,
+          ),
     );
+  }
+
+  void _updateOnDuplicateDelete(String managerName, FileTreeNode treeData) {
+    if (!_disposed && mounted) {
+      setState(() {
+        _treeData = treeData;
+      });
+      
+      // Update the parent shell's tree data
+      widget.onTreeDataUpdate?.call(managerName, treeData);
+    }
   }
 
   void _callGoSearch(String query) async {
@@ -230,8 +215,6 @@ class _ManagerPageState extends State<ManagerPage> {
       }
     }
   }
-
-  void _goToAdvancedSearch() {}
 
   Widget mainContent() {
     if (_searchHappened == true) {
@@ -415,7 +398,7 @@ class _ManagerPageState extends State<ManagerPage> {
           const SizedBox(width: 12),
           HoverableButton(
             onTap: () {
-              _goToAdvancedSearch();
+              widget.onGoToAdvancedSearch?.call(widget.name);
             },
             name: "Advanced Search",
             icon: Icons.manage_search_rounded,
@@ -432,12 +415,6 @@ class _ManagerPageState extends State<ManagerPage> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    HoverableButton(
-                      onTap: _isSorting ? null : _handleSortManager,
-                      name: _isSorting ? "Sorting..." : "Sort Manager",
-                      icon: Icons.account_tree_rounded,
-                    ),
-                    const SizedBox(width: 12),
                     HoverableButton(
                       onTap: () {
                         _showDuplicateDialog(widget.name);
@@ -464,7 +441,7 @@ class _ManagerPageState extends State<ManagerPage> {
             const CircularProgressIndicator(color: Color(0xffFFB400)),
             const SizedBox(height: 16),
             Text(
-              _isSorting ? 'Sorting files...' : 'Loading files...',
+              'Loading files...',
               style: const TextStyle(color: Color(0xff9CA3AF)),
             ),
           ],

@@ -1,14 +1,10 @@
 [
   {
-    "name": "Search SM",
-    "path": "/mnt/c/Users/bosma/OneDrive - University of Pretoria/BsC Computer Science/Year 1"
-  },
-  {
-    "name": "Sort SM",
+    "name": "Test",
     "path": "/mnt/c/COS301/Smart-File-Manager/python/testing/test_files_3"
   },
   {
-    "name": "Duplicate SM",
+    "name": "duplicates",
     "path": "/mnt/c/Users/bosma/OneDrive/Desktop/Papers"
   }
 ]

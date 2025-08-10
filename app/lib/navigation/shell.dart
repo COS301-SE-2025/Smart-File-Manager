@@ -6,6 +6,7 @@ import '../pages/advanced_search_page.dart';
 import 'main_navigation.dart';
 import '../pages/manager_page.dart';
 import 'package:app/constants.dart';
+import 'package:app/api.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:app/models/file_tree_node.dart';
 
@@ -20,8 +21,12 @@ class _ShellState extends State<Shell> {
   int _selectedIndex = 0; //index selected form the main menu (0 to 3)
   String? _selectedManager; //name of the Manager selected
   List<String> _managerNames = []; //list of manager names from startup
+  String _selectedManagerForSearch = "";
 
   final Map<String, FileTreeNode> _managerTreeData = {};
+  final Map<String, bool> _pendingSorts = {}; // Track active sort operations
+  final Map<String, FileTreeNode> _sortResults =
+      {}; // Store sort results for approval
 
   final Uri _url = Uri.parse(
     'https://cos301-se-2025.github.io/Smart-File-Manager/',
@@ -30,8 +35,20 @@ class _ShellState extends State<Shell> {
   //pages are created dynamically to pass manager names to AdvancedSearchPage
   List<Widget> get _pages => [
     const DashboardPage(),
-    const SmartManagersPage(),
-    AdvancedSearchPage(managerNames: _managerNames),
+    SmartManagersPage(
+      managerTreeData: _managerTreeData,
+      managerNames: _managerNames,
+      pendingSorts: _pendingSorts,
+      sortResults: _sortResults,
+      onManagerDelete: _onManagerDelete,
+      onManagerSort: _onManagerSort,
+      onSortApprove: _onSortApprove,
+      onSortDecline: _onSortDecline,
+    ),
+    AdvancedSearchPage(
+      managerNames: _managerNames,
+      selectedManager: _selectedManagerForSearch,
+    ),
     const SettingsPage(),
   ];
 
@@ -49,6 +66,90 @@ class _ShellState extends State<Shell> {
       _selectedIndex = index;
       _selectedManager = null;
     });
+  }
+
+  //when manager is deleted updated values here:
+  void _onManagerDelete(String managerName) {}
+
+  //when manager is sorted(move directory is called, update treedata for manager)
+  void _onManagerSort(String managerName, FileTreeNode managerData) async {
+    // Start background sorting
+    setState(() {
+      _pendingSorts[managerName] = true;
+      _sortResults.remove(managerName); // Clear any previous results
+    });
+
+    try {
+      final sortedData = await Api.sortManager(managerName);
+
+      setState(() {
+        _pendingSorts[managerName] = false;
+        _sortResults[managerName] = sortedData;
+      });
+
+      // Show notification if user is not on SmartManagersPage
+      if (_selectedIndex != 1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Sort completed for "$managerName" - View results to approve',
+            ),
+            backgroundColor: kYellowText,
+            duration: Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'View',
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 1;
+                  _selectedManager = null;
+                });
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _pendingSorts[managerName] = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Sort failed for "$managerName": $e'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  void _onSortApprove(String managerName, FileTreeNode sortedData) {
+    setState(() {
+      _managerTreeData[managerName] = sortedData;
+      _sortResults.remove(managerName);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Sort applied for "$managerName"'),
+        backgroundColor: kYellowText,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _onSortDecline(String managerName) {
+    setState(() {
+      _sortResults.remove(managerName);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Sort declined for "$managerName"'),
+        backgroundColor: Colors.grey,
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _launchUrl() async {
@@ -83,6 +184,22 @@ class _ShellState extends State<Shell> {
     });
   }
 
+  void _goToAdvancedSearch(String managerName) {
+    setState(() {
+      _selectedManager = null;
+      _selectedIndex = 2;
+      _selectedManagerForSearch = managerName;
+    });
+  }
+
+  void _onManagerAdded(String managerName) {
+    setState(() {
+      if (!_managerNames.contains(managerName)) {
+        _managerNames.add(managerName);
+      }
+    });
+  }
+
   //find the active page and return its widget
   Widget _getCurrentPage() {
     if (_selectedManager != null) {
@@ -91,6 +208,7 @@ class _ShellState extends State<Shell> {
         name: _selectedManager!,
         treeData: _managerTreeData[_selectedManager!],
         onTreeDataUpdate: _updateManagerTreeData,
+        onGoToAdvancedSearch: _goToAdvancedSearch,
       );
     } else if (_selectedIndex >= 0 && _selectedIndex < _pages.length) {
       return _pages[_selectedIndex];
@@ -145,6 +263,7 @@ class _ShellState extends State<Shell> {
             onManagerTap: _onManagerTap,
             onManagerTreeDataUpdate: _onManagerTreeDataUpdate,
             onManagerNamesUpdate: _onManagerNamesUpdate,
+            onManagerAdded: _onManagerAdded,
           ),
           //Page that needs to be rendered depending on navigation index
           Expanded(child: _getCurrentPage()),
