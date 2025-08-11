@@ -5,7 +5,21 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 )
+
+// /Type return structs
+type object struct {
+	fileType     string
+	umbrellaType string
+}
+
+type returnStruct struct {
+	filePath string
+	fileName string
+}
+
+var objectMap = map[string]object{}
 
 // this file will contain bulk operations for the filesystem such as bulk add, delete of files, folders and adding tags
 // expected json for bulk add tags
@@ -235,4 +249,79 @@ func BulkDeleteFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Error(w, "Files not found", http.StatusNotFound)
+}
+
+func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	types := r.URL.Query().Get("type")
+	umbrella := r.URL.Query().Get("umbrella")
+	w.Header().Set("Content-Type", "application/json")
+	if name == "" || types == "" || umbrella == "" {
+		http.Error(w, "Missing 'name' or 'type' or 'umbrella' parameter", http.StatusBadRequest)
+		return
+	}
+	for _, c := range Composites {
+		if c.Name == name {
+			var returnList []returnStruct
+			// fmt.Println("LIST CREATED")
+			if umbrella == "true" {
+				for k, v := range objectMap {
+					if v.umbrellaType == types {
+						returnList = append(returnList, returnStruct{
+							filePath: k,
+							fileName: c.GetFile(k).Name,
+						})
+					}
+				}
+			} else {
+				for k, v := range objectMap {
+					if v.fileType == types {
+						// fmt.Println("FILE FOUND:", k, v.fileType)
+						returnList = append(returnList, returnStruct{
+							filePath: k,
+							fileName: c.GetFile(k).Name,
+						})
+					}
+
+				}
+			}
+			// w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(returnList)
+			return
+		}
+
+	}
+	http.Error(w, "Composite not found", http.StatusNotFound)
+
+}
+
+func LoadTypes(item *Folder) {
+	for _, file := range item.Files {
+		objectMap[file.Path] = object{
+			fileType:     strings.Split(file.Name, ".")[1],
+			umbrellaType: getUmbrellaType(file.Path),
+		}
+	}
+	for _, subfolder := range item.Subfolders {
+		LoadTypes(subfolder)
+	}
+}
+
+func getUmbrellaType(path string) string {
+	file, err := os.Open(path)
+	if err != nil {
+		fmt.Printf("Error opening file: %v\n", err)
+		return ""
+	}
+	defer file.Close()
+
+	buffer := make([]byte, 512)
+	_, err = file.Read(buffer)
+	if err != nil {
+		fmt.Printf("Error reading file: %v\n", err)
+		return ""
+	}
+
+	mimeType := http.DetectContentType(buffer)
+	return mimeType
 }

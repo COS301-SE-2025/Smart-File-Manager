@@ -240,6 +240,8 @@ func HandleRequests() {
 	http.HandleFunc("/bulkDeleteFolders", BulkDeleteFolderHandler)
 	http.HandleFunc("/bulkDeleteFiles", BulkDeleteFileHandler)
 
+	http.HandleFunc("/returnType", ReturnTypeHandler)
+
 	fmt.Println("Server started on port 51000")
 
 	// http.ListenAndServe(":51000", nil)
