@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -14,9 +15,57 @@ type object struct {
 	umbrellaType string
 }
 
+var FileTypeMap = map[string]string{
+	// Documents
+	"pdf": "Documents", "doc": "Documents", "docx": "Documents", "dot": "Documents",
+	"dotx": "Documents", "rtf": "Documents", "txt": "Documents", "odt": "Documents",
+	"ott": "Documents", "wpd": "Documents", "wps": "Documents", "md": "Documents",
+	"log": "Documents", "tex": "Documents", "epub": "Documents", "mobi": "Documents",
+	"azw": "Documents", "azw3": "Documents", "djvu": "Documents", "chm": "Documents",
+	"ps": "Documents", "csv": "Documents",
+
+	// Images
+	"jpg": "Images", "jpeg": "Images", "png": "Images", "gif": "Images",
+	"bmp": "Images", "tiff": "Images", "tif": "Images", "webp": "Images",
+	"heic": "Images", "heif": "Images", "svg": "Images", "ico": "Images",
+	"psd": "Images", "ai": "Images", "eps": "Images", "raw": "Images",
+	"cr2": "Images", "nef": "Images", "orf": "Images", "arw": "Images",
+	"dng": "Images",
+
+	// Music
+	"mp3": "Music", "wav": "Music", "flac": "Music", "aac": "Music",
+	"ogg": "Music", "oga": "Music", "m4a": "Music", "wma": "Music",
+	"opus": "Music", "aiff": "Music", "alac": "Music", "mid": "Music",
+	"midi": "Music", "amr": "Music", "dsf": "Music", "dff": "Music",
+
+	// Presentations
+	"ppt": "Presentations", "pptx": "Presentations", "pps": "Presentations",
+	"ppsx": "Presentations", "odp": "Presentations", "otp": "Presentations",
+	"key": "Presentations",
+
+	// Videos
+	"mp4": "Videos", "m4v": "Videos", "mkv": "Videos", "avi": "Videos",
+	"mov": "Videos", "wmv": "Videos", "flv": "Videos", "webm": "Videos",
+	"vob": "Videos", "ts": "Videos", "m2ts": "Videos", "3gp": "Videos",
+	"f4v": "Videos", "mpeg": "Videos", "mpg": "Videos", "ogv": "Videos",
+	"divx": "Videos",
+
+	// Spreadsheets
+	"xls": "Spreadsheets", "xlsx": "Spreadsheets", "xlsm": "Spreadsheets",
+	"ods": "Spreadsheets", "ots": "Spreadsheets", "tsv": "Spreadsheets",
+	"xlsb": "Spreadsheets",
+
+	// Archives
+	"zip": "Archives", "rar": "Archives", "7z": "Archives", "tar": "Archives",
+	"gz": "Archives", "bz2": "Archives", "xz": "Archives", "tgz": "Archives",
+	"tbz2": "Archives", "lz": "Archives", "lzma": "Archives", "z": "Archives",
+	"iso": "Archives", "dmg": "Archives", "cab": "Archives", "arj": "Archives",
+	"ace": "Archives", "uue": "Archives",
+}
+
 type returnStruct struct {
-	filePath string
-	fileName string
+	FilePath string `json:"file_path"`
+	FileName string `json:"file_name"`
 }
 
 var objectMap = map[string]object{}
@@ -268,8 +317,8 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 				for k, v := range objectMap {
 					if v.umbrellaType == types {
 						returnList = append(returnList, returnStruct{
-							filePath: k,
-							fileName: c.GetFile(k).Name,
+							FilePath: k,
+							FileName: c.GetFile(k).Name,
 						})
 					}
 				}
@@ -278,8 +327,8 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 					if v.fileType == types {
 						// fmt.Println("FILE FOUND:", k, v.fileType)
 						returnList = append(returnList, returnStruct{
-							filePath: k,
-							fileName: c.GetFile(k).Name,
+							FilePath: k,
+							FileName: c.GetFile(k).Name,
 						})
 					}
 
@@ -299,7 +348,7 @@ func LoadTypes(item *Folder) {
 	for _, file := range item.Files {
 		objectMap[file.Path] = object{
 			fileType:     strings.Split(file.Name, ".")[1],
-			umbrellaType: getUmbrellaType(file.Path),
+			umbrellaType: GetCategory(file.Path),
 		}
 	}
 	for _, subfolder := range item.Subfolders {
@@ -307,21 +356,10 @@ func LoadTypes(item *Folder) {
 	}
 }
 
-func getUmbrellaType(path string) string {
-	file, err := os.Open(path)
-	if err != nil {
-		fmt.Printf("Error opening file: %v\n", err)
-		return ""
+func GetCategory(filename string) string {
+	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(filename), "."))
+	if category, exists := FileTypeMap[ext]; exists {
+		return category
 	}
-	defer file.Close()
-
-	buffer := make([]byte, 512)
-	_, err = file.Read(buffer)
-	if err != nil {
-		fmt.Printf("Error reading file: %v\n", err)
-		return ""
-	}
-
-	mimeType := http.DetectContentType(buffer)
-	return mimeType
+	return "Unknown"
 }
