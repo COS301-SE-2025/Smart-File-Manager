@@ -8,6 +8,7 @@ import 'package:app/api.dart';
 import 'package:app/custom_widgets/hoverable_button.dart';
 import 'package:app/custom_widgets/custom_search_bar.dart';
 import 'package:app/pages/search_sub_page/folder_view_search.dart';
+import 'package:app/custom_widgets/bulk_dialog.dart';
 
 class ManagerPage extends StatefulWidget {
   final String name;
@@ -172,12 +173,25 @@ class _ManagerPageState extends State<ManagerPage> {
     );
   }
 
+  void _showBulkDialog(String name) async {
+    showDialog<String>(
+      context: context,
+      builder:
+          (context) => BulkDialog(
+            name: name,
+            type: "Documents",
+            umbrella: true,
+            updateOnDelete: _updateOnDuplicateDelete,
+          ),
+    );
+  }
+
   void _updateOnDuplicateDelete(String managerName, FileTreeNode treeData) {
     if (!_disposed && mounted) {
       setState(() {
         _treeData = treeData;
       });
-      
+
       // Update the parent shell's tree data
       widget.onTreeDataUpdate?.call(managerName, treeData);
     }
@@ -421,6 +435,14 @@ class _ManagerPageState extends State<ManagerPage> {
                       },
                       name: "Find Duplicates",
                       icon: Icons.filter_none_rounded,
+                    ),
+                    const SizedBox(width: 12),
+                    HoverableButton(
+                      onTap: () {
+                        _showBulkDialog(widget.name);
+                      },
+                      name: "Bulk Operations",
+                      icon: Icons.factory_rounded,
                     ),
                   ],
                 ),
