@@ -2,6 +2,7 @@
 import os
 
 from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 import numpy as np
 
 from directory_builder import DirectoryCreator
@@ -46,6 +47,8 @@ class KMeansCluster:
         for f in self.locked_files:
             print(f["filename"])
 
+
+        
         unlocked_dirs = self.recDirCluster(full_vecs, files, 0, self.parent_folder, builder)
 
         locked_dirs = self.buildLockedDirs(self.locked_files, builder)
@@ -53,7 +56,7 @@ class KMeansCluster:
         root_dir = builder.merge(unlocked_dirs, locked_dirs)
         #print(root_dir)
         #self.printMetaData(root_dir)
-        return root_dir
+        return root_dir 
         
     
 
@@ -64,7 +67,7 @@ class KMeansCluster:
             folder_name = self.folder_namer.generateFolderName(files)        
             dir_name = os.path.join(dir_prefix, folder_name)
 
-            if folder_name in dir_prefix:
+            if os.path.basename(dir_prefix) == folder_name:
                 return builder.buildDirectory(dir_prefix,files,[])
         else:
             dir_name = dir_prefix
@@ -74,22 +77,18 @@ class KMeansCluster:
         if len(full_vecs) < self.min_size or depth > self.max_depth: # depth can be changed on init of kmeans
             return builder.buildDirectory(dir_name, files, []) 
         
-        # if there are too many clusters reduce it 
-        if len(full_vecs) < self.n_clusters:
-            self.n_clusters = len(full_vecs)
+        bias_factor = (1 / (depth + 1)) * 0.01
+        # get optimal amount of clusters
+        k = self.get_num_clusters(
+                full_vecs, 
+                k_min = self.min_size, 
+                bias_factor = bias_factor
+                )
+        print("Best k values found: ", k)
+        if k <= 1:
+            return builder.buildDirectory(dir_name, files, [])
 
-        # Min clusters (x leaves, x dirs per level)
-        if self.n_clusters <= self.min_size:
-            self.n_clusters = self.min_size
-        else:
-            self.n_clusters -= 1
-
-        # create the clustering
-        self.kmeans = KMeans(
-            n_clusters=self.n_clusters,
-            random_state=42,
-            n_init="auto",
-        )
+        self.kmeans = KMeans(n_clusters=k,random_state =42, n_init="auto")
 
         # cluster and get labels
         labels = self.cluster(full_vecs)
@@ -114,7 +113,8 @@ class KMeansCluster:
                 # sub_dir = self.recDirCluster(sub_vecs,entries,depth,f"{dir_name}_{label}", builder)
                 # subdirs.append(sub_dir)
                 # Flavour 2 (More files per dir)
-                return builder.buildDirectory(dir_name, files, [])                
+                retained_files.extend(entries)
+                continue
             # Good number of entries, atleast minsize so recursively check (if exactly minsize it will make a dir of these two folders)
             elif len(entries) >= self.min_size:                  
                 sub_vecs = [e["full_vector"] for e in entries]
@@ -179,6 +179,66 @@ class KMeansCluster:
             add_to_tree(dir_tree, relative_parts,f)
 
         return builder.buildDirectory(self.parent_folder, [], build_dirs_from_tree(dir_tree))
+
+    def get_num_clusters(self, X, k_min = 2, k_max = None, random_state = 42, bias_factor = 0.01, bad_threshold=0.03, cluster_fraction = 3):
+        """
+        Determine amount of clusters using silhouette_score and elbow method
+        X - features
+        k_min - min clusters set on init
+        k_max - max clusters set on init
+        random_state - random num for reproducibility
+
+        returns:
+            dict with best_k, silhouette_score, inertias
+        """
+        num_samples = len(X)
+        print("Num samples: ", num_samples)
+        if num_samples < 2:
+            return 1
+
+        if k_max is None:
+            k_max = max(k_min, num_samples // cluster_fraction)
+
+        silhouette_scores = []
+        valid_k = []
+        k_values = range(k_min, min(k_max, num_samples)+1)
+        print("Range of val: ", k_values)
+
+        for k in k_values:
+            if k<= 1 or k>= num_samples:
+                print("Continue")
+                continue
+            try:
+                kmeans = KMeans(n_clusters=k, random_state=random_state, n_init="auto")
+                labels = kmeans.fit_predict(X)
+
+                score = silhouette_score(X, labels)
+                score += k * bias_factor
+
+                silhouette_scores.append(score)
+                valid_k.append(k)
+
+            except Exception:
+                pass
+
+        if not silhouette_scores:
+            print("Sil scores empty")
+            return 1
+
+
+        best_index = int(np.argmax(silhouette_scores))
+        best_k = valid_k[best_index]
+
+        # if the best score is very bad dont split
+        best_score = silhouette_scores[best_index] - best_k * bias_factor
+        if best_score < bad_threshold:
+            return 1
+
+        return best_k
+
+
+
+
 
 
 
