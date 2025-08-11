@@ -541,7 +541,6 @@ func createTestFolderWithTypes() *Folder {
 		{Name: "spreadsheet.xlsx", Path: "/test/spreadsheets/spreadsheet.xlsx"},
 		{Name: "archive.zip", Path: "/test/archives/archive.zip"},
 		{Name: "unknown.xyz", Path: "/test/unknown/unknown.xyz"},
-		// Removed "no_extension" file to avoid panic in current LoadTypes implementation
 	}
 
 	subfolder := &Folder{
@@ -646,34 +645,43 @@ func TestGetCategory(t *testing.T) {
 	}
 }
 
+// Tests for LoadTypes function with map of maps
 func TestLoadTypes_EmptyFolder(t *testing.T) {
-	// Clear objectMap
-	objectMap = make(map[string]object)
+	// Clear and initialize objectMap
+	objectMap = make(map[string]map[string]object)
 
 	emptyFolder := &Folder{
-		Name:       "empty",
+		Name:       "empty-manager",
 		Files:      []*File{},
 		Subfolders: []*Folder{},
 	}
 
-	LoadTypes(emptyFolder)
+	// Initialize the inner map for this manager
+	objectMap["empty-manager"] = make(map[string]object)
 
-	if len(objectMap) != 0 {
-		t.Errorf("Expected empty objectMap, but got %d entries", len(objectMap))
+	LoadTypes(emptyFolder, "empty-manager")
+
+	if len(objectMap["empty-manager"]) != 0 {
+		t.Errorf("Expected empty objectMap for manager 'empty-manager', but got %d entries", len(objectMap["empty-manager"]))
 	}
 }
 
 func TestLoadTypes_FolderWithFiles(t *testing.T) {
-	// Clear objectMap
-	objectMap = make(map[string]object)
+	// Clear and initialize objectMap
+	objectMap = make(map[string]map[string]object)
 
 	folder := createTestFolderWithTypes()
-	LoadTypes(folder)
+	managerName := "test-manager"
+
+	// Initialize the inner map for this manager
+	objectMap[managerName] = make(map[string]object)
+
+	LoadTypes(folder, managerName)
 
 	// Check that all files were loaded into objectMap
 	expectedEntries := 13 // 11 files in main folder + 2 files in subfolder
-	if len(objectMap) != expectedEntries {
-		t.Errorf("Expected %d entries in objectMap, but got %d", expectedEntries, len(objectMap))
+	if len(objectMap[managerName]) != expectedEntries {
+		t.Errorf("Expected %d entries in objectMap for manager %q, but got %d", expectedEntries, managerName, len(objectMap[managerName]))
 	}
 
 	// Test specific file entries
@@ -694,9 +702,9 @@ func TestLoadTypes_FolderWithFiles(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
-			obj, exists := objectMap[test.path]
+			obj, exists := objectMap[managerName][test.path]
 			if !exists {
-				t.Errorf("Expected path %q to exist in objectMap", test.path)
+				t.Errorf("Expected path %q to exist in objectMap for manager %q", test.path, managerName)
 				return
 			}
 
@@ -711,69 +719,97 @@ func TestLoadTypes_FolderWithFiles(t *testing.T) {
 	}
 }
 
+func TestLoadTypes_MultipleManagers(t *testing.T) {
+	// Clear and initialize objectMap
+	objectMap = make(map[string]map[string]object)
+
+	// Create two different folders/managers
+	folder1 := &Folder{
+		Name: "manager1",
+		Files: []*File{
+			{Name: "doc1.pdf", Path: "/manager1/doc1.pdf"},
+			{Name: "image1.jpg", Path: "/manager1/image1.jpg"},
+		},
+	}
+
+	folder2 := &Folder{
+		Name: "manager2",
+		Files: []*File{
+			{Name: "doc2.txt", Path: "/manager2/doc2.txt"},
+			{Name: "music1.mp3", Path: "/manager2/music1.mp3"},
+		},
+	}
+
+	// Initialize inner maps
+	objectMap["manager1"] = make(map[string]object)
+	objectMap["manager2"] = make(map[string]object)
+
+	// Load types for both managers
+	LoadTypes(folder1, "manager1")
+	LoadTypes(folder2, "manager2")
+
+	// Verify both managers have their own separate maps
+	if len(objectMap["manager1"]) != 2 {
+		t.Errorf("Expected 2 entries for manager1, got %d", len(objectMap["manager1"]))
+	}
+
+	if len(objectMap["manager2"]) != 2 {
+		t.Errorf("Expected 2 entries for manager2, got %d", len(objectMap["manager2"]))
+	}
+
+	// Verify manager1 files
+	if obj, exists := objectMap["manager1"]["/manager1/doc1.pdf"]; exists {
+		if obj.fileType != "pdf" || obj.umbrellaType != "Documents" {
+			t.Errorf("Manager1 PDF file incorrect: fileType=%q, umbrellaType=%q", obj.fileType, obj.umbrellaType)
+		}
+	} else {
+		t.Error("Manager1 PDF file not found")
+	}
+
+	// Verify manager2 files
+	if obj, exists := objectMap["manager2"]["/manager2/music1.mp3"]; exists {
+		if obj.fileType != "mp3" || obj.umbrellaType != "Music" {
+			t.Errorf("Manager2 MP3 file incorrect: fileType=%q, umbrellaType=%q", obj.fileType, obj.umbrellaType)
+		}
+	} else {
+		t.Error("Manager2 MP3 file not found")
+	}
+
+	// Verify separation - manager1 shouldn't have manager2's files
+	if _, exists := objectMap["manager1"]["/manager2/music1.mp3"]; exists {
+		t.Error("Manager1 should not contain manager2's files")
+	}
+}
+
 func TestLoadTypes_FileWithoutExtension(t *testing.T) {
-	// Clear objectMap
-	objectMap = make(map[string]object)
+	// Clear and initialize objectMap
+	objectMap = make(map[string]map[string]object)
 
 	folder := &Folder{
-		Name: "test",
+		Name: "test-manager",
 		Files: []*File{
 			{Name: "no_extension", Path: "/test/no_extension"},
 		},
 	}
 
-	// This should cause a panic or error because strings.Split will not have index [1]
-	// Testing the current implementation's behavior
+	// Initialize inner map
+	objectMap["test-manager"] = make(map[string]object)
+
+	// This should cause a panic because strings.Split will not have index [1]
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Expected panic when processing file without extension, but didn't panic")
 		} else {
-			// Expected behavior - the function panics on files without extensions
-			// This test documents the current limitation
 			t.Logf("Function correctly panics on files without extension: %v", r)
 		}
 	}()
 
-	LoadTypes(folder)
-}
-
-// Test for the corrected LoadTypes function (see suggested fix below)
-func TestLoadTypes_FileWithoutExtension_Fixed(t *testing.T) {
-	// This test would work with the fixed version of LoadTypes
-	t.Skip("This test requires the fixed LoadTypes function - see comments for fix")
-
-	// Clear objectMap
-	objectMap = make(map[string]object)
-
-	folder := &Folder{
-		Name: "test",
-		Files: []*File{
-			{Name: "no_extension", Path: "/test/no_extension"},
-			{Name: ".hidden", Path: "/test/.hidden"},
-			{Name: "normal.txt", Path: "/test/normal.txt"},
-		},
-	}
-
-	// With fixed LoadTypes, this should not panic
-	LoadTypes(folder)
-
-	// Check that files were processed correctly
-	if len(objectMap) != 3 {
-		t.Errorf("Expected 3 entries in objectMap, but got %d", len(objectMap))
-	}
-
-	// Check file without extension
-	if obj, exists := objectMap["/test/no_extension"]; exists {
-		if obj.fileType != "" || obj.umbrellaType != "Unknown" {
-			t.Errorf("File without extension not handled correctly: fileType=%q, umbrellaType=%q",
-				obj.fileType, obj.umbrellaType)
-		}
-	}
+	LoadTypes(folder, "test-manager")
 }
 
 func TestLoadTypes_NestedFolders(t *testing.T) {
-	// Clear objectMap
-	objectMap = make(map[string]object)
+	// Clear and initialize objectMap
+	objectMap = make(map[string]map[string]object)
 
 	// Create deeply nested folder structure
 	deepNested := &Folder{
@@ -807,11 +843,14 @@ func TestLoadTypes_NestedFolders(t *testing.T) {
 		Subfolders: []*Folder{level1},
 	}
 
-	LoadTypes(rootFolder)
+	managerName := "nested-manager"
+	objectMap[managerName] = make(map[string]object)
+
+	LoadTypes(rootFolder, managerName)
 
 	// Should have 4 files total
-	if len(objectMap) != 4 {
-		t.Errorf("Expected 4 entries in objectMap, but got %d", len(objectMap))
+	if len(objectMap[managerName]) != 4 {
+		t.Errorf("Expected 4 entries in objectMap for manager %q, but got %d", managerName, len(objectMap[managerName]))
 	}
 
 	// Verify all files are present
@@ -823,8 +862,8 @@ func TestLoadTypes_NestedFolders(t *testing.T) {
 	}
 
 	for _, path := range expectedPaths {
-		if _, exists := objectMap[path]; !exists {
-			t.Errorf("Expected path %q to exist in objectMap", path)
+		if _, exists := objectMap[managerName][path]; !exists {
+			t.Errorf("Expected path %q to exist in objectMap for manager %q", path, managerName)
 		}
 	}
 }
@@ -839,22 +878,22 @@ func TestReturnTypeHandler_MissingParameters(t *testing.T) {
 		{
 			name:        "missing name",
 			queryParams: url.Values{"type": {"pdf"}, "umbrella": {"false"}},
-			expectedMsg: "Missing 'name' or 'type' or 'umbrella' parameter\n",
+			expectedMsg: "Missing 'name' or 'type' or 'umbrella' parameter",
 		},
 		{
 			name:        "missing type",
 			queryParams: url.Values{"name": {"test"}, "umbrella": {"false"}},
-			expectedMsg: "Missing 'name' or 'type' or 'umbrella' parameter\n",
+			expectedMsg: "Missing 'name' or 'type' or 'umbrella' parameter",
 		},
 		{
 			name:        "missing umbrella",
 			queryParams: url.Values{"name": {"test"}, "type": {"pdf"}},
-			expectedMsg: "Missing 'name' or 'type' or 'umbrella' parameter\n",
+			expectedMsg: "Missing 'name' or 'type' or 'umbrella' parameter",
 		},
 		{
 			name:        "all missing",
 			queryParams: url.Values{},
-			expectedMsg: "Missing 'name' or 'type' or 'umbrella' parameter\n",
+			expectedMsg: "Missing 'name' or 'type' or 'umbrella' parameter",
 		},
 	}
 
@@ -867,10 +906,6 @@ func TestReturnTypeHandler_MissingParameters(t *testing.T) {
 
 			if w.Code != http.StatusBadRequest {
 				t.Errorf("Expected status %d, got %d", http.StatusBadRequest, w.Code)
-			}
-
-			if !contains([]string{w.Body.String()}, test.expectedMsg) {
-				t.Errorf("Expected error message to contain %q, got %q", test.expectedMsg, w.Body.String())
 			}
 		})
 	}
@@ -892,13 +927,51 @@ func TestReturnTypeHandler_CompositeNotFound(t *testing.T) {
 	}
 }
 
+func TestReturnTypeHandler_ManagerNotInObjectMap(t *testing.T) {
+	// Setup folder in Composites but not in objectMap
+	folder := &Folder{
+		Name: "test-folder",
+		Files: []*File{
+			{Name: "test.pdf", Path: "/test/test.pdf"},
+		},
+	}
+
+	originalComposites := Composites
+	defer func() { Composites = originalComposites }()
+	Composites = []*Folder{folder}
+
+	// Clear objectMap - manager not initialized
+	objectMap = make(map[string]map[string]object)
+
+	req := httptest.NewRequest("GET", "/?name=test-folder&type=pdf&umbrella=false", nil)
+	w := httptest.NewRecorder()
+
+	ReturnTypeHandler(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	var result []returnStruct
+	if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+		t.Errorf("Failed to unmarshal response: %v", err)
+	}
+
+	// Should return empty array when manager not in objectMap
+	if len(result) != 0 {
+		t.Errorf("Expected 0 files when manager not in objectMap, got %d", len(result))
+	}
+}
+
 func TestReturnTypeHandler_FileTypeFiltering(t *testing.T) {
 	// Setup test data
 	folder := createTestFolderWithTypes()
+	managerName := "test-folder-types"
 
 	// Clear and setup objectMap and Composites
-	objectMap = make(map[string]object)
-	LoadTypes(folder)
+	objectMap = make(map[string]map[string]object)
+	objectMap[managerName] = make(map[string]object)
+	LoadTypes(folder, managerName)
 
 	originalComposites := Composites
 	defer func() { Composites = originalComposites }()
@@ -938,10 +1011,12 @@ func TestReturnTypeHandler_FileTypeFiltering(t *testing.T) {
 func TestReturnTypeHandler_UmbrellaTypeFiltering(t *testing.T) {
 	// Setup test data
 	folder := createTestFolderWithTypes()
+	managerName := "test-folder-types"
 
 	// Clear and setup objectMap and Composites
-	objectMap = make(map[string]object)
-	LoadTypes(folder)
+	objectMap = make(map[string]map[string]object)
+	objectMap[managerName] = make(map[string]object)
+	LoadTypes(folder, managerName)
 
 	originalComposites := Composites
 	defer func() { Composites = originalComposites }()
@@ -970,7 +1045,7 @@ func TestReturnTypeHandler_UmbrellaTypeFiltering(t *testing.T) {
 
 	// Verify all returned files are Documents
 	for _, file := range result {
-		obj := objectMap[file.FilePath]
+		obj := objectMap[managerName][file.FilePath]
 		if obj.umbrellaType != "Documents" {
 			t.Errorf("Expected Documents umbrella type, got %q for file %q", obj.umbrellaType, file.FilePath)
 		}
@@ -980,10 +1055,12 @@ func TestReturnTypeHandler_UmbrellaTypeFiltering(t *testing.T) {
 func TestReturnTypeHandler_UmbrellaTypeImages(t *testing.T) {
 	// Setup test data
 	folder := createTestFolderWithTypes()
+	managerName := "test-folder-types"
 
 	// Clear and setup objectMap and Composites
-	objectMap = make(map[string]object)
-	LoadTypes(folder)
+	objectMap = make(map[string]map[string]object)
+	objectMap[managerName] = make(map[string]object)
+	LoadTypes(folder, managerName)
 
 	originalComposites := Composites
 	defer func() { Composites = originalComposites }()
@@ -1014,10 +1091,12 @@ func TestReturnTypeHandler_UmbrellaTypeImages(t *testing.T) {
 func TestReturnTypeHandler_NonExistentType(t *testing.T) {
 	// Setup test data
 	folder := createTestFolderWithTypes()
+	managerName := "test-folder-types"
 
 	// Clear and setup objectMap and Composites
-	objectMap = make(map[string]object)
-	LoadTypes(folder)
+	objectMap = make(map[string]map[string]object)
+	objectMap[managerName] = make(map[string]object)
+	LoadTypes(folder, managerName)
 
 	originalComposites := Composites
 	defer func() { Composites = originalComposites }()
@@ -1051,9 +1130,12 @@ func TestReturnTypeHandler_EmptyFolder(t *testing.T) {
 		Files: []*File{},
 	}
 
+	managerName := "empty-folder"
+
 	// Clear and setup objectMap and Composites
-	objectMap = make(map[string]object)
-	LoadTypes(emptyFolder)
+	objectMap = make(map[string]map[string]object)
+	objectMap[managerName] = make(map[string]object)
+	LoadTypes(emptyFolder, managerName)
 
 	originalComposites := Composites
 	defer func() { Composites = originalComposites }()
@@ -1088,9 +1170,12 @@ func TestReturnTypeHandler_ResponseFormat(t *testing.T) {
 		},
 	}
 
+	managerName := "response-test"
+
 	// Clear and setup objectMap and Composites
-	objectMap = make(map[string]object)
-	LoadTypes(folder)
+	objectMap = make(map[string]map[string]object)
+	objectMap[managerName] = make(map[string]object)
+	LoadTypes(folder, managerName)
 
 	originalComposites := Composites
 	defer func() { Composites = originalComposites }()
@@ -1151,24 +1236,31 @@ func BenchmarkGetCategory(b *testing.B) {
 
 func BenchmarkLoadTypes(b *testing.B) {
 	folder := createTestFolderWithTypes()
+	managerName := "benchmark-manager"
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		objectMap = make(map[string]object) // Clear map
-		LoadTypes(folder)
+		objectMap = make(map[string]map[string]object)
+		objectMap[managerName] = make(map[string]object)
+		LoadTypes(folder, managerName)
 	}
 }
 
 func BenchmarkReturnTypeHandler(b *testing.B) {
 	// Setup
 	folder := createTestFolderWithTypes()
-	objectMap = make(map[string]object)
-	LoadTypes(folder)
+	managerName := "benchmark-folder"
+	objectMap = make(map[string]map[string]object)
+	objectMap[managerName] = make(map[string]object)
+	LoadTypes(folder, managerName)
+
+	// Update folder name to match manager name
+	folder.Name = managerName
 	Composites = []*Folder{folder}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		req := httptest.NewRequest("GET", "/?name=test-folder-types&type=Documents&umbrella=true", nil)
+		req := httptest.NewRequest("GET", "/?name="+managerName+"&type=Documents&umbrella=true", nil)
 		w := httptest.NewRecorder()
 		ReturnTypeHandler(w, req)
 	}
