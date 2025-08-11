@@ -280,7 +280,7 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 			if err := json.NewEncoder(w).Encode(root); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			}
-
+			LoadTypes(c) // load types into the global objectMap
 			return
 		}
 	}
