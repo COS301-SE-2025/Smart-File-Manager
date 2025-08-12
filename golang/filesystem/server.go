@@ -244,7 +244,7 @@ func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
 	for i, c := range Composites {
 		if c.Name == name {
 			// Delete folder
-			os.RemoveAll(c.Path)
+			// os.RemoveAll(c.Path)
 			// Remove from list of managers
 			Composites = append(Composites[:i], Composites[i+1:]...)
 			// Remove from type storage
