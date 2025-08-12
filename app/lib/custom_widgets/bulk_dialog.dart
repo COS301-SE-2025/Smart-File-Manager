@@ -35,6 +35,14 @@ class _BulkDialogState extends State<BulkDialog> {
   String _selectedCategory = "Documents";
   String? _selectedFileType;
 
+  String _selectedBulkOperation = "Bulk Delete";
+
+  final List<String> _bulkOperations = [
+    "Bulk Delete",
+    "Bulk Add Tag",
+    "Bulk Remove Tag",
+  ];
+
   final Map<String, List<String>> _fileTypeMap = {
     "Documents": ["pdf", "doc", "docx", "rtf", "txt", "odt", "md", "csv"],
     "Images": [
@@ -90,6 +98,18 @@ class _BulkDialogState extends State<BulkDialog> {
       setState(() {
         _selectedCategory = newCategory;
         _selectedFileType = null;
+      });
+      _loadBulkData(widget.name, _selectedCategory, true);
+    }
+  }
+
+  void _onBulkOperationChanged(String? newBulkOperation) {
+    if (newBulkOperation != null &&
+        newBulkOperation != _selectedBulkOperation) {
+      setState(() {
+        _selectedCategory = "Documents";
+        _selectedFileType = null;
+        _selectedBulkOperation = newBulkOperation;
       });
       _loadBulkData(widget.name, _selectedCategory, true);
     }
@@ -178,6 +198,23 @@ class _BulkDialogState extends State<BulkDialog> {
           children: [
             Row(
               children: [
+                Expanded(
+                  child: CustomDropdownMenu<String>(
+                    items:
+                        _bulkOperations.map((String operation) {
+                          return DropdownMenuItem<String>(
+                            value: operation,
+                            child: Text(operation),
+                          );
+                        }).toList(),
+                    value: _selectedBulkOperation,
+                    onChanged: _onBulkOperationChanged,
+                    hint: "Select Bulk Operation",
+                    minWidth: 120,
+                    maxWidth: 180,
+                  ),
+                ),
+                SizedBox(width: 10),
                 Expanded(
                   child: CustomDropdownMenu<String>(
                     items:
@@ -342,15 +379,78 @@ class _BulkDialogState extends State<BulkDialog> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                             const SizedBox(height: 6),
-                                            Text(
-                                              'Path: ${object.filePath}',
-                                              style: const TextStyle(
-                                                color: Color(0xff9CA3AF),
-                                                fontSize: 12,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
+                                            _selectedBulkOperation ==
+                                                    "Bulk Delete"
+                                                ? Text(
+                                                  'Path: ${object.filePath}',
+                                                  style: const TextStyle(
+                                                    color: Color(0xff9CA3AF),
+                                                    fontSize: 12,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                )
+                                                : object.fileTags!.isEmpty
+                                                ? Text(
+                                                  "no tags",
+                                                  style: const TextStyle(
+                                                    color: Color(0xff9CA3AF),
+                                                    fontSize: 12,
+                                                  ),
+                                                )
+                                                : Wrap(
+                                                  spacing: 8,
+                                                  runSpacing: 8,
+                                                  children:
+                                                      object.fileTags!
+                                                          .map(
+                                                            (tag) => Container(
+                                                              padding:
+                                                                  const EdgeInsets.symmetric(
+                                                                    horizontal:
+                                                                        12,
+                                                                    vertical: 6,
+                                                                  ),
+                                                              decoration: BoxDecoration(
+                                                                color:
+                                                                    const Color(
+                                                                      0xff374151,
+                                                                    ),
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      16,
+                                                                    ),
+                                                                border: Border.all(
+                                                                  color: const Color(
+                                                                    0xff4B5563,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              child: Row(
+                                                                mainAxisSize:
+                                                                    MainAxisSize
+                                                                        .min,
+                                                                children: [
+                                                                  Text(
+                                                                    tag,
+                                                                    style: const TextStyle(
+                                                                      color: Color(
+                                                                        0xffE5E7EB,
+                                                                      ),
+                                                                      fontSize:
+                                                                          12,
+                                                                    ),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                    width: 4,
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          )
+                                                          .toList(),
+                                                ),
                                           ],
                                         ),
                                       ),
@@ -402,20 +502,59 @@ class _BulkDialogState extends State<BulkDialog> {
               ),
               if (_currentSelectedFiles.isNotEmpty) ...[
                 SizedBox(width: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    _deleteMultipleFiles(widget.name, _currentSelectedFiles);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kYellowText,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+                _selectedBulkOperation == "Bulk Delete"
+                    ? ElevatedButton(
+                      onPressed: () {
+                        _deleteMultipleFiles(
+                          widget.name,
+                          _currentSelectedFiles,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kYellowText,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text('Delete Selected Files'),
+                    )
+                    : _selectedBulkOperation == "Bulk Add Tag"
+                    ? ElevatedButton(
+                      onPressed: () {
+                        _deleteMultipleFiles(
+                          widget.name,
+                          _currentSelectedFiles,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kYellowText,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text('Tag Selected Files'),
+                    )
+                    : ElevatedButton(
+                      onPressed: () {
+                        _deleteMultipleFiles(
+                          widget.name,
+                          _currentSelectedFiles,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kYellowText,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text('Remove Tags from Selected Files'),
                     ),
-                  ),
-                  child: const Text('Delete Selected Files'),
-                ),
               ],
               SizedBox(width: 20),
             ],

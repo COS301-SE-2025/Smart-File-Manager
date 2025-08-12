@@ -281,7 +281,7 @@ func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
 			if err := os.WriteFile(managersFilePath, out, 0644); err != nil {
 				panic(err)
 			}
-
+			fmt.Println("Deleted manager");
 			w.Write([]byte("true"))
 			return
 		}

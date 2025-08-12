@@ -9,7 +9,6 @@ class SmartManagersPage extends StatefulWidget {
   List<String> managerNames;
   Map<String, bool> pendingSorts = {};
   Map<String, FileTreeNode> sortResults = {};
-  final Function(String) onManagerDelete;
   final Function(String, FileTreeNode) onManagerSort;
   final Function(String, FileTreeNode) onSortApprove;
   final Function(String) onSortDecline;
@@ -20,7 +19,6 @@ class SmartManagersPage extends StatefulWidget {
     required this.managerNames,
     required this.pendingSorts,
     required this.sortResults,
-    required this.onManagerDelete,
     required this.onManagerSort,
     required this.onSortApprove,
     required this.onSortDecline,
@@ -137,6 +135,7 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
                               name: "Delete Manager",
                               icon: Icons.delete_forever_rounded,
                               expanded: true,
+                              onTap: () => {},
                             ),
                           ],
                         ),

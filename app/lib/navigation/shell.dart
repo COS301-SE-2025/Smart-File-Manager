@@ -40,7 +40,6 @@ class _ShellState extends State<Shell> {
       managerNames: _managerNames,
       pendingSorts: _pendingSorts,
       sortResults: _sortResults,
-      onManagerDelete: _onManagerDelete,
       onManagerSort: _onManagerSort,
       onSortApprove: _onSortApprove,
       onSortDecline: _onSortDecline,
@@ -67,9 +66,6 @@ class _ShellState extends State<Shell> {
       _selectedManager = null;
     });
   }
-
-  //when manager is deleted updated values here:
-  void _onManagerDelete(String managerName) {}
 
   //when manager is sorted(move directory is called, update treedata for manager)
   void _onManagerSort(String managerName, FileTreeNode managerData) async {
