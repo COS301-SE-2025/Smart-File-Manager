@@ -397,11 +397,9 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoadTypes(item *Folder, name string) {
+
+	objectMap[name] = make(map[string]object)
 	for _, file := range item.Files {
-		_, exists := objectMap[name]
-		if !exists {
-			objectMap[name] = make(map[string]object)
-		}
 		objectMap[name][file.Path] = object{
 			fileType:     strings.Split(file.Name, ".")[1],
 			umbrellaType: GetCategory(file.Path),
