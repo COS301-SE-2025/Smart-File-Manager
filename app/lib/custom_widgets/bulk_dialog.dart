@@ -203,26 +203,84 @@ class _BulkDialogState extends State<BulkDialog> {
     }
   }
 
-  String _convertToJsonAddTag() {
-    List<Map<String, String>> fileList =
+  String _convertToJsonAddTag(String tag) {
+    List<Map<String, dynamic>> fileList =
         _currentSelectedFiles
-            .map((file) => {"file_path": file.filePath})
+            .map((file) => {
+              "file_path": file.filePath,
+              "tags": [tag]
+            })
             .toList();
     return jsonEncode(fileList);
   }
 
-  void _tagMultipleFiles(String managerName, List<FileModel> files) async {
-    String jsonPaths = _convertToJsonAddTag();
-    FileTreeNode response = await Api.bulkDeleteFiles(managerName, jsonPaths);
+  void _showAddTagDialog() {
+    final TextEditingController tagController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: kScaffoldColor,
+          title: const Text('Add Tag', style: kTitle1),
+          content: TextField(
+            controller: tagController,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: 'Enter tag name',
+              hintStyle: TextStyle(color: Color(0xff9CA3AF)),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.grey),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: kYellowText),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                tagController.dispose();
+              },
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final tag = tagController.text.trim();
+                if (tag.isNotEmpty) {
+                  Navigator.of(dialogContext).pop();
+                  _tagMultipleFiles(widget.name, tag);
+                }
+                tagController.dispose();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kYellowText,
+                foregroundColor: Colors.black,
+              ),
+              child: const Text('Add Tag'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _tagMultipleFiles(String managerName, String tag) async {
+    String jsonPaths = _convertToJsonAddTag(tag);
+    FileTreeNode response = await Api.bulkAddTag(managerName, jsonPaths);
     if (response.name == managerName) {
       setState(() {
         widget.files?.clear();
         _currentSelectedFiles.clear();
       });
       widget.updateOnDelete.call(managerName, response);
+      if (mounted) {
+        Navigator.pop(context);
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Deleted all files successfully'),
+          content: Text('Successfully added tag "$tag" to selected files'),
           backgroundColor: kYellowText,
           duration: Duration(seconds: 2),
         ),
@@ -230,7 +288,7 @@ class _BulkDialogState extends State<BulkDialog> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not delete files'),
+          content: Text('Could not add tag to files'),
           backgroundColor: Colors.redAccent,
           duration: Duration(seconds: 2),
         ),
@@ -600,7 +658,7 @@ class _BulkDialogState extends State<BulkDialog> {
                     : _selectedBulkOperation == "Bulk Add Tag"
                     ? ElevatedButton(
                       onPressed: () {
-                        _tagMultipleFiles(widget.name, _currentSelectedFiles);
+                        _showAddTagDialog();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: kYellowText,
