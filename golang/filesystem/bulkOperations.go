@@ -162,8 +162,20 @@ func BulkAddTagHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, fmt.Sprintf("Failed to add tags: %v", err), http.StatusInternalServerError)
 				return
 			}
+			children := GoSidecreateDirectoryJSONStructure(folder)
+
+			root := DirectoryTreeJson{
+				Name:     folder.Name,
+				IsFolder: true,
+				RootPath: folder.Path,
+				Children: children,
+			}
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("Tags added successfully"))
+			w.Header().Set("Content-Type", "application/json")
+			// Encode the response as JSON
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
 			return
 		}
 	}
@@ -195,8 +207,20 @@ func BulkRemoveTagHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, fmt.Sprintf("Failed to remove tags: %v", err), http.StatusInternalServerError)
 				return
 			}
+			children := GoSidecreateDirectoryJSONStructure(folder)
+
+			root := DirectoryTreeJson{
+				Name:     folder.Name,
+				IsFolder: true,
+				RootPath: folder.Path,
+				Children: children,
+			}
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("Tags removed successfully"))
+			w.Header().Set("Content-Type", "application/json")
+			// Encode the response as JSON
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
 			return
 		}
 	}
@@ -335,6 +359,7 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, c := range Composites {
 		if c.Name == name {
+			LoadTypes(c, name) // load types into the global objectMap
 			var returnList []returnStruct
 			// fmt.Println("LIST CREATED")
 			if umbrella == "true" {
