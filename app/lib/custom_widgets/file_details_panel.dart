@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/file_tree_node.dart';
-import 'package:app/constants.dart';
 import 'package:app/api.dart';
 import 'package:app/custom_widgets/tag_dialog.dart';
 

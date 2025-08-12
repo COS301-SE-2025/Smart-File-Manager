@@ -16,7 +16,7 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, item := range composites {
+	for _, item := range Composites {
 		fmt.Printf("Checking manager: %s\n", item.Name)
 		if item.Name == compositeName {
 			fmt.Printf("found manager: %s\n", item.Name)

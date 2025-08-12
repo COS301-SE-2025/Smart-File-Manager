@@ -7,21 +7,23 @@ from kw_extractor import KWExtractor
 from full_vector import FullVector
 import os
 from k_means import KMeansCluster 
-from collections import defaultdict
+
+import time
 
 # Master class
 # Allows submission of gRPC requests. 
 # Takes submitted gRPC requests and assigns them to a slave for processing before returning the response
 class Master():
 
-    def __init__(self, maxSlaves):
+    def __init__(self, maxSlaves, transformer):
         self.slaves = ThreadPoolExecutor(maxSlaves)
         self.scraper = MetaDataScraper()
         self.kw_extractor = KWExtractor()
-        self.full_vec = FullVector()  
+        self.full_vec = FullVector(transformer)  
 
     # Takes gRPC request's root and sends it to be processed by a slave
     def submit_task(self, request : DirectoryRequest):
+        self.start_time = time.time()
         future = self.slaves.submit(self.process, request)
         return future # Return future so non blocking
 
@@ -35,6 +37,8 @@ class Master():
             "KEYWORDS" : self.handle_keyword_request
         }
 
+        self.request_submitted = time.time()
+        print("Submitting request: " + str(self.request_submitted - self.start_time))
         handler = requestHandler.get(request.requestType.upper())
 
         if not handler == None:
@@ -54,19 +58,30 @@ class Master():
         # Modifies directory request by adding metadata and creates map of files with metadata and keywords
         if self.extract_metadata(request.root, files, metadata_fn=self.scraper.get_standard_metadata, build_file_entry=True):
 
+            self.extraction = time.time()
+            print("Metadata and keywords extracted: " +str(self.extraction - self.start_time))
             # Modifies file list to add additional entry to each map i.e. full vector which contains all encoded data required for clustering
             self.full_vec.create_full_vector(files)
+            self.full_vector_time = time.time()
+            print("Full vector created: " + str(self.full_vector_time - self.start_time))
 
             # Append all full vectors
             full_vecs = []
             for file in files:
                 full_vecs.append(file["full_vector"])
+            self.full_vector_time_2 = time.time()
+            print("Full vectors appended: " + str(self.full_vector_time_2 - self.start_time)) 
 
             # Recursively cluster and return a directory
             kmeans = KMeansCluster(int(len(full_vecs)*(1/6)), 10, self.full_vec.model, request.root.name)
             response_directory = kmeans.dirCluster(full_vecs,files)
+            self.clustering_time = time.time()
+            print("Clustering complete: " + str(self.clustering_time - self.start_time))
             kmeans.printDirectoryTree(response_directory) 
             response = DirectoryResponse(root=response_directory, response_code=200, response_msg="Files successfully clustered")
+            # print(response)
+            self.response_time = time.time()
+            print("Sending response: " + str(self.response_time - self.start_time))
             return response
         else:
             response = DirectoryResponse(response_code=400, response_msg="No file could be opened")

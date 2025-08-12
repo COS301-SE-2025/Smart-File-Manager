@@ -228,14 +228,18 @@ class _GraphViewPageState extends State<GraphViewPage> {
     });
   }
 
-  void _handleNodeRightTap(FileTreeNode node, Offset globalPosition) {
+  void _handleNodeRightTap(
+    String managerName,
+    FileTreeNode node,
+    Offset globalPosition,
+  ) {
     if (node.isFolder) {
       final entries = <ContextMenuEntry>[
         MenuItem(
           label: 'Lock',
           icon: Icons.lock,
           onSelected: () async {
-            bool response = await Api.locking(node.path ?? '');
+            bool response = await Api.locking(managerName, node.path ?? '');
             if (response == true) {
               _lockNode(node);
             }
@@ -245,7 +249,7 @@ class _GraphViewPageState extends State<GraphViewPage> {
           label: 'Unlock',
           icon: Icons.lock_open,
           onSelected: () async {
-            bool response = await Api.unlocking(node.path ?? '');
+            bool response = await Api.unlocking(managerName, node.path ?? '');
             if (response == true) {
               _unlockNode(node);
             }
@@ -276,7 +280,7 @@ class _GraphViewPageState extends State<GraphViewPage> {
           label: 'Lock',
           icon: Icons.lock,
           onSelected: () async {
-            bool response = await Api.locking(node.path ?? '');
+            bool response = await Api.locking(managerName, node.path ?? '');
             if (response == true) {
               _lockNode(node);
             }
@@ -286,7 +290,7 @@ class _GraphViewPageState extends State<GraphViewPage> {
           label: 'Unlock',
           icon: Icons.lock_open,
           onSelected: () async {
-            bool response = await Api.unlocking(node.path ?? '');
+            bool response = await Api.unlocking(managerName, node.path ?? '');
             if (response == true) {
               _unlockNode(node);
             }
@@ -405,8 +409,11 @@ class _GraphViewPageState extends State<GraphViewPage> {
             return GestureDetector(
               onDoubleTap: () => _handleNodeDoubleTap(data),
               onSecondaryTapUp:
-                  (details) =>
-                      _handleNodeRightTap(data, details.globalPosition),
+                  (details) => _handleNodeRightTap(
+                    widget.managerName ?? "",
+                    data,
+                    details.globalPosition,
+                  ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

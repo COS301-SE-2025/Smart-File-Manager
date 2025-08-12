@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/custom_widgets/file_item_widget.dart';
@@ -107,6 +106,7 @@ class _FolderViewPageState extends State<FolderViewPage> {
               return GestureDetector(
                 onSecondaryTapDown:
                     (details) => _handleItemRightTap(
+                      widget.managerName ?? "",
                       _currentItems[index],
                       details.globalPosition,
                     ),
@@ -187,14 +187,18 @@ class _FolderViewPageState extends State<FolderViewPage> {
     }
   }
 
-  void _handleItemRightTap(FileTreeNode node, Offset globalPosition) {
+  void _handleItemRightTap(
+    String managerName,
+    FileTreeNode node,
+    Offset globalPosition,
+  ) {
     if (node.isFolder) {
       final entries = <ContextMenuEntry>[
         MenuItem(
           label: 'Lock',
           icon: Icons.lock,
           onSelected: () async {
-            bool response = await Api.locking(node.path ?? '');
+            bool response = await Api.locking(managerName, node.path ?? '');
             if (response == true) {
               _lockNode(node);
             }
@@ -204,7 +208,7 @@ class _FolderViewPageState extends State<FolderViewPage> {
           label: 'Unlock',
           icon: Icons.lock_open,
           onSelected: () async {
-            bool response = await Api.unlocking(node.path ?? '');
+            bool response = await Api.unlocking(managerName, node.path ?? '');
             if (response == true) {
               _unlockNode(node);
             }
@@ -235,7 +239,7 @@ class _FolderViewPageState extends State<FolderViewPage> {
           label: 'Lock',
           icon: Icons.lock,
           onSelected: () async {
-            bool response = await Api.locking(node.path ?? '');
+            bool response = await Api.locking(managerName, node.path ?? '');
             if (response == true) {
               _lockNode(node);
             }
@@ -245,7 +249,7 @@ class _FolderViewPageState extends State<FolderViewPage> {
           label: 'Unlock',
           icon: Icons.lock_open,
           onSelected: () async {
-            bool response = await Api.unlocking(node.path ?? '');
+            bool response = await Api.unlocking(managerName, node.path ?? '');
             if (response == true) {
               _unlockNode(node);
             }
