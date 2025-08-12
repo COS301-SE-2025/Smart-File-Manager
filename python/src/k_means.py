@@ -4,6 +4,7 @@ import os
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 import numpy as np
+from math import ceil
 
 from directory_builder import DirectoryCreator
 from collections import defaultdict
@@ -48,12 +49,6 @@ class KMeansCluster:
     def dirCluster(self,full_vecs,files):
         builder = DirectoryCreator(self.parent_folder,files) # instead of root it should be the parent folder
         self.remove_locked_files(files,full_vecs)
-        print("Num locked files: ", len(self.locked_files))
-
-        for f in self.locked_files:
-            print(f["filename"])
-
-
         
         unlocked_dirs = self._recursive_clustering(full_vecs, files, 0, self.parent_folder, builder)
 
@@ -68,6 +63,11 @@ class KMeansCluster:
 
 
     def _recursive_clustering(self,full_vecs,files, depth, dir_prefix, builder):
+
+        # Quit if not enough folders
+        if len(full_vecs) < self.min_size or depth > self.max_depth: # depth can be changed on init of kmeans
+            return builder.buildDirectory(dir_prefix, files, []) 
+
         if depth > 0:
             # Assign directory name
             folder_name = self.folder_namer.generateFolderName(files)        
@@ -79,25 +79,22 @@ class KMeansCluster:
             dir_name = dir_prefix
                     
 
-        # Quit if not enough folders
-        if len(full_vecs) < self.min_size or depth > self.max_depth: # depth can be changed on init of kmeans
-            return builder.buildDirectory(dir_name, files, []) 
         
-        bias_factor = (1 / (depth + 1)) * 0.01
-        # get optimal amount of clusters
+        bias_factor = (1 / (depth + 1)) * 0.02
+#        get optimal amount of clusters
         k = self.get_num_clusters(
                 full_vecs, 
                 k_min = self.min_size, 
-                bias_factor = bias_factor
+                bias_factor = bias_factor,
+                cluster_fraction = 5
                 )
-        print("Best k values found: ", k)
+       # print("Best k values found: ", k)
         if k <= 1:
             return builder.buildDirectory(dir_name, files, [])
 
-        self.kmeans = KMeans(n_clusters=k,random_state =42, n_init="auto")
-
+        
         # cluster and get labels
-        labels = self.cluster(full_vecs)
+        labels = self.fit_kmeans(full_vecs, k)
 
         # label -> files
         label_to_entries = {}
@@ -110,29 +107,19 @@ class KMeansCluster:
 
 
         for label, entries in label_to_entries.items():
-            # if a label has one entry then clustering is pretty good
-            # To avoid having files in leaves we return all of the files used in this clustering
-            # -> can defnitely backfire but lets hope the clustering is goated
-            if len(entries) <= 1:
-                # Flavour 1 (millions of dirs)
-                # sub_vecs = [e["full_vector"] for e in entries]
-                # sub_dir = self.recDirCluster(sub_vecs,entries,depth,f"{dir_name}_{label}", builder)
-                # subdirs.append(sub_dir)
-                # Flavour 2 (More files per dir)
+            if len(entries) < self.min_size:
                 retained_files.extend(entries)
                 continue
-            # Good number of entries, atleast minsize so recursively check (if exactly minsize it will make a dir of these two folders)
-            elif len(entries) >= self.min_size:                  
-                sub_vecs = [e["full_vector"] for e in entries]
-                sub_dir = self._recursive_clustering(sub_vecs,entries,depth+1,f"{dir_name}", builder)
-                subdirs.append(sub_dir)
-            # Not quite enough files to recluster so keep them together   
-            else:
-                retained_files.extend(entries)
+
+            sub_vecs = [entry["full_vector"] for entry in entries]
+            sub_dir = self._recursive_clustering(sub_vecs, entries, depth + 1, dir_name, builder)
+            subdirs.append(sub_dir)
 
         return builder.buildDirectory(dir_name, retained_files, subdirs)
    
 
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
 
 
     def printDirectoryTree(self, directory, indent=""):
@@ -149,7 +136,7 @@ class KMeansCluster:
         for i in reversed(range(len(files))):
             file = files[i]
             if file.get("is_locked", False):
-                print("Found locked file ", file["filename"])
+                #print("Found locked file ", file["filename"])
                 self.locked_files.append(file)
                 del files[i]
                 del full_vecs[i]
@@ -186,7 +173,7 @@ class KMeansCluster:
 
         return builder.buildDirectory(self.parent_folder, [], build_dirs_from_tree(dir_tree))
 
-    def get_num_clusters(self, X, k_min = 2, k_max = None, random_state = 42, bias_factor = 0.01, bad_threshold=0.03, cluster_fraction = 3):
+    def get_num_clusters(self, X, k_min = 2, k_max = None, random_state = 42, bias_factor = 0.01, bad_threshold=0.2, cluster_fraction = 4):
         """
         Determine amount of clusters using silhouette_score and elbow method
         X - features
@@ -198,21 +185,21 @@ class KMeansCluster:
             dict with best_k, silhouette_score, inertias
         """
         num_samples = len(X)
-        print("Num samples: ", num_samples)
+        #print("Num samples: ", num_samples)
         if num_samples < 2:
             return 1
 
         if k_max is None:
-            k_max = max(k_min, num_samples // cluster_fraction)
+            k_max = min(num_samples, max(k_min, ceil(num_samples // cluster_fraction)))
 
         silhouette_scores = []
         valid_k = []
         k_values = range(k_min, min(k_max, num_samples)+1)
-        print("Range of val: ", k_values)
+        #print("Range of val: ", k_values)
 
         for k in k_values:
             if k<= 1 or k>= num_samples:
-                print("Continue")
+            #    print("Continue")
                 continue
             try:
                 kmeans = KMeans(n_clusters=k, random_state=random_state, n_init="auto")
@@ -228,7 +215,7 @@ class KMeansCluster:
                 pass
 
         if not silhouette_scores:
-            print("Sil scores empty")
+           # print("Sil scores empty")
             return 1
 
 
