@@ -29,4 +29,6 @@ app/pubspec.lock
 .coverage
 profiling/
 
+# swap files
+*.swp
 
