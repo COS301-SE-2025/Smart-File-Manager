@@ -42,7 +42,7 @@ class _FolderViewPageState extends State<FolderViewPage> {
   @override
   void didUpdateWidget(FolderViewPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentPath != widget.currentPath) {
+    if (oldWidget.currentPath != widget.currentPath || oldWidget.treeData != widget.treeData) {
       _updateCurrentItems();
     }
   }
