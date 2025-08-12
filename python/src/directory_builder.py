@@ -8,7 +8,7 @@ class DirectoryCreator:
     # construct the map of map of list of file
     def __init__(self, directoryName, fileMap):
         self.directory_name_idx = 0 
-        self.directory_name = "Directory"
+        self.directory_name = directoryName
         #self.FILE_DIR = os.path.join(TEST_DIR, directoryName)
         self.FILE_DIR = directoryName
         self.file_map = defaultdict()
@@ -29,6 +29,24 @@ class DirectoryCreator:
             files=file_objs,
             directories=children
         )
+
+    def merge(self, dir1, dir2):
+        if dir1.name != dir2.name:
+            raise ValueError("Cannot merge directories with different names")
+
+        merged_dir = Directory()
+        merged_dir.name = dir1.name
+        merged_dir.path = self.get_path(dir1.name)
+
+        merged_dir.files.extend(list(dir1.files))
+        merged_dir.files.extend(list(dir2.files))
+
+        merged_dir.directories.extend(list(dir1.directories))
+        merged_dir.directories.extend(list(dir2.directories))
+
+        return merged_dir
+
+
 
     def createFile(self, filename, dirName):
         file_info = self.file_map[filename]
