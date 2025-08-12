@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"slices"
 	"sync"
 )
@@ -232,6 +233,62 @@ func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	mu.Lock()
+	defer mu.Unlock()
+	if name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
+	}
+	for i, c := range Composites {
+		if c.Name == name {
+			// Delete folder
+			os.RemoveAll(c.Path)
+			// Remove from list of managers
+			Composites = append(Composites[:i], Composites[i+1:]...)
+			// Remove from type storage
+			delete(objectMap, c.Path)
+
+			// Remove from main.json
+			managersFilePath := filepath.Join(getPath(), "golang", "storage", "main.json")
+			data, err := os.ReadFile(managersFilePath)
+			var recs []ManagerRecord
+
+			if err == nil {
+				// File exists — update entry
+				if err := json.Unmarshal(data, &recs); err != nil {
+					fmt.Println("error in unmarshaling of json")
+					panic(err)
+				}
+				// Remove the record with the matching name
+				for j := range recs {
+					if recs[j].Name == name {
+						recs = append(recs[:j], recs[j+1:]...)
+						break
+					}
+				}
+			} else if os.IsNotExist(err) {
+				// Nothing to do if file doesn't exist
+			} else {
+				panic(err)
+			}
+
+			out, err := json.MarshalIndent(recs, "", "  ")
+			if err != nil {
+				panic(err)
+			}
+			if err := os.WriteFile(managersFilePath, out, 0644); err != nil {
+				panic(err)
+			}
+
+			w.Write([]byte("true"))
+			return
+		}
+	}
+	w.Write([]byte("Manager not found"))
+}
+
 func HandleRequests() {
 
 	// path, _ := os.Getwd()
@@ -247,7 +304,7 @@ func HandleRequests() {
 	http.HandleFunc("/removeTag", removeTagHandler)
 
 	http.HandleFunc("/loadTreeData", loadTreeDataHandlerGoOnly)
-	
+
 	http.HandleFunc("/sortTree", sortTreeHandler)
 	http.HandleFunc("/startUp", startUpHandler)
 
@@ -267,6 +324,7 @@ func HandleRequests() {
 	http.HandleFunc("/deleteFolder", deleteFolderHandler)
 	http.HandleFunc("/bulkDeleteFolders", BulkDeleteFolderHandler)
 	http.HandleFunc("/bulkDeleteFiles", BulkDeleteFileHandler)
+	http.HandleFunc("/deleteManager", deleteManagerHandler)
 
 	http.HandleFunc("/returnType", ReturnTypeHandler)
 
