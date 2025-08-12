@@ -36,6 +36,7 @@ class _BulkDialogState extends State<BulkDialog> {
   String? _selectedFileType;
 
   String _selectedBulkOperation = "Bulk Delete";
+  String? _selectedTagFilter;
 
   final List<String> _bulkOperations = [
     "Bulk Delete",
@@ -110,6 +111,7 @@ class _BulkDialogState extends State<BulkDialog> {
         _selectedCategory = "Documents";
         _selectedFileType = null;
         _selectedBulkOperation = newBulkOperation;
+        _selectedTagFilter = null;
       });
       _loadBulkData(widget.name, _selectedCategory, true);
     }
@@ -128,16 +130,40 @@ class _BulkDialogState extends State<BulkDialog> {
     }
   }
 
+  void _onTagFilterChanged(String? newTag) {
+    setState(() {
+      _selectedTagFilter = newTag;
+    });
+  }
+
+  List<String> _getAllAvailableTags() {
+    Set<String> allTags = {};
+    if (widget.files != null) {
+      for (FileModel file in widget.files!) {
+        if (file.fileTags != null) {
+          allTags.addAll(file.fileTags!);
+        }
+      }
+    }
+    return allTags.toList()..sort();
+  }
+
   void _toggleSelectAll() {
     setState(() {
       _selectAll = !_selectAll;
       _currentSelectedFiles.clear();
       if (_selectAll && widget.files != null) {
-        // Filter files based on bulk operation before adding to selection
+        // Filter files based on bulk operation and tag filter before adding to selection
         List<FileModel> filesToAdd =
             widget.files!.where((file) {
               if (_selectedBulkOperation == "Bulk Remove Tag") {
-                return file.fileTags != null && file.fileTags!.isNotEmpty;
+                if (file.fileTags == null || file.fileTags!.isEmpty) {
+                  return false;
+                }
+                if (_selectedTagFilter != null) {
+                  return file.fileTags!.contains(_selectedTagFilter);
+                }
+                return true;
               }
               return true;
             }).toList();
@@ -159,7 +185,13 @@ class _BulkDialogState extends State<BulkDialog> {
         totalAvailableFiles =
             widget.files!.where((file) {
               if (_selectedBulkOperation == "Bulk Remove Tag") {
-                return file.fileTags != null && file.fileTags!.isNotEmpty;
+                if (file.fileTags == null || file.fileTags!.isEmpty) {
+                  return false;
+                }
+                if (_selectedTagFilter != null) {
+                  return file.fileTags!.contains(_selectedTagFilter);
+                }
+                return true;
               }
               return true;
             }).length;
@@ -206,17 +238,19 @@ class _BulkDialogState extends State<BulkDialog> {
   String _convertToJsonAddTag(String tag) {
     List<Map<String, dynamic>> fileList =
         _currentSelectedFiles
-            .map((file) => {
-              "file_path": file.filePath,
-              "tags": [tag]
-            })
+            .map(
+              (file) => {
+                "file_path": file.filePath,
+                "tags": [tag],
+              },
+            )
             .toList();
     return jsonEncode(fileList);
   }
 
   void _showAddTagDialog() {
     final TextEditingController tagController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -360,6 +394,39 @@ class _BulkDialogState extends State<BulkDialog> {
                 ),
               ],
             ),
+            // Show tag filter dropdown only for Bulk Remove Tag operation
+            if (_selectedBulkOperation == "Bulk Remove Tag") ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Text(
+                    'Filter by tag: ',
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                  Expanded(
+                    child: CustomDropdownMenu<String>(
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('All tags'),
+                        ),
+                        ..._getAllAvailableTags().map((String tag) {
+                          return DropdownMenuItem<String>(
+                            value: tag,
+                            child: Text(tag),
+                          );
+                        }),
+                      ],
+                      value: _selectedTagFilter,
+                      onChanged: _onTagFilterChanged,
+                      hint: "Select tag to filter",
+                      minWidth: 120,
+                      maxWidth: 250,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const Divider(color: Color(0xff3D3D3D)),
             if (widget.files != null && widget.files!.isNotEmpty)
               Padding(
@@ -386,7 +453,13 @@ class _BulkDialogState extends State<BulkDialog> {
                     Text(
                       'Select All (${_currentSelectedFiles.length}/${widget.files!.where((file) {
                         if (_selectedBulkOperation == "Bulk Remove Tag") {
-                          return file.fileTags != null && file.fileTags!.isNotEmpty;
+                          if (file.fileTags == null || file.fileTags!.isEmpty) {
+                            return false;
+                          }
+                          if (_selectedTagFilter != null) {
+                            return file.fileTags!.contains(_selectedTagFilter);
+                          }
+                          return true;
                         }
                         return true;
                       }).length})',
@@ -430,11 +503,19 @@ class _BulkDialogState extends State<BulkDialog> {
                         children:
                             widget.files!
                                 .where((object) {
-                                  // Filter out files without tags when "Bulk Remove Tag" is selected
+                                  // Filter files based on bulk operation and tag filter
                                   if (_selectedBulkOperation ==
                                       "Bulk Remove Tag") {
-                                    return object.fileTags != null &&
-                                        object.fileTags!.isNotEmpty;
+                                    if (object.fileTags == null ||
+                                        object.fileTags!.isEmpty) {
+                                      return false;
+                                    }
+                                    if (_selectedTagFilter != null) {
+                                      return object.fileTags!.contains(
+                                        _selectedTagFilter,
+                                      );
+                                    }
+                                    return true;
                                   }
                                   return true;
                                 })
