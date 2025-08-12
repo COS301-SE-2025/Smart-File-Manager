@@ -34,7 +34,7 @@ func TestRemoveFile(t *testing.T) {
 	r.AddFile(f)
 	// remove existing
 	removed := r.RemoveFile("/a.txt")
-	if !removed {
+	if removed != nil {
 		t.Errorf("RemoveFile returned false for existing file")
 	}
 	// ensure it's gone
@@ -42,7 +42,7 @@ func TestRemoveFile(t *testing.T) {
 		t.Errorf("file still found after removal")
 	}
 	// remove non-existing
-	if r.RemoveFile("/nonexistent.txt") {
+	if r.RemoveFile("/nonexistent.txt") == nil {
 		t.Errorf("RemoveFile returned true for non-existing file")
 	}
 }
@@ -67,14 +67,14 @@ func TestRemoveSubfolder(t *testing.T) {
 	r := newFolder("root", "/")
 	sub := newFolder("x", "/x")
 	r.AddSubfolder(sub)
-	if !r.RemoveSubfolder("/x") {
+	if r.RemoveSubfolder("/x") != nil {
 		t.Errorf("RemoveSubfolder failed on existing folder")
 	}
 	if r.GetSubfolder("/x") != nil {
 		t.Errorf("subfolder still found after removal")
 	}
 	// non existing
-	if r.RemoveSubfolder("/y") {
+	if r.RemoveSubfolder("/y") == nil {
 		t.Errorf("RemoveSubfolder returned true for non-existing folder")
 	}
 }

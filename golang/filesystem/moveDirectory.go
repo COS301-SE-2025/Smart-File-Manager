@@ -1,6 +1,7 @@
 package filesystem
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -15,7 +16,7 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, item := range composites {
+	for _, item := range Composites {
 		fmt.Printf("Checking manager: %s\n", item.Name)
 		if item.Name == compositeName {
 			fmt.Printf("found manager: %s\n", item.Name)
@@ -38,6 +39,50 @@ func moveContent(item *Folder) {
 	root = filepath.Join(root, "archives", item.Name)
 	moveContentRecursive(item)
 	//change root back to original path
+	item.Path = root
+	managersFilePath := getPath()
+	managersFilePath = filepath.Join(managersFilePath, "golang", "storage", "main.json")
+	//read storage
+	data, err := os.ReadFile(managersFilePath)
+	var exist bool
+	if os.IsNotExist(err) {
+		exist = false
+	}
+
+	var recs []ManagerRecord
+
+	//populates recs
+	if exist {
+		if err := json.Unmarshal(data, &recs); err != nil {
+			fmt.Println("error in unmarshaling of json")
+			panic(err)
+		}
+
+		for i := range recs {
+			if recs[i].Name == item.Name {
+				recs[i].Path = item.Path
+			}
+		}
+	} else {
+		if err := os.MkdirAll(filepath.Dir(managersFilePath), 0755); err != nil {
+			panic(err)
+		}
+		record := ManagerRecord{
+			item.Name,
+			item.Path,
+		}
+		recs = append(recs, record)
+	}
+
+	out, err := json.MarshalIndent(recs, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	err = os.WriteFile(managersFilePath, out, 0644)
+	if err != nil {
+		panic(err)
+	}
+
 	os.Chdir("filesystem")
 }
 
@@ -88,6 +133,7 @@ func CreateDirectoryStructureRecursive(item *Folder) {
 	}
 }
 
+// helper functions
 func getPath() string {
 	dir, err := os.Getwd()
 	if err != nil {

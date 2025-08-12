@@ -11,33 +11,39 @@ from collections import defaultdict
 from create_folder_name import FolderNameCreator
 
 class KMeansCluster:
-    def __init__(self, numClusters, depth, model, parent_folder):
-        self.kmeans = KMeans(
-            n_clusters=numClusters,
-            n_init=50, 
-            init="k-means++",
-            max_iter=500,
-            tol=1e-5           
-            )
-        self.n_clusters = numClusters
+    def __init__(self, numClusters, max_depth, model, parent_folder):
+        self.base_clusters = numClusters
         self.min_size = 2 # hardcoded for now # even numbers are good
-        self.max_depth = depth
+        self.max_depth = max_depth
         self.folder_namer = FolderNameCreator(model)
-        #self.parent_folder = parent_folder
-        self.parent_folder = "test_files_3"
+        self.parent_folder = parent_folder
 
         self.locked_files = []
 
+        self.kmeans = None
 
-    def cluster(self,files):
-        self.kmeans.fit(files)
+
+    def fit_kmeans(self, vectors, num_clusters):
+        # Only reinitialize the model when necessary
+        if self.kmeans is None or self.kmeans.n_clusters != num_clusters:
+            self.kmeans = KMeans(
+                n_clusters=num_clusters,
+                init="k-means++",
+                max_iter=500,
+                tol=1e-5,
+                random_state=42
+            )
+        self.kmeans.fit(vectors)
         return self.kmeans.labels_
 
+
+    def cluster(self, vectors):
+        return self.kmeans.fit_predict(vectors)
+
     def predict(self, points):
-        predictions = self.kmeans.predict(points)
-        centers = self.kmeans.cluster_centers_
-        centers_rounded = np.round(centers, 4) # rounded to get mostly matching        
-        return predictions, centers_rounded
+        preds = self.kmeans.predict(points)
+        centers = np.round(self.kmeans.cluster_centers_, 4)
+        return preds, centers
     
     def dirCluster(self,full_vecs,files):
         builder = DirectoryCreator(self.parent_folder,files) # instead of root it should be the parent folder
@@ -49,7 +55,7 @@ class KMeansCluster:
 
 
         
-        unlocked_dirs = self.recDirCluster(full_vecs, files, 0, self.parent_folder, builder)
+        unlocked_dirs = self._recursive_clustering(full_vecs, files, 0, self.parent_folder, builder)
 
         locked_dirs = self.buildLockedDirs(self.locked_files, builder)
 
@@ -61,7 +67,7 @@ class KMeansCluster:
     
 
 
-    def recDirCluster(self,full_vecs,files, depth, dir_prefix, builder):
+    def _recursive_clustering(self,full_vecs,files, depth, dir_prefix, builder):
         if depth > 0:
             # Assign directory name
             folder_name = self.folder_namer.generateFolderName(files)        
@@ -118,7 +124,7 @@ class KMeansCluster:
             # Good number of entries, atleast minsize so recursively check (if exactly minsize it will make a dir of these two folders)
             elif len(entries) >= self.min_size:                  
                 sub_vecs = [e["full_vector"] for e in entries]
-                sub_dir = self.recDirCluster(sub_vecs,entries,depth+1,f"{dir_name}", builder)
+                sub_dir = self._recursive_clustering(sub_vecs,entries,depth+1,f"{dir_name}", builder)
                 subdirs.append(sub_dir)
             # Not quite enough files to recluster so keep them together   
             else:
@@ -236,11 +242,3 @@ class KMeansCluster:
 
         return best_k
 
-
-
-
-
-
-
-
-        

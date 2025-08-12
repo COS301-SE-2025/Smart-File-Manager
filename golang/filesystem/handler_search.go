@@ -1,0 +1,281 @@
+package filesystem
+
+import (
+	"encoding/json"
+	"fmt"
+	"math"
+	"net/http"
+	"path/filepath"
+	"strings"
+	"sync"
+)
+
+const limit int = 25
+const maxDist int = 25
+
+func LevenshteinDist(searchText string, fileName string) int {
+	if len(searchText) == 0 {
+		return len(fileName)
+	}
+	if len(fileName) == 0 {
+		return len(searchText)
+	}
+
+	if fileName[0] != '.' {
+
+		searchText = strings.ToLower(searchText)
+		fileName = strings.ToLower(fileName)
+
+		//if the search doesnt contain a . then we remove the file
+		// extention from the fie names for better search results
+		if !strings.Contains(searchText, ".") {
+
+			if i := strings.LastIndex(searchText, "."); i >= 0 {
+				searchText = searchText[:i]
+			}
+			if i := strings.LastIndex(fileName, "."); i >= 0 {
+				fileName = fileName[:i]
+			}
+		}
+	}
+
+	//  exact matches should be 0
+	if fileName == searchText {
+		return 0
+	}
+	//this is the name
+	//his ist the
+	//  BOOST exact substrings
+	var boost float32 = 1 //lower boost is better as it makes the distance smaller
+	if strings.Contains(fileName, searchText) {
+		boost = 0.2
+	}
+
+	// now fall back on full Levenshtein
+	lenSearchText, lenFileName := len(searchText), len(fileName)
+
+	prev := make([]int, lenFileName+1)
+	curr := make([]int, lenFileName+1)
+	for j := 0; j <= lenFileName; j++ {
+		prev[j] = j
+	}
+	for i := 1; i <= lenSearchText; i++ {
+		curr[0] = i
+		ai := searchText[i-1]
+		for j := 1; j <= lenFileName; j++ {
+			cost := 0
+			if ai != fileName[j-1] {
+				cost = 1
+			}
+			sub := prev[j-1] + cost
+			ins := curr[j-1] + 1
+			del := prev[j] + 1
+
+			// take the minimum
+			if ins < sub {
+				sub = ins
+			}
+			if del < sub {
+				sub = del
+			}
+			curr[j] = sub
+		}
+		prev, curr = curr, prev
+	}
+
+	return int(math.Round(float64(prev[lenFileName]) * float64(boost)))
+
+}
+
+type safeResults struct {
+	Name        string
+	rankedFiles []rankedFile
+}
+
+type rankedFile struct {
+	file     File
+	distance int
+}
+
+// gpt given
+func PrettyPrintFolder(f *Folder, indent string) {
+	fmt.Printf("%s📁 %s (locked=%v)\n", indent, f.Name, f.Locked)
+	// print files
+	for _, file := range f.Files {
+		fmt.Printf("%s  📄 %s (locked=%v)\n", indent, file.Name, file.Locked)
+		fmt.Printf("%s  Metadata:\n", indent)
+
+		for _, md := range file.Metadata {
+			fmt.Printf("%s    • %s: %s\n", indent, md.Key, md.Value)
+		}
+	}
+	// recurse into subfolders
+	for _, sub := range f.Subfolders {
+		PrettyPrintFolder(sub, indent+"  ")
+	}
+}
+
+// todo error if comp not found
+func SearchHandler(w http.ResponseWriter, r *http.Request) {
+
+	compositeName := r.URL.Query().Get("compositeName")
+	searchText := r.URL.Query().Get("searchText")
+	w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins, or specify your frontend origin
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	for _, comp := range Composites {
+		fmt.Println(comp.Name)
+		if comp.Name == compositeName {
+
+			fmt.Println("stat of print with md")
+			// PrettyPrintFolder(comp, "")
+			fmt.Println("end of print with md")
+
+			sr := getMatches(searchText, comp)
+
+			cores := DirectoryTreeJson{
+				Name:     sr.Name,
+				IsFolder: true,
+				Children: make([]FileNode, len(sr.rankedFiles)),
+			}
+
+			for i, rf := range sr.rankedFiles {
+				file := rf.file
+				fileNodeToAdd := FileNode{
+					Name:     file.Name,
+					Path:     file.Path,
+					IsFolder: false,
+					Tags:     file.Tags,
+					Metadata: ConvertMetadataEntries(file.Metadata),
+				}
+				cores.Children[i] = fileNodeToAdd
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(cores)
+			return
+		}
+	}
+
+}
+
+func ConvertMetadataEntries(entries []*MetadataEntry) *Metadata {
+	md := &Metadata{}
+
+	for _, entry := range entries {
+		switch strings.ToLower(entry.Key) {
+
+		case "size":
+			md.Size = entry.Value
+		case "datecreated":
+			md.DateCreated = entry.Value
+		case "lastmodified":
+			md.LastModified = entry.Value
+		case "mimetype":
+			md.MimeType = entry.Value
+
+		}
+	}
+
+	return md
+}
+
+func getMatches(text string, composite *Folder) *safeResults {
+
+	res := &safeResults{
+		Name: composite.Name,
+	}
+
+	resultChan := make(chan rankedFile)
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go exploreFolder(composite, text, resultChan, &wg)
+
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	seen := make(map[string]struct{})
+	for currentRankedFile := range resultChan {
+
+		key := currentRankedFile.file.Path
+		if _, ok := seen[key]; ok {
+			continue // already inserted this file
+		}
+		seen[key] = struct{}{}
+
+		inserted := false
+		for i, iteratedRankedFile := range res.rankedFiles {
+			//if current is better
+			if iteratedRankedFile.distance > currentRankedFile.distance {
+
+				if len(res.rankedFiles) < limit {
+					//insert by shifting over to make the array sorted
+					res.rankedFiles = append(
+						append(res.rankedFiles[:i], currentRankedFile),
+						res.rankedFiles[i:]...,
+					)
+
+					inserted = true
+					break
+				} else {
+					res.rankedFiles = append(
+						append(
+							res.rankedFiles[:i],
+							currentRankedFile,
+						),
+						res.rankedFiles[i:limit-1]...,
+					)
+					inserted = true
+					break
+				}
+			}
+		}
+		// if limit is not reached and not inserted then we insert at the end
+		if len(res.rankedFiles) < limit {
+			if !inserted {
+				res.rankedFiles = append(res.rankedFiles, currentRankedFile)
+			}
+		}
+	}
+
+	//checks to remove dups (yes if concurrency was perfect there wouldnt be dups)
+	unique := make([]rankedFile, 0, len(res.rankedFiles))
+
+	finalSeen := make(map[string]struct{}, len(res.rankedFiles))
+
+	for _, rf := range res.rankedFiles {
+		key := filepath.Clean(rf.file.Path)
+
+		if _, ok := finalSeen[key]; ok {
+			continue
+		}
+
+		finalSeen[key] = struct{}{}
+		unique = append(unique, rf)
+	}
+	res.rankedFiles = unique
+
+	return res
+}
+
+func exploreFolder(f *Folder, text string, c chan<- rankedFile, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for _, folder := range f.Subfolders {
+		wg.Add(1)
+		go exploreFolder(folder, text, c, wg)
+	}
+
+	for _, file := range f.Files {
+		dist := LevenshteinDist(text, file.Name)
+		if dist <= maxDist {
+
+			c <- rankedFile{file: *file, distance: dist}
+		}
+	}
+}

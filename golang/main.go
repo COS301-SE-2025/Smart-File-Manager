@@ -10,6 +10,11 @@ func main() {
 	// filesystem.CreateDirectoryStructure(folder)
 	filesystem.HandleRequests()
 
+	// print current Composites
+	Composites := filesystem.GetComposites()
+	for _, item := range Composites {
+		item.Display(0)
+	}
 	// print current composites
 	// composites := filesystem.GetComposites()
 	// for _, item := range composites {

@@ -15,7 +15,7 @@ func sortTreeHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		if c.Name == name {
 			// build the nested []FileNode
 			err := grpcFunc(c, "CLUSTERING")
@@ -28,6 +28,7 @@ func sortTreeHandler(w http.ResponseWriter, r *http.Request) {
 			root := DirectoryTreeJson{
 				Name:     c.Name,
 				IsFolder: true,
+				RootPath: c.Path,
 				Children: children,
 			}
 

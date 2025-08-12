@@ -57,4 +57,4 @@ def test_generate_folder_name_basic(creator):
     assert "_" not in name or len(name.split("_")) <= creator.foldername_length
 
 def test_generate_folder_name_empty(creator):
-    assert creator.generateFolderName([]) == "Untitled"
+    assert creator.generateFolderName([]) == "Group"

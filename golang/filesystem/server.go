@@ -2,15 +2,17 @@ package filesystem
 
 import (
 	// "encoding/json"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"slices"
 	"sync"
 )
 
 var (
 	//array of smartfile managers
-	composites []*Folder
+	Composites []*Folder
 	mu         sync.Mutex
 )
 
@@ -26,7 +28,7 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mu.Lock()
-	// composites = append(composites, composite)
+	// Composites = append(Composites, composite)
 	//appendng happens in this:
 	AddManager(managerName, filePath)
 	mu.Unlock()
@@ -41,9 +43,9 @@ func removeCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	convertedPath := ConvertToWSLPath(filePath)
 
 	mu.Lock()
-	for i, item := range composites {
+	for i, item := range Composites {
 		if item.Path == convertedPath {
-			composites = slices.Delete(composites, i, i+1)
+			Composites = slices.Delete(Composites, i, i+1)
 			break
 		}
 	}
@@ -62,7 +64,7 @@ func addTagHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		item := c.GetFile(convertedPath)
 		if item != nil {
 			c.AddTagToFile(convertedPath, tag)
@@ -85,7 +87,7 @@ func removeTagHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		// Check file
 		if file := c.GetFile(convertedPath); file != nil {
 			if file.RemoveTag(tag) {
@@ -112,17 +114,23 @@ func removeTagHandler(w http.ResponseWriter, r *http.Request) {
 func lockHandler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Query().Get("path")
 	name := r.URL.Query().Get("name")
+	if path == "" || name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
+	}
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		if c.Name == name {
 			c.LockByPath(path)
-		} else {
-			w.Write([]byte("false"))
+			fmt.Println("LOCKED FILE")
+			w.Write([]byte("true"))
+			return
 		}
 	}
-	w.Write([]byte("true"))
+	w.Write([]byte("false"))
+
 }
 
 // Unlocks a file or folder and its children
@@ -132,14 +140,96 @@ func unlockHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	if path == "" || name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
+	}
+	for _, c := range Composites {
 		if c.Name == name {
 			c.UnlockByPath(path)
-		} else {
-			w.Write([]byte("false"))
+			w.Write([]byte("true"))
+			return
 		}
 	}
-	w.Write([]byte("true"))
+	w.Write([]byte("false"))
+
+}
+
+func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Query().Get("path")
+	name := r.URL.Query().Get("name")
+	mu.Lock()
+	defer mu.Unlock()
+	if path == "" || name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
+	}
+	for _, c := range Composites {
+		if c.Name == name {
+			err := os.RemoveAll(path)
+			if err == nil {
+				c.RemoveFile(path)
+			} else {
+				fmt.Println("Error removing folder:", path, "Error:", err)
+			}
+			children := GoSidecreateDirectoryJSONStructure(c)
+
+			root := DirectoryTreeJson{
+				Name:     c.Name,
+				IsFolder: true,
+				RootPath: c.Path,
+				Children: children,
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			// Encode the response as JSON
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
+			return
+		}
+	}
+
+	w.Write([]byte("false"))
+
+}
+
+func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Query().Get("path")
+	name := r.URL.Query().Get("name")
+	mu.Lock()
+	defer mu.Unlock()
+	if path == "" || name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
+	}
+	for _, c := range Composites {
+		if c.Name == name {
+			err := os.RemoveAll(path)
+			if err == nil {
+				c.RemoveSubfolder(path)
+			} else {
+				fmt.Println("Error removing folder:", path, "Error:", err)
+			}
+			children := GoSidecreateDirectoryJSONStructure(c)
+
+			root := DirectoryTreeJson{
+				Name:     c.Name,
+				IsFolder: true,
+				RootPath: c.Path,
+				Children: children,
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			// Encode the response as JSON
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
+			return
+		}
+	}
+	w.Write([]byte("false"))
+
 }
 
 func HandleRequests() {
@@ -152,17 +242,36 @@ func HandleRequests() {
 
 	http.HandleFunc("/addDirectory", addCompositeHandler)
 	http.HandleFunc("/removeDirectory", removeCompositeHandler)
+
 	http.HandleFunc("/addTag", addTagHandler)
 	http.HandleFunc("/removeTag", removeTagHandler)
+
 	http.HandleFunc("/loadTreeData", loadTreeDataHandlerGoOnly)
-	// http.HandleFunc("/loadTreeData", loadTreeDataHandler)
+	
 	http.HandleFunc("/sortTree", sortTreeHandler)
 	http.HandleFunc("/startUp", startUpHandler)
+
 	http.HandleFunc("/lock", lockHandler)
 	http.HandleFunc("/unlock", unlockHandler)
+
+	http.HandleFunc("/search", SearchHandler)
+
 	http.HandleFunc("/moveDirectory", moveDirectoryHandler)
+
 	http.HandleFunc("/findDuplicateFiles", findDuplicateFilesHandler)
+
+	http.HandleFunc("/bulkAddTag", BulkAddTagHandler)
+	http.HandleFunc("/bulkRemoveTag", BulkRemoveTagHandler)
+
+	http.HandleFunc("/deleteFile", deleteFileHandler)
+	http.HandleFunc("/deleteFolder", deleteFolderHandler)
+	http.HandleFunc("/bulkDeleteFolders", BulkDeleteFolderHandler)
+	http.HandleFunc("/bulkDeleteFiles", BulkDeleteFileHandler)
+
+	http.HandleFunc("/returnType", ReturnTypeHandler)
+
 	fmt.Println("Server started on port 51000")
+
 	// http.ListenAndServe(":51000", nil)
 	http.ListenAndServe("0.0.0.0:51000", nil)
 
@@ -172,5 +281,5 @@ func HandleRequests() {
 func GetComposites() []*Folder {
 	mu.Lock()
 	defer mu.Unlock()
-	return composites
+	return Composites
 }

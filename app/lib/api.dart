@@ -153,9 +153,11 @@ class Api {
   }
 
   //lock files/folders
-  static Future<bool> locking(String path) async {
+  static Future<bool> locking(String managerName, String path) async {
     try {
-      final response = await http.post(Uri.parse("$uri/lock?path=$path"));
+      final response = await http.post(
+        Uri.parse("$uri/lock?name=$managerName&path=$path"),
+      );
       print(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
@@ -171,9 +173,11 @@ class Api {
     }
   }
 
-  static Future<bool> unlocking(String path) async {
+  static Future<bool> unlocking(String managerName, String path) async {
     try {
-      final response = await http.post(Uri.parse("$uri/unlock?path=$path"));
+      final response = await http.post(
+        Uri.parse("$uri/unlock?name=$managerName&path=$path"),
+      );
       print(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
@@ -211,6 +215,75 @@ class Api {
       }
     } catch (e, stackTrace) {
       print('Error loading duplicates: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //Endpoint to use GO search(Simple file name search)
+  static Future<FileTreeNode> searchGo(String name, String searchString) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$uri/search?compositeName=$name&searchText=$searchString"),
+      );
+
+      if (response.statusCode == 200) {
+        print(jsonDecode(response.body) as Map<String, dynamic>);
+
+        return FileTreeNode.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to load data: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error loading tree data from loadTreeData: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<FileTreeNode> deleteSingleFile(
+    String managerName,
+    String path,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/deleteFile?name=$managerName&path=$path"),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return FileTreeNode.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to delete File: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error deleting file: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<FileTreeNode> bulkDeleteFiles(
+    String managerName,
+    String jsonPaths,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/bulkDeleteFiles?name=$managerName"),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonPaths,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return FileTreeNode.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to delete files: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error deleting files: $e');
       print(stackTrace);
       rethrow;
     }

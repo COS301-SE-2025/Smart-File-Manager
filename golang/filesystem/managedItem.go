@@ -46,26 +46,95 @@ func (f *Folder) AddSubfolder(folder *Folder) {
 	f.Subfolders = append(f.Subfolders, folder)
 }
 
-// RemoveFile removes a file by path
-func (f *Folder) RemoveFile(filePath string) bool {
+func (f *Folder) RemoveFile(filePath string) error {
+	if f.Locked {
+		return fmt.Errorf("cannot remove file: folder '%s' is locked", f.Name)
+	}
+
 	for i, file := range f.Files {
 		if file.Path == filePath {
-			f.Files = append(f.Files[:i], f.Files[i+1:]...)
-			return true
+			f.Files[i] = f.Files[len(f.Files)-1]
+			f.Files[len(f.Files)-1] = nil
+			f.Files = f.Files[:len(f.Files)-1]
+			return nil
 		}
 	}
-	return false
+
+	for _, subfolder := range f.Subfolders {
+		if err := subfolder.RemoveFile(filePath); err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("file not found: %s", filePath)
 }
 
-// RemoveSubfolder removes a folder by path
-func (f *Folder) RemoveSubfolder(folderPath string) bool {
-	for i, folder := range f.Subfolders {
-		if folder.Path == folderPath {
-			f.Subfolders = append(f.Subfolders[:i], f.Subfolders[i+1:]...)
-			return true
+func (f *Folder) RemoveFileOrderPreserving(filePath string) error {
+
+	for i, file := range f.Files {
+		if file.Path == filePath {
+
+			copy(f.Files[i:], f.Files[i+1:])
+			f.Files[len(f.Files)-1] = nil
+			f.Files = f.Files[:len(f.Files)-1]
+			return nil
 		}
 	}
-	return false
+
+	for _, subfolder := range f.Subfolders {
+		if err := subfolder.RemoveFileOrderPreserving(filePath); err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("file not found: %s", filePath)
+}
+
+func (f *Folder) RemoveSubfolder(folderPath string) error {
+
+	for i, subfolder := range f.Subfolders {
+		if subfolder.Path == folderPath {
+
+			f.Subfolders[i] = f.Subfolders[len(f.Subfolders)-1]
+			f.Subfolders[len(f.Subfolders)-1] = nil
+			f.Subfolders = f.Subfolders[:len(f.Subfolders)-1]
+			return nil
+		}
+	}
+
+	for _, subfolder := range f.Subfolders {
+		if err := subfolder.RemoveSubfolder(folderPath); err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("folder not found: %s", folderPath)
+}
+
+func (f *Folder) RemoveMultipleFiles(filePaths []string) map[string]error {
+
+	errors := make(map[string]error)
+
+	for _, path := range filePaths {
+		err := f.RemoveFile(path)
+		if err != nil {
+			errors[path] = err
+		}
+	}
+
+	return errors
+}
+
+func (f *Folder) RemoveMultipleSubfolders(folderPaths []string) map[string]error {
+	errors := make(map[string]error)
+	for _, path := range folderPaths {
+		err := f.RemoveSubfolder(path)
+		if err != nil {
+			errors[path] = err
+		}
+	}
+
+	return errors
 }
 
 // GetFile returns a file by path, searching recursively
@@ -151,6 +220,11 @@ func (f *Folder) unlockRecursive() {
 func (f *Folder) AddTagToFile(filePath, tagName string) bool {
 	file := f.GetFile(filePath)
 	if file != nil {
+		for _, tag := range file.Tags {
+			if tag == tagName {
+				return false // Tag already exists
+			}
+		}
 		file.Tags = append(file.Tags, tagName)
 		return true
 	}

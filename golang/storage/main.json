@@ -1,10 +1,10 @@
 [
   {
-    "name": "test3",
-    "path": "/mnt/c/Users/bosma/OneDrive/Desktop/Papers/test"
+    "name": "Test",
+    "path": "/mnt/c/COS301/Smart-File-Manager/python/testing/test_files_3"
   },
   {
-    "name": "docker",
-    "path": "/mnt/c/Users/bosma/OneDrive - University of Pretoria/BsC Computer Science/Year 3/Semester 1/COS 344/Docker"
+    "name": "duplicates",
+    "path": "/mnt/c/Users/bosma/OneDrive/Desktop/Papers"
   }
 ]
