@@ -26,7 +26,20 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 			CreateDirectoryStructure(item)
 			// Move the content into new manager folder
 			moveContent(item)
-			w.Write([]byte("true"))
+			children := GoSidecreateDirectoryJSONStructure(item)
+
+			root := DirectoryTreeJson{
+				Name:     item.Name,
+				IsFolder: true,
+				RootPath: item.Path,
+				Children: children,
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			// Encode the response as JSON
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
 			return
 		}
 	}

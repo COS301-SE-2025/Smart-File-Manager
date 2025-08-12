@@ -360,6 +360,7 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, c := range Composites {
 		if c.Name == name {
+			objectMap[name] = make(map[string]object)
 			LoadTypes(c, name) // load types into the global objectMap
 			var returnList []returnStruct
 			// fmt.Println("LIST CREATED")
@@ -398,7 +399,6 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 
 func LoadTypes(item *Folder, name string) {
 
-	objectMap[name] = make(map[string]object)
 	for _, file := range item.Files {
 		objectMap[name][file.Path] = object{
 			fileType:     strings.Split(file.Name, ".")[1],
