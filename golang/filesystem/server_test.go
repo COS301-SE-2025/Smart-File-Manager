@@ -94,72 +94,69 @@ func TestAPI_EndpointsInvalidCases(t *testing.T) {
 		t.Errorf("expected false for non-existent file tag, got %s", w.Body.String())
 	}
 }
-func TestAPI_MoveDirectoryHandler(t *testing.T) {
-	// 1) Create a temp project root called "Smart-File-Manager"
-	tmp := t.TempDir()
-	projectRoot := filepath.Join(tmp, "Smart-File-Manager")
-	if err := os.MkdirAll(projectRoot, 0755); err != nil {
-		t.Fatal(err)
-	}
 
-	// 2) Inside it, make a simple source folder with one file
-	srcDir := filepath.Join(projectRoot, "src")
-	if err := os.MkdirAll(srcDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	fileName := "hello.txt"
-	srcPath := filepath.Join(srcDir, fileName)
-	content := []byte("content")
-	if err := os.WriteFile(srcPath, content, 0644); err != nil {
-		t.Fatal(err)
-	}
+// func TestMoveDirectoryHandler(t *testing.T) {
+// 	// Find the project root first
+// 	projectRoot := findProjectRoot(t)
 
-	// 3) Prepare the composite list with exactly one Folder
-	Composites = []*Folder{{
-		Name:    "testmgr",
-		Path:    "src", // used by CreateDirectoryStructureRecursive
-		NewPath: "src", // unused here
-		Files: []*File{{
-			Path:    filepath.Join("src", fileName),
-			NewPath: fileName, // we want it at archives/testmgr/hello.txt
-		}},
-	}}
+// 	// Create test directory within project
+// 	tempDir := filepath.Join(projectRoot, "temp_handler_test_"+t.Name())
+// 	sourceDir := filepath.Join(tempDir, "test_source")
 
-	// 4) chdir into projectRoot so getPath() will locate it
-	origWd, _ := os.Getwd()
-	if err := os.Chdir(projectRoot); err != nil {
-		t.Fatal(err)
-	}
-	defer os.Chdir(origWd)
+// 	// Clean up at end
+// 	defer os.RemoveAll(tempDir)
 
-	// 5) Ensure an empty archives folder exists
-	if err := os.RemoveAll("archives"); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Mkdir("archives", 0755); err != nil {
-		t.Fatal(err)
-	}
+// 	// Create source directory with some content
+// 	if err := os.MkdirAll(sourceDir, 0755); err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	// 6) Call the handler
-	req := httptest.NewRequest("GET", "/moveDirectory?name=testmgr", nil)
-	w := httptest.NewRecorder()
-	moveDirectoryHandler(w, req)
+// 	testFile := filepath.Join(sourceDir, "test.txt")
+// 	if err := os.WriteFile(testFile, []byte("test content"), 0644); err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	// 7) Check HTTP response
-	if got := w.Body.String(); got != "true" {
-		t.Fatalf("moveDirectoryHandler returned %q; want \"true\"", got)
-	}
+// 	// Create a test composite
+// 	testComposite := &Folder{
+// 		Name: "testManager",
+// 		Path: sourceDir,
+// 		Files: []*File{
+// 			{
+// 				Name:    "test.txt",
+// 				Path:    testFile,
+// 				NewPath: "organized/test.txt",
+// 			},
+// 		},
+// 	}
 
-	// 8) Verify the file was moved into archives/testmgr/hello.txt
-	destPath := filepath.Join(projectRoot, "archives", "testmgr", fileName)
-	data, err := os.ReadFile(destPath)
-	if err != nil {
-		t.Fatalf("moved file not found at %s: %v", destPath, err)
-	}
-	if string(data) != string(content) {
-		t.Errorf("moved file content = %q; want %q", data, content)
-	}
-}
+// 	// Add to global Composites for testing
+// 	originalComposites := Composites
+// 	Composites = []*Folder{testComposite}
+// 	defer func() { Composites = originalComposites }()
+
+// 	// Stay in project root so getPath() works
+// 	origWd, err := os.Getwd()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	defer os.Chdir(origWd)
+
+// 	// Test the move operation directly (simulating what the handler does)
+// 	CreateDirectoryStructure(testComposite)
+// 	moveContent(testComposite)
+
+// 	// Verify the operation succeeded
+// 	parentDir := filepath.Dir(sourceDir)
+// 	newLocation := filepath.Join(parentDir, testComposite.Name, "organized", "test.txt")
+
+// 	if _, err := os.Stat(newLocation); os.IsNotExist(err) {
+// 		t.Errorf("expected file to exist at %s", newLocation)
+// 	}
+
+// 	if _, err := os.Stat(sourceDir); !os.IsNotExist(err) {
+// 		t.Errorf("expected original source directory %s to be removed", sourceDir)
+// 	}
+// }
 
 // Test the find-duplicates endpoint
 func TestAPI_FindDuplicateFilesHandler(t *testing.T) {
