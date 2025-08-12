@@ -64,8 +64,9 @@ var FileTypeMap = map[string]string{
 }
 
 type returnStruct struct {
-	FilePath string `json:"file_path"`
-	FileName string `json:"file_name"`
+	FilePath string   `json:"file_path"`
+	FileName string   `json:"file_name"`
+	FileTags []string `json:"file_tags,omitempty"`
 }
 
 var objectMap = map[string]map[string]object{}
@@ -368,6 +369,7 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 						returnList = append(returnList, returnStruct{
 							FilePath: k,
 							FileName: c.GetFile(k).Name,
+							FileTags: c.GetFile(k).Tags,
 						})
 					}
 				}
@@ -378,6 +380,7 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 						returnList = append(returnList, returnStruct{
 							FilePath: k,
 							FileName: c.GetFile(k).Name,
+							FileTags: c.GetFile(k).Tags,
 						})
 					}
 
