@@ -38,7 +38,7 @@ import (
 						file_paths: ["/home/user/documents/report.pdf", "/home/user/photos/vacation.jpg", "/home/user/music/song.mp3"],
 						file_names: ["report.pdf", "vacation.jpg", "song.mp3"]
 						},
-			"umbrella_percentage": ["5%","20%","10%","20%","10%","20%","10%","15%"]
+			"umbrella_percentage": ["5","20","10","20","10","20","10","15"]
 	//	},
 	//	{
 	//	  	"manager_name": manager2,
@@ -57,7 +57,7 @@ import (
 						file_paths: ["/home/user/documents/report.pdf", "/home/user/photos/vacation.jpg", "/home/user/music/song.mp3"],
 						file_names: ["report.pdf", "vacation.jpg", "song.mp3"]
 						},
-			"umbrella_percentage": ["5%","20%","10%","20%","10%","20%","10%","15%"]
+			"umbrella_percentage": ["5","20","10","20","10","20","10","15"]
 	//	},
 	//	{
 	//	  	"manager_name": manager3,
@@ -76,7 +76,7 @@ import (
 						file_paths: ["/home/user/documents/report.pdf", "/home/user/photos/vacation.jpg", "/home/user/music/song.mp3"],
 						file_names: ["report.pdf", "vacation.jpg", "song.mp3"]
 						},
-			"umbrella_percentage": ["5%","20%","10%","20%","10%","20%","10%","15%"]
+			"umbrella_percentage": ["5","20","10","20","10","20","10","15"]
 	//	}
 	//
 
@@ -87,14 +87,14 @@ type file struct {
 	FileName string `json:"file_name"`
 }
 type ManagerStatistics struct {
-	ManagerName        string   `json:"manager_name"`
-	Size               int64    `json:"size"`
-	Folders            int      `json:"folders"`
-	Files              int      `json:"files"`
-	Recent             []file   `json:"recent"`
-	Largest            []file   `json:"largest"`
-	Oldest             []file   `json:"oldest"`
-	UmbrellaPercentage []string `json:"umbrella_percentage"`
+	ManagerName    string `json:"manager_name"`
+	Size           int64  `json:"size"`
+	Folders        int    `json:"folders"`
+	Files          int    `json:"files"`
+	Recent         []file `json:"recent"`
+	Largest        []file `json:"largest"`
+	Oldest         []file `json:"oldest"`
+	UmbrellaCounts []int  `json:"umbrella_counts"`
 }
 
 func getNumItems(m *ManagerStatistics, item *Folder) {
@@ -125,4 +125,40 @@ func getManagerSize(m *ManagerStatistics, item *Folder) {
 	for _, subFolder := range item.Subfolders {
 		getManagerSize(m, subFolder)
 	}
+}
+
+// Documents
+// Images
+// Music
+// Presentations
+// Videos
+// Spreadsheets
+// Archives
+// Unknown
+// remember to call loadTypes before calling this function
+func getUmbrellaRatio(m *ManagerStatistics, item *Folder) {
+	umbrellaCounts := make([]int, 8)
+	for _, file := range item.Files {
+		umbrellaType := ObjectMap[item.Name][file.Path].umbrellaType
+		switch umbrellaType {
+		case "Documents":
+			umbrellaCounts[0]++
+		case "Images":
+			umbrellaCounts[1]++
+		case "Music":
+			umbrellaCounts[2]++
+		case "Presentations":
+			umbrellaCounts[3]++
+		case "Videos":
+			umbrellaCounts[4]++
+		case "Spreadsheets":
+			umbrellaCounts[5]++
+		case "Archives":
+			umbrellaCounts[6]++
+		default:
+			umbrellaCounts[7]++
+		}
+	}
+
+	m.UmbrellaCounts = umbrellaCounts
 }
