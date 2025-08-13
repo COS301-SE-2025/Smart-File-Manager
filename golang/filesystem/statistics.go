@@ -7,89 +7,14 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
 )
 
-/*
-	statistics we need
-	num managers
-	num files	& per manager
-	num folders & per manager
-	size of manager & per manager
-
-	Most recently used files	lim=5
-	largest files	lim=5
-	least recently used files 	lim=5
-
-
-	umbrella files perentage of all files
-
-	json structure:
-	// [
-	//	{
-	//	 	"manager_name": manager1,
-			"size": 1024,
-			"folders": 10,
-			"files": 100,
-			"recent": {
-						file_paths: ["/home/user/documents/report.pdf", "/home/user/photos/vacation.jpg", "/home/user/music/song.mp3"],
-						file_names: ["report.pdf", "vacation.jpg", "song.mp3"]
-						},
-			"largest": {
-						file_paths: ["/home/user/documents/report.pdf", "/home/user/photos/vacation.jpg", "/home/user/music/song.mp3"],
-						file_names: ["report.pdf", "vacation.jpg", "song.mp3"]
-						},
-			"oldest": {
-						file_paths: ["/home/user/documents/report.pdf", "/home/user/photos/vacation.jpg", "/home/user/music/song.mp3"],
-						file_names: ["report.pdf", "vacation.jpg", "song.mp3"]
-						},
-			"umbrella_percentage": ["5","20","10","20","10","20","10","15"]
-	//	},
-	//	{
-	//	  	"manager_name": manager2,
-			"size": 1024,
-			"folders": 10,
-			"files": 100,
-			"recent": {
-						file_paths: ["/home/user/documents/report.pdf", "/home/user/photos/vacation.jpg", "/home/user/music/song.mp3"],
-						file_names: ["report.pdf", "vacation.jpg", "song.mp3"]
-						},
-			"largest": {
-						file_paths: ["/home/user/documents/report.pdf", "/home/user/photos/vacation.jpg", "/home/user/music/song.mp3"],
-						file_names: ["report.pdf", "vacation.jpg", "song.mp3"]
-						},
-			"oldest": {
-						file_paths: ["/home/user/documents/report.pdf", "/home/user/photos/vacation.jpg", "/home/user/music/song.mp3"],
-						file_names: ["report.pdf", "vacation.jpg", "song.mp3"]
-						},
-			"umbrella_percentage": ["5","20","10","20","10","20","10","15"]
-	//	},
-	//	{
-	//	  	"manager_name": manager3,
-			"size": 1024,
-			"folders": 10,
-			"files": 100,
-			"recent": {
-						file_paths: ["/home/user/documents/report.pdf", "/home/user/photos/vacation.jpg", "/home/user/music/song.mp3"],
-						file_names: ["report.pdf", "vacation.jpg", "song.mp3"]
-						},
-			"largest": {
-						file_paths: ["/home/user/documents/report.pdf", "/home/user/photos/vacation.jpg", "/home/user/music/song.mp3"],
-						file_names: ["report.pdf", "vacation.jpg", "song.mp3"]
-						},
-			"oldest": {
-						file_paths: ["/home/user/documents/report.pdf", "/home/user/photos/vacation.jpg", "/home/user/music/song.mp3"],
-						file_names: ["report.pdf", "vacation.jpg", "song.mp3"]
-						},
-			"umbrella_percentage": ["5","20","10","20","10","20","10","15"]
-	//	}
-	//
-
-// ]
-*/
 type file struct {
 	FilePath string `json:"file_path"`
 	FileName string `json:"file_name"`
 }
+
 type ManagerStatistics struct {
 	ManagerName    string `json:"manager_name"`
 	Size           int64  `json:"size"`
@@ -101,176 +26,228 @@ type ManagerStatistics struct {
 	UmbrellaCounts []int  `json:"umbrella_counts"`
 }
 
+type fileInfo struct {
+	path     string
+	name     string
+	size     int64
+	modTime  time.Time
+	umbrella string
+}
+
 func StatHandler(w http.ResponseWriter, r *http.Request) {
-	mu.Lock()
-	defer mu.Unlock()
-	//load all maps
-	assignMaps()
-	//create object that will be converted into json
-	managers := make([]ManagerStatistics, 0)
-	for _, folder := range GetComposites() {
+	// mu.Lock()
+	// defer mu.Unlock()
+
+	log.Println("StatHandler: Starting statistics collection")
+
+	var managers []ManagerStatistics
+	log.Println("StatHandler: Retrieving composites")
+	composites := GetComposites()
+	log.Printf("StatHandler: Found %d managers to process", len(composites))
+
+	for i, folder := range composites {
+		log.Printf("StatHandler: Processing manager %d/%d: %s", i+1, len(composites), folder.Name)
+
 		manager := ManagerStatistics{
 			ManagerName: folder.Name,
 		}
-		getNumItems(&manager, folder)
-		getManagerSize(&manager, folder)
-		getUmbrellaRatio(&manager, folder)
-		getFileStats(&manager)
+
+		// Collect all file information for this manager
+		log.Printf("StatHandler: Collecting files for manager: %s", folder.Name)
+		allFiles := collectManagerFiles(folder)
+		log.Printf("StatHandler: Found %d files in manager: %s", len(allFiles), folder.Name)
+
+		// Calculate statistics
+		manager.Files = len(allFiles)
+		manager.Folders = countFolders(folder)
+		manager.Size = calculateTotalSize(allFiles)
+		manager.UmbrellaCounts = calculateUmbrellaCounts(allFiles)
+
+		// Get file rankings
+		log.Printf("StatHandler: Calculating file rankings for manager: %s", folder.Name)
+		manager.Recent = getNewestFiles(allFiles, 5)
+		manager.Oldest = getOldestFiles(allFiles, 5)
+		manager.Largest = getLargestFiles(allFiles, 5)
+
 		managers = append(managers, manager)
+		log.Printf("StatHandler: Completed manager: %s", folder.Name)
 	}
-	//convert to json
+
+	log.Println("StatHandler: Encoding response to JSON")
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(managers)
-	return
-
+	log.Println("StatHandler: Request completed successfully")
 }
 
-func assignMaps() {
-	//initialize if needed
-	if len(fileStatsReturn.Newest) == 0 {
-		fileStatsReturn.Newest = []file{}
-	}
-	if len(fileStatsReturn.Oldest) == 0 {
-		fileStatsReturn.Oldest = []file{}
-	}
-	if len(fileStatsReturn.Largest) == 0 {
-		fileStatsReturn.Largest = []file{}
-	}
-	for _, folder := range GetComposites() {
-		readIntoMap(&timesMap, &sizeMap, folder)
-		LoadTypes(folder, folder.Name)
-	}
-	assignTimedFiles()
-	assignSizeFiles()
+func collectManagerFiles(folder *Folder) []fileInfo {
+	var files []fileInfo
 
+	log.Printf("LoadTypes: Starting for folder %s", folder.Name)
+	// Load types for this folder - this might be slow
+	LoadTypes(folder, folder.Name)
+	log.Printf("LoadTypes: Completed for folder %s", folder.Name)
+
+	log.Printf("collectFilesRecursive: Starting for folder %s", folder.Name)
+	collectFilesRecursive(folder, &files)
+	log.Printf("collectFilesRecursive: Completed for folder %s, found %d files", folder.Name, len(files))
+
+	return files
 }
 
-func getNumItems(m *ManagerStatistics, item *Folder) {
-	m.Files += len(item.Files)
-	for _, subFolder := range item.Subfolders {
-		getNumItems(m, subFolder)
-	}
-}
-
-func getManagerSize(m *ManagerStatistics, item *Folder) {
-	for _, file := range item.Files {
-		// Get file information using os.Stat()
-		fileInfo, err := os.Stat(file.Path)
-		if err != nil {
-			if os.IsNotExist(err) {
-				log.Printf("Error: File '%s' does not exist.\n", file.Path)
-			} else {
-				log.Fatalf("Error getting file info for '%s': %v\n", file.Path, err)
-			}
-			return
-		}
-
-		// Access the file size from the FileInfo
-		fileSize := fileInfo.Size()
-		m.Size += fileSize
-	}
-
-	for _, subFolder := range item.Subfolders {
-		getManagerSize(m, subFolder)
-	}
-}
-
-// Documents
-// Images
-// Music
-// Presentations
-// Videos
-// Spreadsheets
-// Archives
-// Unknown
-// remember to call loadTypes before calling this function
-func getUmbrellaRatio(m *ManagerStatistics, item *Folder) {
-	umbrellaCounts := make([]int, 8)
-	for _, file := range item.Files {
-		umbrellaType := ObjectMap[item.Name][file.Path].umbrellaType
-		switch umbrellaType {
-		case "Documents":
-			umbrellaCounts[0]++
-		case "Images":
-			umbrellaCounts[1]++
-		case "Music":
-			umbrellaCounts[2]++
-		case "Presentations":
-			umbrellaCounts[3]++
-		case "Videos":
-			umbrellaCounts[4]++
-		case "Spreadsheets":
-			umbrellaCounts[5]++
-		case "Archives":
-			umbrellaCounts[6]++
+func collectFilesRecursive(folder *Folder, files *[]fileInfo) {
+	for _, file := range folder.Files {
+		// Add timeout check periodically
+		select {
+		case <-time.After(50 * time.Millisecond):
+			log.Printf("Timeout warning: Processing file %s is taking longer than expected", file.Path)
 		default:
-			umbrellaCounts[7]++
 		}
-	}
 
-	m.UmbrellaCounts = umbrellaCounts
-}
-
-type fileStats struct {
-	Newest  []file `json:"newest"`
-	Oldest  []file `json:"oldest"`
-	Largest []file `json:"largest"`
-}
-
-var fileStatsReturn fileStats
-
-func getFileStats(m *ManagerStatistics) {
-	m.Recent = fileStatsReturn.Newest
-	m.Oldest = fileStatsReturn.Oldest
-	m.Largest = fileStatsReturn.Largest
-}
-
-var timesMap map[float64]string
-var sizeMap map[float64]string
-
-func readIntoMap(times *map[float64]string, sizes *map[float64]string, f *Folder) {
-	for _, item := range f.Files {
-		// Get the file modification time
-		fileInfo, err := os.Stat(item.Path)
+		info, err := os.Stat(file.Path)
 		if err != nil {
-			log.Printf("Error getting file info for '%s': %v\n", item.Path, err)
+			log.Printf("Error getting file info for '%s': %v", file.Path, err)
 			continue
 		}
-		modTime := fileInfo.ModTime().UnixNano()
-		timesMap[float64(modTime)] = item.Path
-		fileSize := fileInfo.Size()
-		sizeMap[float64(fileSize)] = item.Path
+
+		umbrella := "Unknown"
+		if ObjectMap != nil && ObjectMap[folder.Name] != nil {
+			if objInfo, exists := ObjectMap[folder.Name][file.Path]; exists {
+				umbrella = objInfo.umbrellaType
+			}
+		}
+
+		*files = append(*files, fileInfo{
+			path:     file.Path,
+			name:     filepath.Base(file.Path),
+			size:     info.Size(),
+			modTime:  info.ModTime(),
+			umbrella: umbrella,
+		})
 	}
-	for _, subFolder := range f.Subfolders {
-		readIntoMap(times, sizes, subFolder)
+
+	for _, subFolder := range folder.Subfolders {
+		collectFilesRecursive(subFolder, files)
 	}
 }
 
-func assignTimedFiles() {
-	basket := timesMap
-	keys := make([]float64, 0, len(basket))
-	for k := range basket {
-		keys = append(keys, k)
+func countFolders(folder *Folder) int {
+	count := len(folder.Subfolders)
+	for _, subFolder := range folder.Subfolders {
+		count += countFolders(subFolder)
 	}
-	sort.Float64s(keys)
-	for i := 0; i < 5; i++ {
-		filePath := basket[keys[i]]
-		fileStatsReturn.Newest = append(fileStatsReturn.Newest, file{FilePath: filePath, FileName: filepath.Base(filePath)})
-	}
-	for i := len(keys) - 6; i > len(keys)-1; i-- {
-		filePath := basket[keys[i]]
-		fileStatsReturn.Oldest = append(fileStatsReturn.Oldest, file{FilePath: filePath, FileName: filepath.Base(filePath)})
-	}
+	return count
 }
 
-func assignSizeFiles() {
-	basket := sizeMap
-	keys := make([]float64, 0, len(basket))
-	for k := range basket {
-		keys = append(keys, k)
+func calculateTotalSize(files []fileInfo) int64 {
+	var total int64
+	for _, file := range files {
+		total += file.size
 	}
-	sort.Float64s(keys)
-	for i := 0; i < 5; i++ {
-		filePath := basket[keys[i]]
-		fileStatsReturn.Largest = append(fileStatsReturn.Largest, file{FilePath: filePath, FileName: filepath.Base(filePath)})
+	return total
+}
+
+func calculateUmbrellaCounts(files []fileInfo) []int {
+	// [Documents, Images, Music, Presentations, Videos, Spreadsheets, Archives, Unknown]
+	counts := make([]int, 8)
+
+	for _, file := range files {
+		switch file.umbrella {
+		case "Documents":
+			counts[0]++
+		case "Images":
+			counts[1]++
+		case "Music":
+			counts[2]++
+		case "Presentations":
+			counts[3]++
+		case "Videos":
+			counts[4]++
+		case "Spreadsheets":
+			counts[5]++
+		case "Archives":
+			counts[6]++
+		default:
+			counts[7]++
+		}
 	}
+
+	return counts
+}
+
+func getNewestFiles(files []fileInfo, limit int) []file {
+	if len(files) == 0 {
+		return []file{}
+	}
+
+	// Sort by modification time (newest first)
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].modTime.After(files[j].modTime)
+	})
+
+	result := make([]file, 0, limit)
+	count := limit
+	if count > len(files) {
+		count = len(files)
+	}
+
+	for i := 0; i < count; i++ {
+		result = append(result, file{
+			FilePath: files[i].path,
+			FileName: files[i].name,
+		})
+	}
+
+	return result
+}
+
+func getOldestFiles(files []fileInfo, limit int) []file {
+	if len(files) == 0 {
+		return []file{}
+	}
+
+	// Sort by modification time (oldest first)
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].modTime.Before(files[j].modTime)
+	})
+
+	result := make([]file, 0, limit)
+	count := limit
+	if count > len(files) {
+		count = len(files)
+	}
+
+	for i := 0; i < count; i++ {
+		result = append(result, file{
+			FilePath: files[i].path,
+			FileName: files[i].name,
+		})
+	}
+
+	return result
+}
+
+func getLargestFiles(files []fileInfo, limit int) []file {
+	if len(files) == 0 {
+		return []file{}
+	}
+
+	// Sort by size (largest first)
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].size > files[j].size
+	})
+
+	result := make([]file, 0, limit)
+	count := limit
+	if count > len(files) {
+		count = len(files)
+	}
+
+	for i := 0; i < count; i++ {
+		result = append(result, file{
+			FilePath: files[i].path,
+			FileName: files[i].name,
+		})
+	}
+
+	return result
 }
