@@ -3,6 +3,8 @@ package filesystem
 import (
 	"log"
 	"os"
+	"path/filepath"
+	"sort"
 )
 
 /*
@@ -97,6 +99,25 @@ type ManagerStatistics struct {
 	UmbrellaCounts []int  `json:"umbrella_counts"`
 }
 
+func assignMaps() {
+	//initialize if needed
+	if len(fileStatsReturn.Newest) == 0 {
+		fileStatsReturn.Newest = []file{}
+	}
+	if len(fileStatsReturn.Oldest) == 0 {
+		fileStatsReturn.Oldest = []file{}
+	}
+	if len(fileStatsReturn.Largest) == 0 {
+		fileStatsReturn.Largest = []file{}
+	}
+	for _, folder := range GetComposites() {
+		readIntoMap(&timesMap, &sizeMap, folder)
+	}
+	assignTimedFiles()
+	assignSizeFiles()
+
+}
+
 func getNumItems(m *ManagerStatistics, item *Folder) {
 	m.Files += len(item.Files)
 	for _, subFolder := range item.Subfolders {
@@ -161,4 +182,69 @@ func getUmbrellaRatio(m *ManagerStatistics, item *Folder) {
 	}
 
 	m.UmbrellaCounts = umbrellaCounts
+}
+
+type fileStats struct {
+	Newest  []file `json:"newest"`
+	Oldest  []file `json:"oldest"`
+	Largest []file `json:"largest"`
+}
+
+var fileStatsReturn fileStats
+
+func getFileStats(m *ManagerStatistics) {
+	m.Recent = fileStatsReturn.Newest
+	m.Oldest = fileStatsReturn.Oldest
+	m.Largest = fileStatsReturn.Largest
+}
+
+var timesMap map[float64]string
+var sizeMap map[float64]string
+
+func readIntoMap(times *map[float64]string, sizes *map[float64]string, f *Folder) {
+	for _, item := range f.Files {
+		// Get the file modification time
+		fileInfo, err := os.Stat(item.Path)
+		if err != nil {
+			log.Printf("Error getting file info for '%s': %v\n", item.Path, err)
+			continue
+		}
+		modTime := fileInfo.ModTime().UnixNano()
+		timesMap[float64(modTime)] = item.Path
+		fileSize := fileInfo.Size()
+		sizeMap[float64(fileSize)] = item.Path
+	}
+	for _, subFolder := range f.Subfolders {
+		readIntoMap(times, sizes, subFolder)
+	}
+}
+
+func assignTimedFiles() {
+	basket := timesMap
+	keys := make([]float64, 0, len(basket))
+	for k := range basket {
+		keys = append(keys, k)
+	}
+	sort.Float64s(keys)
+	for i := 0; i < 5; i++ {
+		filePath := basket[keys[i]]
+		fileStatsReturn.Newest = append(fileStatsReturn.Newest, file{FilePath: filePath, FileName: filepath.Base(filePath)})
+	}
+	for i := len(keys) - 6; i > len(keys)-1; i-- {
+		filePath := basket[keys[i]]
+		fileStatsReturn.Oldest = append(fileStatsReturn.Oldest, file{FilePath: filePath, FileName: filepath.Base(filePath)})
+	}
+}
+
+func assignSizeFiles() {
+	basket := sizeMap
+	keys := make([]float64, 0, len(basket))
+	for k := range basket {
+		keys = append(keys, k)
+	}
+	sort.Float64s(keys)
+	for i := 0; i < 5; i++ {
+		filePath := basket[keys[i]]
+		fileStatsReturn.Largest = append(fileStatsReturn.Largest, file{FilePath: filePath, FileName: filepath.Base(filePath)})
+	}
 }
