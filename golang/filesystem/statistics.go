@@ -1,5 +1,10 @@
 package filesystem
 
+import (
+	"log"
+	"os"
+)
+
 /*
 	statistics we need
 	num managers
@@ -83,7 +88,7 @@ type file struct {
 }
 type ManagerStatistics struct {
 	ManagerName        string   `json:"manager_name"`
-	Size               int      `json:"size"`
+	Size               int64    `json:"size"`
 	Folders            int      `json:"folders"`
 	Files              int      `json:"files"`
 	Recent             []file   `json:"recent"`
@@ -96,5 +101,28 @@ func getNumItems(m *ManagerStatistics, item *Folder) {
 	m.Files += len(item.Files)
 	for _, subFolder := range item.Subfolders {
 		getNumItems(m, subFolder)
+	}
+}
+
+func getManagerSize(m *ManagerStatistics, item *Folder) {
+	for _, file := range item.Files {
+		// Get file information using os.Stat()
+		fileInfo, err := os.Stat(file.Path)
+		if err != nil {
+			if os.IsNotExist(err) {
+				log.Printf("Error: File '%s' does not exist.\n", file.Path)
+			} else {
+				log.Fatalf("Error getting file info for '%s': %v\n", file.Path, err)
+			}
+			return
+		}
+
+		// Access the file size from the FileInfo
+		fileSize := fileInfo.Size()
+		m.Size += fileSize
+	}
+
+	for _, subFolder := range item.Subfolders {
+		getManagerSize(m, subFolder)
 	}
 }
