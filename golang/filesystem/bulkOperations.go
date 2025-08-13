@@ -109,6 +109,7 @@ type TagsStruct struct {
 //	}
 //
 // ]
+
 type DeleteStruct struct {
 	FilePath string `json:"file_path"`
 }
@@ -349,6 +350,8 @@ func BulkDeleteFileHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Files not found", http.StatusNotFound)
 }
 
+// TODO: Type: ALL, umbrella true/false
+// TODO: Type: Tags, umbrella false/true
 func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	types := r.URL.Query().Get("type")
@@ -364,7 +367,25 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 			LoadTypes(c, name) // load types into the global objectMap
 			var returnList []returnStruct
 			// fmt.Println("LIST CREATED")
-			if umbrella == "true" {
+			if types == "ALL" {
+				for k := range objectMap[name] {
+					returnList = append(returnList, returnStruct{
+						FilePath: k,
+						FileName: c.GetFile(k).Name,
+						FileTags: c.GetFile(k).Tags,
+					})
+				}
+			} else if types == "TAGS" {
+				for k := range objectMap[name] {
+					if len(c.GetFile(k).Tags) > 0 {
+						returnList = append(returnList, returnStruct{
+							FilePath: k,
+							FileName: c.GetFile(k).Name,
+							FileTags: c.GetFile(k).Tags,
+						})
+					}
+				}
+			} else if umbrella == "true" {
 				for k, v := range objectMap[name] {
 					if v.umbrellaType == types {
 						returnList = append(returnList, returnStruct{
