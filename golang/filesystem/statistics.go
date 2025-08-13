@@ -1,7 +1,9 @@
 package filesystem
 
 import (
+	"encoding/json"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -99,6 +101,29 @@ type ManagerStatistics struct {
 	UmbrellaCounts []int  `json:"umbrella_counts"`
 }
 
+func StatHandler(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	defer mu.Unlock()
+	//load all maps
+	assignMaps()
+	//create object that will be converted into json
+	managers := make([]ManagerStatistics, 0)
+	for _, folder := range GetComposites() {
+		manager := ManagerStatistics{
+			ManagerName: folder.Name,
+		}
+		getNumItems(&manager, folder)
+		getManagerSize(&manager, folder)
+		getUmbrellaRatio(&manager, folder)
+		getFileStats(&manager)
+		managers = append(managers, manager)
+	}
+	//convert to json
+	json.NewEncoder(w).Encode(managers)
+	return
+
+}
+
 func assignMaps() {
 	//initialize if needed
 	if len(fileStatsReturn.Newest) == 0 {
@@ -112,6 +137,7 @@ func assignMaps() {
 	}
 	for _, folder := range GetComposites() {
 		readIntoMap(&timesMap, &sizeMap, folder)
+		LoadTypes(folder, folder.Name)
 	}
 	assignTimedFiles()
 	assignSizeFiles()
