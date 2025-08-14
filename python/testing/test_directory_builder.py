@@ -1,7 +1,6 @@
 import sys
 import unittest
-from unittest.mock import patch, MagicMock
-from types import SimpleNamespace
+from unittest.mock import patch
 import pytest
 import os
 import tempfile

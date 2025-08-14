@@ -1,12 +1,11 @@
-import grpc
 import pytest
-from concurrent import futures
 import sys
 import os
 import time
 
 # Add src to path temporarily so the generated grpc file can find message_structure_pb2
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
 
 from src import message_structure_pb2, message_structure_pb2_grpc
 from src.message_structure_pb2 import Directory, File, Tag, MetadataEntry, DirectoryRequest
@@ -26,6 +25,7 @@ def grpc_test_server():
     yield stub  # This is used in the test function
 
     server.stop(None)
+
 
 
 # <------ INTEGRATION TESTING ----->

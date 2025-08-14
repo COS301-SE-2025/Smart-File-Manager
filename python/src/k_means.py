@@ -35,12 +35,18 @@ class KMeansCluster:
         centers = np.round(self.kmeans.cluster_centers_, 4)
         return preds, centers
 
+        if depth > 0:
+            # Assign directory name
+            folder_name = self.folder_namer.generateFolderName(files)        
+            dir_name = folder_name
+
     def cluster(self, vectors):
         return self.kmeans.fit_predict(vectors)
 
     def dirCluster(self, full_vecs, files):
         builder = DirectoryCreator(self.parent_folder, files)
         return self._recursive_clustering(full_vecs, files, depth=0, dir_prefix=self.parent_folder, builder=builder)
+
 
     def _recursive_clustering(self, vectors, files, depth, dir_prefix, builder):
         # Base condition: shallow depth or too few vectors
@@ -85,8 +91,10 @@ class KMeansCluster:
 
 
     def printDirectoryTree(self, directory, indent=""):
+
         for file in directory.files:
             print(f'"{file.new_path}",')
+
         for subdir in directory.directories:
             self.printDirectoryTree(subdir, indent + "  ")
 

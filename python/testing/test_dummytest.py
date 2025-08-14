@@ -1,4 +1,3 @@
-import pytest
 
 def foo():
     return 3
