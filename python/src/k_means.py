@@ -49,6 +49,7 @@ class KMeansCluster:
     def dirCluster(self,full_vecs,files):
         builder = DirectoryCreator(self.parent_folder,files) # instead of root it should be the parent folder
         self.remove_locked_files(files,full_vecs)
+        print("Locked files ", len(self.locked_files))
         
         unlocked_dirs = self._recursive_clustering(full_vecs, files, 0, self.parent_folder, builder)
 

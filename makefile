@@ -84,6 +84,8 @@ python_client:
 python_master_temp:
 	pytest -v -s --color=yes --tb=short python/testing/test_clustering_request.py
 
+python_locked_temp:
+	pytest -v -s --color=yes --tb=short python/testing/test_locked_request.py
 
 python_fn_temp:
 	pytest -v -s --color=yes --tb=short python/testing/test_folder_name_creator.py
