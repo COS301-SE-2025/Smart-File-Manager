@@ -374,11 +374,18 @@ func LoadTypes(item *Folder, name string) {
 		if !exists {
 			ObjectMap[name] = make(map[string]object)
 		}
+
+		ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(file.Name), "."))
+		if ext == "" {
+			ext = "unknown"
+		}
+
 		ObjectMap[name][file.Path] = object{
-			fileType:     strings.Split(file.Name, ".")[1],
+			fileType:     ext,
 			umbrellaType: GetCategory(file.Path),
 		}
 	}
+
 	for _, subfolder := range item.Subfolders {
 		LoadTypes(subfolder, name)
 	}
@@ -386,6 +393,9 @@ func LoadTypes(item *Folder, name string) {
 
 func GetCategory(filename string) string {
 	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(filename), "."))
+	if ext == "" {
+		return "Unknown"
+	}
 	if category, exists := FileTypeMap[ext]; exists {
 		return category
 	}
