@@ -45,7 +45,7 @@ func StatHandler(w http.ResponseWriter, r *http.Request) {
 	composites := GetComposites()
 	// log.Printf("StatHandler: Found %d managers to process", len(composites))
 	if composites == nil {
-		w.Write([]byte("false"))
+		json.NewEncoder(w).Encode(struct{}{})
 		return
 	}
 	for i, folder := range composites {
