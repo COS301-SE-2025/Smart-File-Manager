@@ -219,6 +219,7 @@ func TestCountFolders(t *testing.T) {
 }
 
 // TestGetNewestFiles tests the getNewestFiles function
+// love tiaan
 func TestGetNewestFiles(t *testing.T) {
 	now := time.Now()
 	files := []fileInfo{
