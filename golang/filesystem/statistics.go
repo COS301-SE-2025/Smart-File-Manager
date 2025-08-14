@@ -41,10 +41,13 @@ func StatHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("StatHandler: Starting statistics collection")
 
 	var managers []ManagerStatistics
-	log.Println("StatHandler: Retrieving composites")
+	// log.Println("StatHandler: Retrieving composites")
 	composites := GetComposites()
-	log.Printf("StatHandler: Found %d managers to process", len(composites))
-
+	// log.Printf("StatHandler: Found %d managers to process", len(composites))
+	if composites == nil {
+		w.Write([]byte("false"))
+		return
+	}
 	for i, folder := range composites {
 		log.Printf("StatHandler: Processing manager %d/%d: %s", i+1, len(composites), folder.Name)
 
