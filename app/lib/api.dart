@@ -1,3 +1,4 @@
+import 'package:app/models/file_model.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'models/file_tree_node.dart';
@@ -284,6 +285,55 @@ class Api {
       }
     } catch (e, stackTrace) {
       print('Error deleting files: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<List<FileModel>> bulkOperation(
+    String name,
+    String type,
+    bool umbrella,
+  ) async {
+    print(name);
+    print(type);
+    print(umbrella);
+    try {
+      final response = await http.get(
+        Uri.parse("$uri/returnType?name=$name&type=$type&umbrella=$umbrella"),
+      );
+
+      if (response.statusCode == 200) {
+        if (response.body == "" || response.body == "null") {
+          return <FileModel>[];
+        }
+        try {
+          final dynamic jsonData = jsonDecode(response.body);
+          print(jsonData);
+          
+          if (jsonData == null) {
+            return <FileModel>[];
+          }
+          
+          if (jsonData is! List) {
+            return <FileModel>[];
+          }
+          
+          final List<dynamic> jsonList = jsonData;
+          return jsonList
+              .map((item) => FileModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        } catch (e) {
+          print('Error parsing JSON: $e');
+          return <FileModel>[];
+        }
+      } else {
+        throw Exception(
+          'Failed to load duplicate data: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error loading duplicates: $e');
       print(stackTrace);
       rethrow;
     }

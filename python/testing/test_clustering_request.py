@@ -1,6 +1,4 @@
-import grpc
 import pytest
-from concurrent import futures
 import sys
 import os
 import time

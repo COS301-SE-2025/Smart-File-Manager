@@ -55,6 +55,7 @@ class KMeansCluster:
 
         locked_dirs = self.buildLockedDirs(self.locked_files, builder)
 
+
         root_dir = builder.merge(unlocked_dirs, locked_dirs)
         #print(root_dir)
         #self.printMetaData(root_dir)
@@ -65,7 +66,7 @@ class KMeansCluster:
 
     def _recursive_clustering(self,full_vecs,files, depth, dir_prefix, builder):
 
-        # Quit if not enough folders
+        # Quit if not enough folders  # Base condition: shallow depth or too few vectors
         if len(full_vecs) < self.min_size or depth > self.max_depth: # depth can be changed on init of kmeans
             return builder.buildDirectory(dir_prefix, files, []) 
 
@@ -124,11 +125,12 @@ class KMeansCluster:
 
 
     def printDirectoryTree(self, directory, indent=""):
-       # print(f"{indent}{directory.name}/")
+
         for file in directory.files:
            # print(f"{file.name} ")
           #  print(f"{indent} - {file.original_path} ")
             print(f'"{file.new_path}",')
+
         for subdir in directory.directories:
             self.printDirectoryTree(subdir, indent + "  ")
 

@@ -13,21 +13,6 @@ from src import message_structure_pb2, message_structure_pb2_grpc
 from src.message_structure_pb2 import Directory, File, DirectoryRequest, Keyword
 from src.request_handler import RequestHandler
 
-# Create a fixture to automatically setup and tear down a grpc_test_server
-@pytest.fixture(scope="module")
-def grpc_test_server():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
-    message_structure_pb2_grpc.add_DirectoryServiceServicer_to_server(RequestHandler(), server)
-    port = server.add_insecure_port("localhost:0")  # OS assigns free port
-    server.start()
-
-    channel = grpc.insecure_channel(f"localhost:{port}")
-    stub = message_structure_pb2_grpc.DirectoryServiceStub(channel)
-
-    yield stub  # This is used in the test function
-
-    server.stop(None)
-
 
 # <------ INTEGRATION TESTING ----->
 # Fixture creates a gRPC DirectoryRequest from everything in python/testing/test_files_2 for repeated use
