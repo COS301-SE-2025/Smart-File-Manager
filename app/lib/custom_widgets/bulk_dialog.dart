@@ -32,7 +32,7 @@ class _BulkDialogState extends State<BulkDialog> {
   final List<FileModel> _currentSelectedFiles = [];
   bool _selectAll = false;
 
-  String _selectedCategory = "Documents";
+  String _selectedCategory = "All Files";
   String? _selectedFileType;
 
   String _selectedBulkOperation = "Bulk Delete";
@@ -45,6 +45,7 @@ class _BulkDialogState extends State<BulkDialog> {
   ];
 
   final Map<String, List<String>> _fileTypeMap = {
+    "All Files": [],
     "Documents": ["pdf", "doc", "docx", "rtf", "txt", "odt", "md", "csv"],
     "Images": [
       "jpg",
@@ -74,7 +75,12 @@ class _BulkDialogState extends State<BulkDialog> {
   @override
   void initState() {
     super.initState();
-    _loadBulkData(widget.name, _selectedCategory, widget.umbrella);
+    if (_selectedBulkOperation == "Bulk Remove Tag") {
+      _loadBulkData(widget.name, "TAGS", widget.umbrella);
+    } else {
+      String apiType = _selectedCategory == "All Files" ? "ALL" : _selectedCategory;
+      _loadBulkData(widget.name, apiType, widget.umbrella);
+    }
   }
 
   Future<void> _loadBulkData(String name, String type, bool umbrella) async {
@@ -100,7 +106,8 @@ class _BulkDialogState extends State<BulkDialog> {
         _selectedCategory = newCategory;
         _selectedFileType = null;
       });
-      _loadBulkData(widget.name, _selectedCategory, true);
+      String apiType = _selectedCategory == "All Files" ? "ALL" : _selectedCategory;
+      _loadBulkData(widget.name, apiType, true);
     }
   }
 
@@ -108,12 +115,17 @@ class _BulkDialogState extends State<BulkDialog> {
     if (newBulkOperation != null &&
         newBulkOperation != _selectedBulkOperation) {
       setState(() {
-        _selectedCategory = "Documents";
+        _selectedCategory = "All Files";
         _selectedFileType = null;
         _selectedBulkOperation = newBulkOperation;
         _selectedTagFilter = null;
       });
-      _loadBulkData(widget.name, _selectedCategory, true);
+      if (newBulkOperation == "Bulk Remove Tag") {
+        _loadBulkData(widget.name, "TAGS", true);
+      } else {
+        String apiType = _selectedCategory == "All Files" ? "ALL" : _selectedCategory;
+        _loadBulkData(widget.name, apiType, true);
+      }
     }
   }
 
@@ -125,7 +137,8 @@ class _BulkDialogState extends State<BulkDialog> {
       if (newFileType != null) {
         _loadBulkData(widget.name, newFileType, false);
       } else {
-        _loadBulkData(widget.name, _selectedCategory, true);
+        String apiType = _selectedCategory == "All Files" ? "ALL" : _selectedCategory;
+        _loadBulkData(widget.name, apiType, true);
       }
     }
   }
@@ -146,6 +159,16 @@ class _BulkDialogState extends State<BulkDialog> {
       }
     }
     return allTags.toList()..sort();
+  }
+
+  List<String> _getTagsFromSelectedFiles() {
+    Set<String> selectedFileTags = {};
+    for (FileModel file in _currentSelectedFiles) {
+      if (file.fileTags != null) {
+        selectedFileTags.addAll(file.fileTags!);
+      }
+    }
+    return selectedFileTags.toList()..sort();
   }
 
   void _toggleSelectAll() {
@@ -248,6 +271,30 @@ class _BulkDialogState extends State<BulkDialog> {
     return jsonEncode(fileList);
   }
 
+  String _convertToJsonRemoveTag(String? tag) {
+    List<Map<String, dynamic>> fileList = [];
+    
+    for (FileModel file in _currentSelectedFiles) {
+      if (tag == null) {
+        // Remove all tags from this file
+        fileList.add({
+          "file_path": file.filePath,
+          "tags": file.fileTags ?? [],
+        });
+      } else {
+        // Only include this file if it has the specific tag to remove
+        if (file.fileTags != null && file.fileTags!.contains(tag)) {
+          fileList.add({
+            "file_path": file.filePath,
+            "tags": [tag],
+          });
+        }
+      }
+    }
+    
+    return jsonEncode(fileList);
+  }
+
   void _showAddTagDialog() {
     final TextEditingController tagController = TextEditingController();
 
@@ -300,6 +347,93 @@ class _BulkDialogState extends State<BulkDialog> {
     );
   }
 
+  void _showRemoveTagDialog() {
+    List<String> availableTags = _getTagsFromSelectedFiles();
+    String? selectedTag;
+
+    // Check if any selected files have tags
+    if (availableTags.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No tags found on selected files'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: kScaffoldColor,
+              title: const Text('Remove Tag', style: kTitle1),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Select which tags to remove from selected files:',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.maxFinite,
+                    child: CustomDropdownMenu<String>(
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: "ALL_TAGS",
+                          child: Text('All Tags'),
+                        ),
+                        ...availableTags.map((String tag) {
+                          return DropdownMenuItem<String>(
+                            value: tag,
+                            child: Text(tag),
+                          );
+                        }),
+                      ],
+                      value: selectedTag,
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedTag = newValue;
+                        });
+                      },
+                      hint: "Select tag to remove",
+                      minWidth: 200,
+                      maxWidth: 300,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: selectedTag != null ? () {
+                    Navigator.of(dialogContext).pop();
+                    _removeTagsFromFiles(widget.name, selectedTag);
+                  } : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kYellowText,
+                    foregroundColor: Colors.black,
+                  ),
+                  child: const Text('Remove Tag'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _tagMultipleFiles(String managerName, String tag) async {
     String jsonPaths = _convertToJsonAddTag(tag);
     FileTreeNode response = await Api.bulkAddTag(managerName, jsonPaths);
@@ -323,6 +457,71 @@ class _BulkDialogState extends State<BulkDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Could not add tag to files'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _removeTagsFromFiles(String managerName, String? selectedTag) async {
+    String? tagToRemove = selectedTag == "ALL_TAGS" ? null : selectedTag;
+    
+    // Count how many files will be affected
+    int affectedFilesCount = 0;
+    for (FileModel file in _currentSelectedFiles) {
+      if (tagToRemove == null) {
+        // Count files that have any tags
+        if (file.fileTags != null && file.fileTags!.isNotEmpty) {
+          affectedFilesCount++;
+        }
+      } else {
+        // Count files that have the specific tag
+        if (file.fileTags != null && file.fileTags!.contains(tagToRemove)) {
+          affectedFilesCount++;
+        }
+      }
+    }
+    
+    if (affectedFilesCount == 0) {
+      String message = selectedTag == "ALL_TAGS" 
+          ? 'No tags found on selected files'
+          : 'Tag "$selectedTag" not found on any selected files';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    
+    String jsonPaths = _convertToJsonRemoveTag(tagToRemove);
+    FileTreeNode response = await Api.bulkRemoveTag(managerName, jsonPaths);
+    if (response.name == managerName) {
+      setState(() {
+        widget.files?.clear();
+        _currentSelectedFiles.clear();
+      });
+      widget.updateOnDelete.call(managerName, response);
+      if (mounted) {
+        Navigator.pop(context);
+      }
+      String message = selectedTag == "ALL_TAGS" 
+          ? 'Successfully removed all tags from $affectedFilesCount file(s)'
+          : 'Successfully removed tag "$selectedTag" from $affectedFilesCount file(s)';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: kYellowText,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not remove tags from files'),
           backgroundColor: Colors.redAccent,
           duration: Duration(seconds: 2),
         ),
@@ -358,40 +557,44 @@ class _BulkDialogState extends State<BulkDialog> {
                     maxWidth: 180,
                   ),
                 ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: CustomDropdownMenu<String>(
-                    items:
-                        _fileTypeMap.keys.map((String category) {
-                          return DropdownMenuItem<String>(
-                            value: category,
-                            child: Text(category),
-                          );
-                        }).toList(),
-                    value: _selectedCategory,
-                    onChanged: _onCategoryChanged,
-                    hint: "Documents",
-                    minWidth: 120,
-                    maxWidth: 180,
+                if (_selectedBulkOperation != "Bulk Remove Tag") ...[
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: CustomDropdownMenu<String>(
+                      items:
+                          _fileTypeMap.keys.map((String category) {
+                            return DropdownMenuItem<String>(
+                              value: category,
+                              child: Text(category),
+                            );
+                          }).toList(),
+                      value: _selectedCategory,
+                      onChanged: _onCategoryChanged,
+                      hint: "All Files",
+                      minWidth: 120,
+                      maxWidth: 180,
+                    ),
                   ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: CustomDropdownMenu<String>(
-                    items:
-                        _fileTypeMap[_selectedCategory]!.map((String fileType) {
-                          return DropdownMenuItem<String>(
-                            value: fileType,
-                            child: Text(fileType.toUpperCase()),
-                          );
-                        }).toList(),
-                    value: _selectedFileType,
-                    onChanged: _onFileTypeChanged,
-                    hint: "Select File type",
-                    minWidth: 120,
-                    maxWidth: 180,
-                  ),
-                ),
+                  if (_selectedCategory != "All Files") ...[
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: CustomDropdownMenu<String>(
+                        items:
+                            _fileTypeMap[_selectedCategory]!.map((String fileType) {
+                              return DropdownMenuItem<String>(
+                                value: fileType,
+                                child: Text(fileType.toUpperCase()),
+                              );
+                            }).toList(),
+                        value: _selectedFileType,
+                        onChanged: _onFileTypeChanged,
+                        hint: "Select File type",
+                        minWidth: 120,
+                        maxWidth: 180,
+                      ),
+                    ),
+                  ],
+                ],
               ],
             ),
             // Show tag filter dropdown only for Bulk Remove Tag operation
@@ -753,10 +956,7 @@ class _BulkDialogState extends State<BulkDialog> {
                     )
                     : ElevatedButton(
                       onPressed: () {
-                        _deleteMultipleFiles(
-                          widget.name,
-                          _currentSelectedFiles,
-                        );
+                        _showRemoveTagDialog();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: kYellowText,
