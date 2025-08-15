@@ -12,24 +12,16 @@
 
 ## Table of Contents
 
-- [3.6.1 Architectural Design Strategy](#361-architectural-design-strategy)
-- [3.6.3 Architectural Quality Requirements](#363-architectural-quality-requirements)
-- [3.6.2 Architectural Strategies](#362-architectural-strategies)
-- [3.6.4 Architectural Design and Pattern](#364-architectural-design-and-pattern)
-- [3.6.5 Architectural Constraints](#365-architectural-constraints)
-- [3.6.6 Technology Choices](#366-technology-choices)
+- [Architectural Quality Requirements](#architectural-quality-requirements)
+- [Architectural Strategies](#architectural-strategies)
+- [Architectural Design and Pattern](#architectural-design-and-pattern)
+- [Architectural Constraints](#architectural-constraints)
+- [Technology Choices](#technology-choices)
 
 ---
 
-## 3.6.1 Architectural Design Strategy
 
-_This section will be completed for Demo 3._
-
-The architectural design strategy selection and justification will be provided in the next demonstration phase.
-
----
-
-## 3.6.3 Architectural Quality Requirements
+## Architectural Quality Requirements
 
 The following quality requirements are prioritized from highest to lowest priority for the Smart File Manager system:
 
@@ -68,7 +60,7 @@ The following quality requirements are prioritized from highest to lowest priori
 ---
 
 
-## 3.6.2 Architectural Strategies
+## Architectural Strategies
 
 <table>
   <thead>
@@ -114,25 +106,29 @@ The following quality requirements are prioritized from highest to lowest priori
 
 ---
 
-## 3.6.4 Architectural Design and Pattern
+## Architectural Design and Pattern
 
-_This section will be completed for Demo 3._
+SFM makes use of various architectural patterns selected to support our quality requirements. Our choices and justifications for them follows.
 
-The detailed architectural design overview, system diagrams, and design decision justifications will be provided in Demo 3.
+### Monolithic Architecture 
 
-### Current Architecture Overview (From Demo 1)
+Monolithic architecture combines the various components of an application into a single inseparable unit. Our project is deployed as an single executable application running exclusively on the user's personal machine, with no external dependancies. This deployment model justifies our choice for using this architecture.
 
-**Architecture Style:** The Smart File Manager employs a hybrid architectural approach:
+#### How it supports our quality requirements
+* **Reliability:**
+   - Monolithic systems have no dependancies on external modules which could fail, therby reducing overall system uptime.
+   - Monolithic systems are not continuously deployed, instead only being deployed once a stable and fully tested version is ready, improving reliability.
+* **Performance:**
+   - Due to reduced communication overhead between modules within the monolithic system performance may be faster as opposed to network based bottlenecks introduced by other architectures.
+* **Scalability:**
+   - While monolithic systems do not scale horizontally, monolithic systems may scale vertically with improved hardware. Please also see how we leverage the master-slave pattern to offset the limited scalability. 
+* **Usability:**
+   - By deploying our monolithic system on different operating systems we improve usability since the application runs in an environment familiar to the end user. 
+* **Modifiability:**
+   - Not applicable 
 
-1. **Client-Server Architecture** for the website component
+### Master-Slave Pattern between Request Handler and Task Processor
 
-   - Enables users to communicate with the server for operations (downloading, profile management)
-
-2. **Modular Monolithic Structure** for the application
-
-   - Entire application deployed as single unit with separated concerns into independent layers
-
-3. **Master-Slave Pattern** between Request Handler and Task Processor
    - Request Handler manages multiple Task Processor instances
 
 ### System Components
@@ -159,7 +155,7 @@ The detailed architectural design overview, system diagrams, and design decision
 
 ---
 
-## 3.6.5 Architectural Constraints
+## Architectural Constraints
 
 The following constraints affect the architectural design of the Smart File Manager:
 
@@ -185,7 +181,7 @@ The following constraints affect the architectural design of the Smart File Mana
 
 ---
 
-## 3.6.6 Technology Choices
+## Technology Choices
 
 This section provides an overview of the various technologies used in our stack and the reasoning behind each choice.
 
