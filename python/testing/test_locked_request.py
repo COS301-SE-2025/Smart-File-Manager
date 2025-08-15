@@ -1,11 +1,13 @@
+
+import grpc
 import pytest
+from concurrent import futures
 import sys
 import os
 import time
 
 # Add src to path temporarily so the generated grpc file can find message_structure_pb2
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-
 
 from src import message_structure_pb2, message_structure_pb2_grpc
 from src.message_structure_pb2 import Directory, File, Tag, MetadataEntry, DirectoryRequest
@@ -27,29 +29,39 @@ def grpc_test_server():
     server.stop(None)
 
 
-
 # <------ INTEGRATION TESTING ----->
 @pytest.fixture(scope="module")
 def createDirectoryRequest():
     TEST_DIR = os.path.dirname(__file__)
-    TEST_FILE_DIR = os.path.join(TEST_DIR, "test_files_3")
+    TEST_FILE_DIR = os.path.join(TEST_DIR, "test_files_4")
+    TEST_FILE_DIR_LOCKED = os.path.join(TEST_DIR, "test_files_4", "Locked dir")
+    TEST_FILE_DIR_LOCKED_2 = os.path.join(TEST_DIR, "test_files_4", "Locked dir 2")
+    TEST_FILE_DIR_LOCKED_INNER = os.path.join(TEST_FILE_DIR_LOCKED_2, "inner lock")
 
     def get_path(name):
         return os.path.join(TEST_FILE_DIR, name)
 
+    def get_locked_path(name):
+        return os.path.join(TEST_FILE_DIR_LOCKED, name)
+
+    def get_locked_path_2(name):
+        return os.path.join(TEST_FILE_DIR_LOCKED_2, name)
+
+    def get_locked_path_inner(name):
+        return os.path.join(TEST_FILE_DIR_LOCKED_INNER, name)
     # gRPC objects for files we want to test
     files1 =   [
-        File(name="Apr8TODO.txt", original_path=get_path("Apr8TODO.txt"), tags=[]),
-        File(name="Apr18 meeting.txt", original_path=get_path("Apr18 meeting.txt"), tags=[] ),
-        File(name="architecture_diagram.png", original_path=get_path("architecture_diagram.png"), tags=[]),
-        File(name="Assignment2.pdf", original_path=get_path("Assignment2.pdf"), tags=[]),
+        File(name="Apr8TODO.txt", original_path=get_locked_path("Apr8TODO.txt"), tags=[]),
+        File(name="Apr18 meeting.txt", original_path=get_locked_path_inner("Apr18 meeting.txt"), tags=[] ),
+        File(name="architecture_diagram.png", original_path=get_locked_path("architecture_diagram.png"), tags=[]),
+        File(name="Assignment2.pdf", original_path=get_locked_path_inner("Assignment2.pdf"), tags=[]),
         File(name="collection_page_wireframe.png", original_path=get_path("collection_page_wireframe.png"), tags=[]),
-        File(name="COS 301 - Mini-Project - Demo 1 Instructions.pdf", original_path=get_path("COS 301 - Mini-Project - Demo 1 Instructions.pdf"), tags=[]),
-        File(name="COS 301 - Mini-Project - Demo 2 Instructions.pdf", original_path=get_path("COS 301 - Mini-Project - Demo 2 Instructions.pdf"), tags=[]),
+        File(name="COS 301 - Mini-Project - Demo 1 Instructions.pdf", original_path=get_locked_path_2("COS 301 - Mini-Project - Demo 1 Instructions.pdf"), tags=[]),
+        File(name="COS 301 - Mini-Project - Demo 2 Instructions.pdf", original_path=get_locked_path_inner("COS 301 - Mini-Project - Demo 2 Instructions.pdf"), tags=[]),
         File(name="COS122 Tutorial 4 Sept 7-8, 2023.pdf", original_path=get_path("COS122 Tutorial 4 Sept 7-8, 2023.pdf"), tags=[]),
-        File(name="COS221 Assignment 1 2025.pdf", original_path=get_path("COS221 Assignment 1 2025.pdf"), tags=[]),
-        File(name="cpp_api.md", original_path=get_path("cpp_api.md"), tags=[]),
-        File(name="DeeBee.png", original_path=get_path("DeeBee.png"), tags=[]),
+        File(name="COS221 Assignment 1 2025.pdf", original_path=get_locked_path("COS221 Assignment 1 2025.pdf"), tags=[]),
+        File(name="cpp_api.md", original_path=get_locked_path_2("cpp_api.md"), tags=[]),
+        File(name="DeeBee.png", original_path=get_locked_path("DeeBee.png"), tags=[]),
         File(name="Importing the Database.md", original_path=get_path("Importing the Database.md"), tags=[]),
         File(name="L01_Ch01a(1).pdf", original_path=get_path("L01_Ch01a(1).pdf"), tags=[]),
         File(name="L05_Ch02c.pdf", original_path=get_path("L05_Ch02c.pdf"), tags=[]),
@@ -64,11 +76,11 @@ def createDirectoryRequest():
         File(name="TODO mar30 Meeting.txt", original_path=get_path("TODO mar30 Meeting.txt"), tags=[]),
         File(name="Tututorial_2.pdf", original_path=get_path("Tututorial_2.pdf"), tags=[]),
         File(name="UseCase.png", original_path=get_path("UseCase.png"), tags=[]),
-        File(name="~$ecutive summary", original_path=get_path("~$ecutive summary.docx"), tags=[]),
+        File(name="~$ecutive summary", original_path=get_locked_path_2("~$ecutive summary.docx"), tags=[]),
         File(name="~WRL0005.tmp", original_path=get_path("~WRL0005.tmp"), tags=[]),
         File(name="~WRL1847.tmp", original_path=get_path("~WRL1847.tmp"), tags=[]),
-        File(name="3.6.4 Survey data to be analysed and visualised", original_path=get_path("3.6.4 Survey data to be analysed and visualised for project report mine.xlsx"), tags=[]),
-        File(name="Document[1]", original_path=get_path("Document[1].pdf"), tags=[]),
+        File(name="3.6.4 Survey data to be analysed and visualised", original_path=get_locked_path_2("3.6.4 Survey data to be analysed and visualised for project report mine.xlsx"), tags=[]),
+        File(name="Document[1]", original_path=get_locked_path_2("Document[1].pdf"), tags=[]),
         File(name="ENjoyment", original_path=get_path("ENjoyment.png"), tags=[]),
         File(name="Gantt chart", original_path=get_path("Gantt chart.png"), tags=[]),
         File(name="Gauteng", original_path=get_path("Gauteng.png"), tags=[]),
@@ -92,9 +104,26 @@ def createDirectoryRequest():
     files1[3].tags.append(tag_1)
     files1[12].tags.append(tag_2)
 
+    # Tag for locked files
+    files1[0].is_locked = True
+    files1[1].is_locked= True
+    files1[2].is_locked= True
+    files1[3].is_locked = True
+    files1[5].is_locked = True
+    files1[6].is_locked = True
+    files1[8].is_locked = True
+    files1[9].is_locked = True
+    files1[10].is_locked = True
+    files1[25].is_locked = True
+    files1[28].is_locked = True
+    files1[29].is_locked = True
+
+
+
+
     root_dir = Directory(
-        name = "test_files_3",
-        path = get_path("test_files_3"),
+        name = "test_files_4",
+        path = get_path("test_files_4"),
         files = files1
     )    
 

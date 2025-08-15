@@ -1,0 +1,51 @@
+DELIMITER //
+
+CREATE TRIGGER before_insert_customer_vehicles
+BEFORE INSERT ON CustomerVehicles
+FOR EACH ROW
+BEGIN
+    DECLARE vehicle_status VARCHAR(20);
+
+    -- Get the current rental status of the vehicle
+    SELECT status INTO vehicle_status FROM Rentals WHERE v_id = NEW.v_id LIMIT 1;
+
+    -- Prevent insertion if the vehicle is currently rented
+    IF vehicle_status = 'Rented' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Insertion failed: Vehicle is currently rented.';
+    END IF;
+
+    -- If the vehicle is returned, update Rentals to mark it as available
+    IF vehicle_status = 'Returned' THEN
+        UPDATE Rentals SET status = 'Rented' WHERE v_id = NEW.v_id;
+    END IF;
+END;
+//
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE TRIGGER after_rental_update
+AFTER UPDATE ON Rentals
+FOR EACH ROW
+BEGIN
+    -- If the rental is marked as 'Returned', delete it from CustomerVehicles
+    IF NEW.status = 'Returned' THEN
+        DELETE FROM CustomerVehicles WHERE v_id = NEW.v_id;
+    END IF;
+
+    -- Ensure all rentals are updated based on CustomerVehicles
+    UPDATE Rentals 
+    SET status = 
+        CASE 
+            WHEN v_id IN (SELECT v_id FROM CustomerVehicles) THEN 'Rented'
+            ELSE 'Returned'
+        END
+    WHERE v_id = NEW.v_id;
+END;
+//
+
+DELIMITER ;
+
