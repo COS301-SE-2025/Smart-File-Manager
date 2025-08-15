@@ -48,8 +48,10 @@ func moveContent(item *Folder) {
 	}
 
 	moveContentRecursive(item)
-	os.RemoveAll(originalPath)
 	item.Path = filepath.Join(root, item.Name)
+	if originalPath != item.Path {
+		os.RemoveAll(originalPath)
+	}
 
 	// Path to managers storage file
 	managersFilePath := filepath.Join(getPath(), "golang", "storage", "main.json")
