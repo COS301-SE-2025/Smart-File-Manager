@@ -290,14 +290,61 @@ class Api {
     }
   }
 
+  //Bulk add Tag
+  static Future<FileTreeNode> bulkAddTag(
+    String managerName,
+    String jsonPaths,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/bulkAddTag?name=$managerName"),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonPaths,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return FileTreeNode.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to delete files: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error deleting files: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //Bulk remove Tag
+  static Future<FileTreeNode> bulkRemoveTag(
+    String managerName,
+    String jsonPaths,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/bulkRemoveTag?name=$managerName"),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonPaths,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return FileTreeNode.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to remove tags: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error removing tags: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
   static Future<List<FileModel>> bulkOperation(
     String name,
     String type,
     bool umbrella,
   ) async {
-    print(name);
-    print(type);
-    print(umbrella);
     try {
       final response = await http.get(
         Uri.parse("$uri/returnType?name=$name&type=$type&umbrella=$umbrella"),
@@ -310,15 +357,15 @@ class Api {
         try {
           final dynamic jsonData = jsonDecode(response.body);
           print(jsonData);
-          
+
           if (jsonData == null) {
             return <FileModel>[];
           }
-          
+
           if (jsonData is! List) {
             return <FileModel>[];
           }
-          
+
           final List<dynamic> jsonList = jsonData;
           return jsonList
               .map((item) => FileModel.fromJson(item as Map<String, dynamic>))

@@ -191,10 +191,8 @@ class _ManagerPageState extends State<ManagerPage> {
       setState(() {
         _treeData = treeData;
       });
-
-      // Update the parent shell's tree data
-      widget.onTreeDataUpdate?.call(managerName, treeData);
     }
+    widget.onTreeDataUpdate?.call(managerName, treeData);
   }
 
   void _callGoSearch(String query) async {

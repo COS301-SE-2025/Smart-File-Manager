@@ -50,10 +50,10 @@ class MainNavigation extends StatefulWidget {
   });
 
   @override
-  State<MainNavigation> createState() => _MainNavigationState();
+  State<MainNavigation> createState() => MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class MainNavigationState extends State<MainNavigation> {
   //has a list of managers that are created
   final List<ManagerNavigationItem> _managers = [];
   bool _isInitialized = false;

@@ -64,8 +64,9 @@ var FileTypeMap = map[string]string{
 }
 
 type returnStruct struct {
-	FilePath string `json:"file_path"`
-	FileName string `json:"file_name"`
+	FilePath string   `json:"file_path"`
+	FileName string   `json:"file_name"`
+	FileTags []string `json:"file_tags,omitempty"`
 }
 
 var objectMap = map[string]map[string]object{}
@@ -108,6 +109,7 @@ type TagsStruct struct {
 //	}
 //
 // ]
+
 type DeleteStruct struct {
 	FilePath string `json:"file_path"`
 }
@@ -162,8 +164,20 @@ func BulkAddTagHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, fmt.Sprintf("Failed to add tags: %v", err), http.StatusInternalServerError)
 				return
 			}
+			children := GoSidecreateDirectoryJSONStructure(folder)
+
+			root := DirectoryTreeJson{
+				Name:     folder.Name,
+				IsFolder: true,
+				RootPath: folder.Path,
+				Children: children,
+			}
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("Tags added successfully"))
+			w.Header().Set("Content-Type", "application/json")
+			// Encode the response as JSON
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
 			return
 		}
 	}
@@ -195,8 +209,20 @@ func BulkRemoveTagHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, fmt.Sprintf("Failed to remove tags: %v", err), http.StatusInternalServerError)
 				return
 			}
+			children := GoSidecreateDirectoryJSONStructure(folder)
+
+			root := DirectoryTreeJson{
+				Name:     folder.Name,
+				IsFolder: true,
+				RootPath: folder.Path,
+				Children: children,
+			}
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("Tags removed successfully"))
+			w.Header().Set("Content-Type", "application/json")
+			// Encode the response as JSON
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
 			return
 		}
 	}
@@ -324,6 +350,8 @@ func BulkDeleteFileHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Files not found", http.StatusNotFound)
 }
 
+// TODO: Type: ALL, umbrella true/false
+// TODO: Type: Tags, umbrella false/true
 func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	types := r.URL.Query().Get("type")
@@ -335,14 +363,35 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, c := range Composites {
 		if c.Name == name {
+			objectMap[name] = make(map[string]object)
+			LoadTypes(c, name) // load types into the global objectMap
 			var returnList []returnStruct
 			// fmt.Println("LIST CREATED")
-			if umbrella == "true" {
+			if types == "ALL" {
+				for k := range objectMap[name] {
+					returnList = append(returnList, returnStruct{
+						FilePath: k,
+						FileName: c.GetFile(k).Name,
+						FileTags: c.GetFile(k).Tags,
+					})
+				}
+			} else if types == "TAGS" {
+				for k := range objectMap[name] {
+					if len(c.GetFile(k).Tags) > 0 {
+						returnList = append(returnList, returnStruct{
+							FilePath: k,
+							FileName: c.GetFile(k).Name,
+							FileTags: c.GetFile(k).Tags,
+						})
+					}
+				}
+			} else if umbrella == "true" {
 				for k, v := range objectMap[name] {
 					if v.umbrellaType == types {
 						returnList = append(returnList, returnStruct{
 							FilePath: k,
 							FileName: c.GetFile(k).Name,
+							FileTags: c.GetFile(k).Tags,
 						})
 					}
 				}
@@ -353,6 +402,7 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 						returnList = append(returnList, returnStruct{
 							FilePath: k,
 							FileName: c.GetFile(k).Name,
+							FileTags: c.GetFile(k).Tags,
 						})
 					}
 
@@ -369,11 +419,8 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoadTypes(item *Folder, name string) {
+
 	for _, file := range item.Files {
-		_, exists := objectMap[name]
-		if !exists {
-			objectMap[name] = make(map[string]object)
-		}
 		objectMap[name][file.Path] = object{
 			fileType:     strings.Split(file.Name, ".")[1],
 			umbrellaType: GetCategory(file.Path),
