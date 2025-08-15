@@ -25,8 +25,7 @@ class _ManagerItemWidgetState extends State<ManagerItemWidget> {
       builder: (context, constraints) {
         return SizedBox(
           width: constraints.maxWidth,
-          child: Positioned.fill(
-            child: Container(
+          child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: const Color(0xff242424),
@@ -89,7 +88,6 @@ class _ManagerItemWidgetState extends State<ManagerItemWidget> {
                 ],
               ),
             ),
-          ),
         );
       },
     );
