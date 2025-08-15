@@ -3,6 +3,7 @@ import 'package:app/constants.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/pages/manager_page_sub/folder_view_page.dart';
 import 'package:app/pages/manager_page_sub/graph_view_page.dart';
+import 'package:app/api.dart';
 
 class SortPreviewDialog extends StatefulWidget {
   final String managerName;
@@ -49,9 +50,15 @@ class _SortPreviewDialogState extends State<SortPreviewDialog> {
     });
   }
 
-  void _handleApprove() {
-    widget.onApprove(widget.managerName, widget.sortedData);
-    Navigator.of(context).pop();
+  void _handleApprove() async {
+    bool response = await Api.moveDirectory(widget.managerName);
+    if (response == true) {
+      widget.onApprove(widget.managerName, widget.sortedData);
+      Navigator.of(context).pop();
+    } else {
+      widget.onDecline(widget.managerName);
+      Navigator.of(context).pop();
+    }
   }
 
   void _handleDecline() {
