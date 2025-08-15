@@ -32,7 +32,6 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     if (widget.selectedManager != "") {
       _updateSelectedManager(widget.selectedManager ?? "");
