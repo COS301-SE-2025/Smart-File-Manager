@@ -400,4 +400,29 @@ class Api {
       rethrow;
     }
   }
+
+  //Move directory
+  static Future<bool> moveDirectory(String managerName) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/moveDirectory?name=$managerName"),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print(response.body);
+        if (response.body == "true") {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        throw Exception(
+          'Failed to unlock File/Folder: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error unlocking folder/file: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
 }
