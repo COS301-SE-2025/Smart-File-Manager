@@ -32,11 +32,7 @@ class _SearchItemWidgetState extends State<SearchItemWidget> {
           return GestureDetector(
             onTap: () => widget.onTap(widget.item),
             onDoubleTap: () => widget.onDoubleTap(widget.item),
-            child: SizedBox(
-              width: constraints.maxWidth,
-              height: constraints.maxHeight,
-              child: Positioned.fill(
-                child: AnimatedContainer(
+            child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -103,8 +99,6 @@ class _SearchItemWidgetState extends State<SearchItemWidget> {
                     ],
                   ),
                 ),
-              ),
-            ),
           );
         },
       ),
