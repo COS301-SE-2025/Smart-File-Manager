@@ -16,6 +16,14 @@ import (
 	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
 )
 
+//flow idea:
+// app starts
+// keywords are loaded from json(and locks and tags) if they exist
+// run go version of keyword extraction and python at the same time
+// overwrite keywords for all files when go returns
+// overwrite keywords for all files when python returns
+// save python keywords along with tags and locks
+
 var wg sync.WaitGroup
 
 func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
@@ -46,10 +54,8 @@ func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
 			grpcElapsed := time.Since(grpcStart)
 
 			goStart := time.Now()
+			extractKeywords(c)
 
-			wg.Add(1)
-			go getKeywords(c)
-			wg.Wait()
 			goElapsed := time.Since(goStart)
 
 			PrettyPrintFolder(c, "")
@@ -63,12 +69,20 @@ func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
 
 	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
 }
+
+func extractKeywords(c *Folder) {
+	wg.Add(1)
+	go getKeywords(c)
+	wg.Wait()
+}
+
 func getKeywords(c *Folder) {
 	defer wg.Done()
 
 	for _, file := range c.Files {
 
 		keywords, err := ExtractKeywordsRAKE(ConvertToWSLPath(file.Path), 20, 50*1024*1024)
+
 		if err != nil {
 			fmt.Printf("err")
 		}
