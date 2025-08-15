@@ -42,7 +42,6 @@ class _ShellState extends State<Shell> {
       managerNames: _managerNames,
       pendingSorts: _pendingSorts,
       sortResults: _sortResults,
-      onManagerDelete: _onManagerDelete,
       onManagerSort: _onManagerSort,
       onSortApprove: _onSortApprove,
       onSortDecline: _onSortDecline,
@@ -69,6 +68,7 @@ class _ShellState extends State<Shell> {
       _selectedManager = null;
     });
   }
+
 
   //update stats
   void _updateStats() {

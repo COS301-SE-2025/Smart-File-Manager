@@ -10,7 +10,8 @@ from nltk import pos_tag
 from nltk.stem import WordNetLemmatizer
 
 #adding these imports could be slow
-from typing import Dict
+from sentence_transformers import SentenceTransformer
+from typing import List, Dict
 from collections import Counter
 
 from collections import defaultdict

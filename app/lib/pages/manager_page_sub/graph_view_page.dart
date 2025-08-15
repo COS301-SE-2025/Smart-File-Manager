@@ -61,7 +61,8 @@ class _GraphViewPageState extends State<GraphViewPage> {
   @override
   void didUpdateWidget(GraphViewPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentPath != widget.currentPath) {
+    if (oldWidget.currentPath != widget.currentPath ||
+        oldWidget.treeData != widget.treeData) {
       _buildFileTreeGraph();
     }
   }

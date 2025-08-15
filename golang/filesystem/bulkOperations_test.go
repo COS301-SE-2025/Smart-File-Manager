@@ -960,6 +960,7 @@ func TestReturnTypeHandler_ManagerNotInObjectMap(t *testing.T) {
 	// Should return empty array when manager not in ObjectMap
 	if len(result) != 0 {
 		t.Errorf("Expected 0 files when manager not in ObjectMap, got %d", len(result))
+
 	}
 }
 
