@@ -176,6 +176,7 @@ class _SortPreviewDialogState extends State<SortPreviewDialog> {
       onFileSelected: _handleFileSelect,
       onNavigate: _handleNavigation,
       managerName: widget.managerName,
+      isPreviewMode: true,
       onTagChanged: () {
         // Tags can't be changed in preview mode
       },
@@ -189,6 +190,7 @@ class _SortPreviewDialogState extends State<SortPreviewDialog> {
       onFileSelected: _handleFileSelect,
       onNavigate: _handleNavigation,
       managerName: widget.managerName,
+      isPreviewMode: true,
       onTagChanged: () {
         // Tags can't be changed in preview mode
       },

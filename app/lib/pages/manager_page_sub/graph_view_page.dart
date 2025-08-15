@@ -18,6 +18,7 @@ class GraphViewPage extends StatefulWidget {
   final Function(List<String>) onNavigate;
   final String? managerName;
   final VoidCallback? onTagChanged;
+  final bool isPreviewMode;
 
   const GraphViewPage({
     required this.treeData,
@@ -26,6 +27,7 @@ class GraphViewPage extends StatefulWidget {
     required this.onNavigate,
     this.managerName,
     this.onTagChanged,
+    this.isPreviewMode = false,
     super.key,
   });
 
@@ -409,12 +411,13 @@ class _GraphViewPageState extends State<GraphViewPage> {
 
             return GestureDetector(
               onDoubleTap: () => _handleNodeDoubleTap(data),
-              onSecondaryTapUp:
-                  (details) => _handleNodeRightTap(
-                    widget.managerName ?? "",
-                    data,
-                    details.globalPosition,
-                  ),
+              onSecondaryTapUp: widget.isPreviewMode 
+                  ? null
+                  : (details) => _handleNodeRightTap(
+                      widget.managerName ?? "",
+                      data,
+                      details.globalPosition,
+                    ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

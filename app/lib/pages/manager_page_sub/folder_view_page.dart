@@ -15,6 +15,7 @@ class FolderViewPage extends StatefulWidget {
   final Function(List<String>) onNavigate;
   final String? managerName;
   final VoidCallback? onTagChanged;
+  final bool isPreviewMode;
 
   const FolderViewPage({
     required this.treeData,
@@ -23,6 +24,7 @@ class FolderViewPage extends StatefulWidget {
     required this.onNavigate,
     this.managerName,
     this.onTagChanged,
+    this.isPreviewMode = false,
     super.key,
   });
 
@@ -104,12 +106,13 @@ class _FolderViewPageState extends State<FolderViewPage> {
             itemCount: _currentItems.length,
             itemBuilder: (context, index) {
               return GestureDetector(
-                onSecondaryTapDown:
-                    (details) => _handleItemRightTap(
-                      widget.managerName ?? "",
-                      _currentItems[index],
-                      details.globalPosition,
-                    ),
+                onSecondaryTapDown: widget.isPreviewMode 
+                    ? null 
+                    : (details) => _handleItemRightTap(
+                        widget.managerName ?? "",
+                        _currentItems[index],
+                        details.globalPosition,
+                      ),
                 child: FileItemWidget(
                   item: _currentItems[index],
                   onTap: _handleItemTap,
