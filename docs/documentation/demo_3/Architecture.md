@@ -8,7 +8,7 @@
 **Prepared By:** Spark Industries  
 **Prepared For:** Southern Cross Solutions  
 **Document Type:** Architectural Requirements Document  
-**Demo:** Demo 2
+**Demo:** Demo 3
 
 ## Table of Contents
 
@@ -16,7 +16,6 @@
 - [Architectural Strategies](#architectural-strategies)
 - [Architectural Design and Pattern](#architectural-design-and-pattern)
 - [Architectural Constraints](#architectural-constraints)
-- [Technology Choices](#technology-choices)
 
 ---
 
@@ -127,9 +126,24 @@ Monolithic architecture combines the various components of an application into a
 * **Modifiability:**
    - Not applicable 
 
-### Master-Slave Pattern between Request Handler and Task Processor
+### Master-Slave Architectural Pattern
 
-   - Request Handler manages multiple Task Processor instances
+Master-Slave architecture leverages a central node (master) to delegate tasks to multiple worker nodes (slaves). We mainly leverage this pattern to improve the performance of our computational demanding tasks.
+
+#### How it supports our quality requirements
+* **Reliability:**
+   - Reliance on a master node generally decreases the reliability of the master-slave architecture pattern. We compensate for this by ensuring that when our master fails it does so gracefully without going into an unrecoverable state. Use of the monolithic architecture further supports this since the domain in which our system runs is more predictable (owing to the deployment).
+* **Performance:**
+   - The primary reason for using Master-slave is performance. Our backend is paritioned into 2 sub-systems reponsible for filesystem and clustering features respectively. By leveraging threadpools in our clustering subsystem (slaves) we increase performance drastically.
+   - Furthermore our slaves are stateless and do not interact with the same resources, avoiding traditional concurrency related problems like deadlock.
+* **Scalability:**
+   - The Master-slave patterns facilitates horizontal scaling by creating more slave instances. It should be noted that there is a upper limit on our ability to scale horizontally dictated by the system's number of logical processors.
+* **Usability:**
+   - Not applicable
+* **Modifiability:**
+   - Not applicable 
+
+
 
 ### System Components
 
@@ -181,123 +195,3 @@ The following constraints affect the architectural design of the Smart File Mana
 
 ---
 
-## Technology Choices
-
-This section provides an overview of the various technologies used in our stack and the reasoning behind each choice.
-
-![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)
-![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white)
-
-### Frontend Framework
-
-#### Technology Options Assessed:
-
-1. **Flutter**
-
-   - **Overview:** Google's UI toolkit for building natively compiled applications
-   - **Pros:** Cross-platform (Both Desktop and Mobile), Native performance, Material UI widgets
-   - **Cons:** Larger binary size
-
-2. **Electron**
-
-   - **Overview:** Framework for building desktop applications using web technologies
-   - **Pros:** Easy integration with web
-   - **Cons:** Heavy memory usage, Does not directly support mobile (Needs Capacitor or Cordova)
-
-3. **React Native**
-   - **Overview:** Framework for building mobile applications using React
-   - **Pros:** Cross-platform mobile/web
-   - **Cons:** Weak desktop support
-
-#### Final Choice: Flutter
-
-**Justification:** Chosen for its ability to create cross-platform desktop applications with native performance, aligning with our architectural requirement for both desktop and mobile support while maintaining consistency across platforms.
-
----
-
-### AI Capabilities
-
-#### Technology Options Assessed:
-
-1. **Python**
-
-   - **Overview:** High-level programming language with extensive AI/ML libraries
-   - **Pros:** Well supported for AI purposes (We use SciKit), Fast development
-   - **Cons:** Slower runtime performance, Weak multithreading support
-
-2. **Java**
-
-   - **Overview:** Object-oriented programming language with strong ecosystem
-   - **Pros:** High performance, Strong threading and ecosystem
-   - **Cons:** Slower development speed for AI applications
-
-3. **C++**
-   - **Overview:** Low-level programming language with fine-grained control
-   - **Pros:** High performance, Fine-grained control
-   - **Cons:** Unreliable due to no memory safety
-
-#### Final Choice: Python
-
-**Justification:** Chosen for its out-of-the-box AI functionality and portability. The extensive library ecosystem (SciKit) provides rapid development capabilities essential for implementing intelligent file management features, despite performance trade-offs that are mitigated by our Go bridge component.
-
----
-
-### Filesystem Management & Bridge
-
-#### Technology Options Assessed:
-
-1. **Go**
-
-   - **Overview:** Compiled programming language designed for system programming
-   - **Pros:** Easy concurrency with goroutines, Fast compilation, Simple learning curve
-   - **Cons:** Less dynamic than scripting languages
-
-2. **Rust**
-
-   - **Overview:** Systems programming language focused on safety and performance
-   - **Pros:** High performance, Memory Safety
-   - **Cons:** Extreme learning curve
-
-3. **Java**
-   - **Overview:** Platform-independent programming language running on JVM
-   - **Pros:** Portable due to JVM
-   - **Cons:** Verbose and heavyweight for lightweight APIs
-
-#### Final Choice: Go
-
-**Justification:** Chosen for its powerful concurrency features to balance out Python's performance bottleneck and easy web development for endpoints required by the frontend. The goroutine-based concurrency model is ideal for handling multiple file operations simultaneously while maintaining system responsiveness.
-
----
-
-### API Communication
-
-#### Technology Options Assessed:
-
-1. **gRPC**
-
-   - **Overview:** High-performance RPC framework using Protocol Buffers
-   - **Pros:** Very fast due to binary serialization, Code generation support, Strong typing
-   - **Cons:** Requires more setup than REST
-
-2. **REST**
-
-   - **Overview:** Architectural style for distributed hypermedia systems
-   - **Pros:** Simple and well-understood, Easy testing and debugging
-   - **Cons:** No built-in type safety, Not ideal for dynamic recursive structures like Directories
-
-3. **GraphQL**
-   - **Overview:** Query language and runtime for APIs
-   - **Pros:** Flexible queries, Efficient data fetching
-   - **Cons:** Overkill for simple RPCs, More complex tooling
-
-#### Final Choice: Hybrid Approach (gRPC + REST)
-
-**Justification:**
-
-- **gRPC:** Chosen for efficiency between Go and Python components due to binary serialization and strong typing, essential for high-performance file operations
-- **REST:** Chosen for easy-to-use and testable endpoints between Go backend and Flutter frontend, providing simplicity for client-server communication
-
-This hybrid approach leverages the strengths of both technologies where they are most appropriate within our multi-language architecture.
-
----

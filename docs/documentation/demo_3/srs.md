@@ -338,6 +338,9 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 
 ## Architectural Requirements
 
+**IMPORTANT:** This sections only provides a brief overview of our architecture. Kindly consult [here](Architecture.md) for the detailed documentation on architecture.
+
+
 ### Quality Requirements
 
 1. Performance.  
@@ -364,12 +367,6 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
    5.3 The system should only track and organize files that the user gave explicit permissions to organize.
 
 ### Architectural Patterns
-
-#### Website Architecture
-
-![Website architecture](assets/websiteArchitecure.png).
-Client server to allow users to communicate with the server and perform operations (downloading, profile edits, login/register etc.). This is the standard architecture associated with most traditional websites.
-
 #### Application Architecture
 
 ![Application architecture](assets/applicationArchitecture.png)
