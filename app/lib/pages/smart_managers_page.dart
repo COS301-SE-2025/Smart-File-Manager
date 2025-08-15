@@ -3,6 +3,7 @@ import 'package:app/custom_widgets/hoverable_button.dart';
 import 'package:app/custom_widgets/sort_preview_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
+import 'package:app/api.dart';
 
 class SmartManagersPage extends StatefulWidget {
   Map<String, FileTreeNode> managerTreeData = {};
@@ -12,6 +13,7 @@ class SmartManagersPage extends StatefulWidget {
   final Function(String, FileTreeNode) onManagerSort;
   final Function(String, FileTreeNode) onSortApprove;
   final Function(String) onSortDecline;
+  final Function(String)? onManagerDelete;
 
   SmartManagersPage({
     super.key,
@@ -22,6 +24,7 @@ class SmartManagersPage extends StatefulWidget {
     required this.onManagerSort,
     required this.onSortApprove,
     required this.onSortDecline,
+    this.onManagerDelete,
   });
 
   @override
@@ -68,6 +71,67 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
               onApprove: widget.onSortApprove,
               onDecline: widget.onSortDecline,
             ),
+      );
+    }
+  }
+
+  void _handleDeleteManager(String managerName) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Smart Manager'),
+            content: Text(
+              'Are you sure you want to delete "$managerName"? This action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await _deleteManager(managerName);
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  Future<void> _deleteManager(String managerName) async {
+    try {
+      final success = await Api.deleteSmartManager(managerName);
+
+      if (success) {
+        widget.onManagerDelete?.call(managerName);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Smart Manager "$managerName" deleted successfully'),
+            backgroundColor: kYellowText,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete Smart Manager "$managerName"'),
+            backgroundColor: Colors.redAccent,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting Smart Manager "$managerName": $e'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 3),
+        ),
       );
     }
   }
@@ -135,7 +199,7 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
                               name: "Delete Manager",
                               icon: Icons.delete_forever_rounded,
                               expanded: true,
-                              onTap: () => {},
+                              onTap: () => _handleDeleteManager(item.name),
                             ),
                           ],
                         ),

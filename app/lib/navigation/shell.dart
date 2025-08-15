@@ -45,6 +45,7 @@ class _ShellState extends State<Shell> {
       onManagerSort: _onManagerSort,
       onSortApprove: _onSortApprove,
       onSortDecline: _onSortDecline,
+      onManagerDelete: _onManagerDelete,
     ),
     AdvancedSearchPage(
       managerNames: _managerNames,
@@ -78,7 +79,28 @@ class _ShellState extends State<Shell> {
   }
 
   //when manager is deleted updated values here:
-  void _onManagerDelete(String managerName) {}
+  void _onManagerDelete(String managerName) {
+    setState(() {
+      _managerNames.remove(managerName);
+      _managerTreeData.remove(managerName);
+      _pendingSorts.remove(managerName);
+      _sortResults.remove(managerName);
+      
+      // If the deleted manager was selected, deselect it
+      if (_selectedManager == managerName) {
+        _selectedManager = null;
+        _selectedIndex = 0; // Go to dashboard
+      }
+      
+      // If the deleted manager was selected for search, clear it
+      if (_selectedManagerForSearch == managerName) {
+        _selectedManagerForSearch = "";
+      }
+    });
+
+    // Update stats to reflect the deletion
+    _updateStats();
+  }
 
   //when manager is sorted(move directory is called, update treedata for manager)
   void _onManagerSort(String managerName, FileTreeNode managerData) async {
@@ -274,6 +296,7 @@ class _ShellState extends State<Shell> {
             onManagerTreeDataUpdate: _onManagerTreeDataUpdate,
             onManagerNamesUpdate: _onManagerNamesUpdate,
             onManagerAdded: _onManagerAdded,
+            onManagerDelete: _onManagerDelete,
           ),
           //Page that needs to be rendered depending on navigation index
           Expanded(child: _getCurrentPage()),
