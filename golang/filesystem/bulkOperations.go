@@ -363,12 +363,12 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, c := range Composites {
 		if c.Name == name {
-			objectMap[name] = make(map[string]object)
-			LoadTypes(c, name) // load types into the global objectMap
+			ObjectMap[name] = make(map[string]object)
+			LoadTypes(c, name) // load types into the global ObjectMap
 			var returnList []returnStruct
 			// fmt.Println("LIST CREATED")
 			if types == "ALL" {
-				for k := range objectMap[name] {
+				for k := range ObjectMap[name] {
 					returnList = append(returnList, returnStruct{
 						FilePath: k,
 						FileName: c.GetFile(k).Name,
@@ -376,7 +376,7 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 					})
 				}
 			} else if types == "TAGS" {
-				for k := range objectMap[name] {
+				for k := range ObjectMap[name] {
 					if len(c.GetFile(k).Tags) > 0 {
 						returnList = append(returnList, returnStruct{
 							FilePath: k,
@@ -386,7 +386,7 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			} else if umbrella == "true" {
-				for k, v := range objectMap[name] {
+				for k, v := range ObjectMap[name] {
 					if v.umbrellaType == types {
 						returnList = append(returnList, returnStruct{
 							FilePath: k,

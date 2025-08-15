@@ -248,7 +248,7 @@ func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
 			// Remove from list of managers
 			Composites = append(Composites[:i], Composites[i+1:]...)
 			// Remove from type storage
-			delete(objectMap, c.Path)
+			delete(ObjectMap, c.Path)
 
 			// Remove from main.json
 			managersFilePath := filepath.Join(getPath(), "golang", "storage", "main.json")
@@ -281,7 +281,7 @@ func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
 			if err := os.WriteFile(managersFilePath, out, 0644); err != nil {
 				panic(err)
 			}
-			fmt.Println("Deleted manager");
+			fmt.Println("Deleted manager")
 			w.Write([]byte("true"))
 			return
 		}

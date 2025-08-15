@@ -92,10 +92,11 @@ class Api {
   static Future<bool> deleteSmartManager(String name) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/deleteDirectory?name=$name"),
+        Uri.parse("$uri/removeDirectory?name=$name"),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        print(response.body);
         return true;
       } else {
         throw Exception(
