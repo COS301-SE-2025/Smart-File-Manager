@@ -300,43 +300,6 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// actual api endpoint function
-func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("loadTree called")
-	w.Header().Set("Content-Type", "application/json")
-
-	name := r.URL.Query().Get("name")
-	mu.Lock()
-	defer mu.Unlock()
-
-	for _, c := range Composites {
-		if c.Name == name {
-			// build the nested []FileNode
-			err := grpcFunc(c, "METADATA")
-			if err != nil {
-				log.Fatalf("grpcFunc failed: %v", err)
-				http.Error(w, "internal server error, GRPC CALLED WRONG", http.StatusInternalServerError)
-			}
-			children := createDirectoryJSONStructure(c)
-
-			root := DirectoryTreeJson{
-				Name:     c.Name,
-				IsFolder: true,
-				RootPath: c.Path,
-				Children: children,
-			}
-
-			if err := json.NewEncoder(w).Encode(root); err != nil {
-				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-			}
-
-			return
-		}
-	}
-
-	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
-}
-
 // helper recursive function
 func GoSidecreateDirectoryJSONStructure(folder *Folder) []FileNode {
 	var nodes []FileNode
