@@ -10,6 +10,8 @@ import 'package:app/api.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:app/models/file_tree_node.dart';
 
+GlobalKey<DashboardPageState> globalKey = GlobalKey();
+
 class Shell extends StatefulWidget {
   const Shell({super.key});
 
@@ -34,7 +36,7 @@ class _ShellState extends State<Shell> {
 
   //pages are created dynamically to pass manager names to AdvancedSearchPage
   List<Widget> get _pages => [
-    const DashboardPage(),
+    DashboardPage(managerNames: _managerNames, key: globalKey),
     SmartManagersPage(
       managerTreeData: _managerTreeData,
       managerNames: _managerNames,
@@ -66,6 +68,13 @@ class _ShellState extends State<Shell> {
       _selectedIndex = index;
       _selectedManager = null;
     });
+  }
+
+  //update stats
+  void _updateStats() {
+    if (_managerNames.isNotEmpty) {
+      globalKey.currentState?.loadStatsData();
+    }
   }
 
   //when manager is deleted updated values here:
@@ -260,6 +269,7 @@ class _ShellState extends State<Shell> {
             selectedIndex: _selectedIndex,
             selectedManager: _selectedManager,
             onTap: _onNavigationTap,
+            updateStats: _updateStats,
             onManagerTap: _onManagerTap,
             onManagerTreeDataUpdate: _onManagerTreeDataUpdate,
             onManagerNamesUpdate: _onManagerNamesUpdate,
