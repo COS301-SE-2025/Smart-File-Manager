@@ -136,11 +136,6 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                     ),
                   ),
                 ),
-                HoverableButton(
-                  onTap: () {},
-                  name: "Clear All",
-                  icon: Icons.clear_all_rounded,
-                ),
               ],
             ),
           ),

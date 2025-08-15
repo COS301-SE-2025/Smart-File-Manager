@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:app/models/file_tree_node.dart';
 
 GlobalKey<DashboardPageState> globalKey = GlobalKey();
+GlobalKey<MainNavigationState> mainNavigationKey = GlobalKey();
 
 class Shell extends StatefulWidget {
   const Shell({super.key});
@@ -38,6 +39,7 @@ class _ShellState extends State<Shell> {
   List<Widget> get _pages => [
     DashboardPage(managerNames: _managerNames, key: globalKey),
     SmartManagersPage(
+      key: const ValueKey('smart_managers_page'),
       managerTreeData: _managerTreeData,
       managerNames: _managerNames,
       pendingSorts: _pendingSorts,
@@ -81,7 +83,8 @@ class _ShellState extends State<Shell> {
   //when manager is deleted updated values here:
   void _onManagerDelete(String managerName) {
     setState(() {
-      _managerNames.remove(managerName);
+      // Create a new list to ensure Flutter detects the change
+      _managerNames = _managerNames.where((name) => name != managerName).toList();
       _managerTreeData.remove(managerName);
       _pendingSorts.remove(managerName);
       _sortResults.remove(managerName);
@@ -97,6 +100,9 @@ class _ShellState extends State<Shell> {
         _selectedManagerForSearch = "";
       }
     });
+
+    // Remove the manager from the navigation sidebar
+    mainNavigationKey.currentState?.removeManagerFromNavigation(managerName);
 
     // Update stats to reflect the deletion
     _updateStats();
@@ -226,9 +232,15 @@ class _ShellState extends State<Shell> {
   void _onManagerAdded(String managerName) {
     setState(() {
       if (!_managerNames.contains(managerName)) {
-        _managerNames.add(managerName);
+        // Create a new list to ensure Flutter detects the change
+        _managerNames = [..._managerNames, managerName];
       }
     });
+    
+    // Force dashboard to update if it's the active page
+    if (_selectedIndex == 0) {
+      _updateStats();
+    }
   }
 
   //find the active page and return its widget
@@ -287,6 +299,7 @@ class _ShellState extends State<Shell> {
         children: [
           //Main Navigation Widget with parmeters used to navigate
           MainNavigation(
+            key: mainNavigationKey,
             items: _navigationItems,
             selectedIndex: _selectedIndex,
             selectedManager: _selectedManager,

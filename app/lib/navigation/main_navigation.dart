@@ -137,6 +137,14 @@ class MainNavigationState extends State<MainNavigation> {
     }
   }
 
+  void removeManagerFromNavigation(String managerName) {
+    if (mounted) {
+      setState(() {
+        _managers.removeWhere((m) => m.label == managerName);
+      });
+    }
+  }
+
   Future<void> loadTreeDataForManager(String managerName) async {
     final index = _managers.indexWhere((m) => m.label == managerName);
     if (index == -1) return;

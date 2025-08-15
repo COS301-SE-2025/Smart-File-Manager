@@ -45,7 +45,9 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
     super.didUpdateWidget(oldWidget);
     if (widget.managerTreeData != oldWidget.managerTreeData ||
         widget.pendingSorts != oldWidget.pendingSorts ||
-        widget.sortResults != oldWidget.sortResults) {
+        widget.sortResults != oldWidget.sortResults ||
+        widget.managerNames.length != oldWidget.managerNames.length ||
+        widget.managerTreeData.length != oldWidget.managerTreeData.length) {
       _updateCurrentItems();
     }
   }
@@ -80,22 +82,40 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Delete Smart Manager'),
-            content: Text(
-              'Are you sure you want to delete "$managerName"? This action cannot be undone.',
+            backgroundColor: kScaffoldColor,
+            title: const Text('Delete Smart Manager', style: kTitle1),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Are you sure you want to delete "$managerName"?',
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'This will only remove the Smart Manager from the app. Your actual files and folders will remain untouched on your system.',
+                  style: TextStyle(color: Color(0xff9CA3AF), fontSize: 14),
+                ),
+              ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Color(0xff9CA3AF)),
+                ),
               ),
               TextButton(
                 onPressed: () async {
                   Navigator.of(context).pop();
                   await _deleteManager(managerName);
                 },
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(color: Color(0xffDC2626)),
+                ),
               ),
             ],
           ),
@@ -108,6 +128,13 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
 
       if (success) {
         widget.onManagerDelete?.call(managerName);
+
+        // Force immediate UI update after parent state is updated
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _updateCurrentItems();
+          }
+        });
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -137,9 +164,12 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
   }
 
   void _updateCurrentItems() {
-    setState(() {
-      _currentItems = List.from(widget.managerTreeData.values);
-    });
+    final newItems = List<FileTreeNode>.from(widget.managerTreeData.values);
+    if (mounted) {
+      setState(() {
+        _currentItems = newItems;
+      });
+    }
   }
 
   @override
@@ -195,12 +225,7 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
                           children: [
                             _buildSortButton(item.name),
                             SizedBox(height: 8),
-                            HoverableButton(
-                              name: "Delete Manager",
-                              icon: Icons.delete_forever_rounded,
-                              expanded: true,
-                              onTap: () => _handleDeleteManager(item.name),
-                            ),
+                            _buildDeleteButton(item.name),
                           ],
                         ),
                       ],
@@ -260,5 +285,18 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
         expanded: true,
       );
     }
+  }
+
+  Widget _buildDeleteButton(String managerName) {
+    final isPending = widget.pendingSorts[managerName] ?? false;
+    final hasSortResult = widget.sortResults.containsKey(managerName);
+    final isDisabled = isPending || hasSortResult;
+
+    return HoverableButton(
+      name: "Delete Manager",
+      icon: Icons.delete_forever_rounded,
+      expanded: true,
+      onTap: isDisabled ? null : () => _handleDeleteManager(managerName),
+    );
   }
 }

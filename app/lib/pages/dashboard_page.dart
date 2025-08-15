@@ -19,13 +19,23 @@ class DashboardPageState extends State<DashboardPage> {
   final double _gigInBytes = 1e+9;
   bool _gig = false;
   bool _refreshing = false;
-  bool _noManagers = true;
+  bool _noManagers = false;
   String _selectedFileSort = 'Recents';
 
   @override
   void initState() {
     super.initState();
     _onPageload();
+  }
+
+  @override
+  void didUpdateWidget(DashboardPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Refresh data when manager list changes
+    if (widget.managerNames != oldWidget.managerNames) {
+      _onPageload();
+    }
   }
 
   void _onPageload() async {
@@ -36,7 +46,9 @@ class DashboardPageState extends State<DashboardPage> {
         _managerStats = response;
       });
     } else {
-      _noManagers = true;
+      setState(() {
+        _noManagers = true;
+      });
     }
   }
 
