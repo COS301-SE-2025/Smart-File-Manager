@@ -327,6 +327,7 @@ func HandleRequests() {
 	http.HandleFunc("/deleteManager", deleteManagerHandler)
 
 	http.HandleFunc("/returnType", ReturnTypeHandler)
+	http.HandleFunc("/returnStats", StatHandler)
 
 	fmt.Println("Server started on port 51000")
 

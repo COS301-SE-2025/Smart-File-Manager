@@ -69,7 +69,7 @@ type returnStruct struct {
 	FileTags []string `json:"file_tags,omitempty"`
 }
 
-var objectMap = map[string]map[string]object{}
+var ObjectMap = map[string]map[string]object{}
 
 // this file will contain bulk operations for the filesystem such as bulk add, delete of files, folders and adding tags
 // expected json for bulk add tags
@@ -396,7 +396,7 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			} else {
-				for k, v := range objectMap[name] {
+				for k, v := range ObjectMap[name] {
 					if v.fileType == types {
 						// fmt.Println("FILE FOUND:", k, v.fileType)
 						returnList = append(returnList, returnStruct{
@@ -421,11 +421,23 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 func LoadTypes(item *Folder, name string) {
 
 	for _, file := range item.Files {
-		objectMap[name][file.Path] = object{
-			fileType:     strings.Split(file.Name, ".")[1],
+
+		_, exists := ObjectMap[name]
+		if !exists {
+			ObjectMap[name] = make(map[string]object)
+		}
+
+		ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(file.Name), "."))
+		if ext == "" {
+			ext = "unknown"
+		}
+
+		ObjectMap[name][file.Path] = object{
+			fileType:     ext,
 			umbrellaType: GetCategory(file.Path),
 		}
 	}
+
 	for _, subfolder := range item.Subfolders {
 		LoadTypes(subfolder, name)
 	}
@@ -433,6 +445,9 @@ func LoadTypes(item *Folder, name string) {
 
 func GetCategory(filename string) string {
 	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(filename), "."))
+	if ext == "" {
+		return "Unknown"
+	}
 	if category, exists := FileTypeMap[ext]; exists {
 		return category
 	}

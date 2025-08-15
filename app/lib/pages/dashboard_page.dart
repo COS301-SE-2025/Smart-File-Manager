@@ -1,22 +1,166 @@
 import 'package:app/constants.dart';
-import 'package:app/custom_widgets/custom_dropdown_menu.dart';
+import 'package:app/custom_widgets/hoverable_button.dart';
 import 'package:flutter/material.dart';
 import 'package:app/custom_widgets/overview_widget.dart';
 import 'package:app/custom_widgets/manager_item_widget.dart';
+import 'package:app/api.dart';
+import 'package:app/models/stats_model.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  List<String> managerNames;
+  DashboardPage({required this.managerNames, super.key});
 
   @override
-  State<DashboardPage> createState() => _DashboardPageState();
+  State<DashboardPage> createState() => DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
+class DashboardPageState extends State<DashboardPage> {
+  ManagersStatsResponse? _managerStats;
+  final double _gigInBytes = 1e+9;
+  bool _gig = false;
+  bool _refreshing = false;
+  bool _noManagers = true;
+  String _selectedFileSort = 'Recents';
+
+  @override
+  void initState() {
+    super.initState();
+    _onPageload();
+  }
+
+  void _onPageload() async {
+    if (widget.managerNames.isNotEmpty) {
+      var response = await Api.loadStatsData();
+      setState(() {
+        _noManagers = false;
+        _managerStats = response;
+      });
+    } else {
+      _noManagers = true;
+    }
+  }
+
+  void loadStatsData() async {
+    var response = await Api.loadStatsData();
+    setState(() {
+      _managerStats = response;
+    });
+  }
+
+  void refreshData() async {
+    setState(() {
+      _refreshing = true;
+    });
+    var response = await Api.loadStatsData();
+    setState(() {
+      _managerStats = response;
+      _refreshing = false;
+    });
+  }
+
+  int _sumTotalFiles() {
+    int totalfiles = 0;
+    for (StatsModel manager in _managerStats!.managers!) {
+      totalfiles = totalfiles + manager.files!;
+    }
+    return totalfiles;
+  }
+
+  int _sumTotalFolders() {
+    int totalfolders = 0;
+    for (StatsModel manager in _managerStats!.managers!) {
+      totalfolders = totalfolders + manager.folders!;
+    }
+    return totalfolders;
+  }
+
+  double _sumTotalSize() {
+    double totalsize = 0;
+    for (StatsModel manager in _managerStats!.managers!) {
+      totalsize = totalsize + manager.size!;
+    }
+    if (totalsize < _gigInBytes) {
+      _gig = false;
+      return (totalsize / 1e+6).roundToDouble();
+    } else {
+      _gig = true;
+      return (totalsize / 8e+9).roundToDouble();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildTopBar(),
-      body: Column(children: [Expanded(child: _buildMainSection())]),
+      body:
+          _refreshing == true
+              ? _refreshState()
+              : _noManagers
+              ? _loadingState()
+              : _managerStats == null
+              ? _loadingState()
+              : _buildMainSection(),
+    );
+  }
+
+  Widget _loadingState() {
+    if (_noManagers) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(
+              Icons.manage_accounts_outlined,
+              size: 64,
+              color: Color(0xff9CA3AF),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'No managers found',
+              style: TextStyle(
+                color: Color(0xff9CA3AF),
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Create a manager first to view dashboard data',
+              style: TextStyle(color: Color(0xff6B7280), fontSize: 14),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          CircularProgressIndicator(color: Color(0xffFFB400)),
+          SizedBox(height: 16),
+          Text(
+            'Loading Dashboard...',
+            style: TextStyle(color: Color(0xff9CA3AF)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _refreshState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          CircularProgressIndicator(color: Color(0xffFFB400)),
+          SizedBox(height: 16),
+          Text(
+            'Refreshing Dashboard...',
+            style: TextStyle(color: Color(0xff9CA3AF)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -48,6 +192,12 @@ class _DashboardPageState extends State<DashboardPage> {
                             color: Colors.white,
                           ),
                         ),
+                        SizedBox(width: 20),
+                        HoverableButton(
+                          name: "Refresh",
+                          icon: Icons.refresh_rounded,
+                          onTap: () => refreshData(),
+                        ),
                       ],
                     ),
                   ),
@@ -61,90 +211,130 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildFileList() {
-    List<Map<String, String>> sampleFiles = [
-      {'name': 'Document1.pdf', 'size': '2.5 MB', 'date': '2024-01-15'},
-      {'name': 'Spreadsheet.xlsx', 'size': '1.2 MB', 'date': '2024-01-14'},
-      {'name': 'Presentation.pptx', 'size': '5.8 MB', 'date': '2024-01-13'},
-      {'name': 'Report.docx', 'size': '3.1 MB', 'date': '2024-01-12'},
-      {'name': 'Image.jpg', 'size': '4.2 MB', 'date': '2024-01-11'},
-    ];
+    List<Files> files = [];
+
+    for (var manager in _managerStats!.managers!) {
+      switch (_selectedFileSort) {
+        case 'Recents':
+          if (manager.recent != null) files.addAll(manager.recent!);
+          break;
+        case 'Largest':
+          if (manager.largest != null) files.addAll(manager.largest!);
+          break;
+        case 'Oldest':
+          if (manager.oldest != null) files.addAll(manager.oldest!);
+          break;
+      }
+    }
+
+    if (files.isEmpty) {
+      return SizedBox(
+        height: 300,
+        child: Center(
+          child: Text(
+            'No files available',
+            style: TextStyle(color: Color(0xff9CA3AF), fontSize: 16),
+          ),
+        ),
+      );
+    }
 
     return SizedBox(
       height: 300,
-      child: Column(
-        children:
-            sampleFiles.map((file) {
-              return Container(
-                margin: EdgeInsets.only(bottom: 10),
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Color(0xff242424),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Color(0xff3D3D3D), width: 1),
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(width: 8),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        file['name']!,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
+      child: SingleChildScrollView(
+        child: Column(
+          children:
+              files.take(10).map((file) {
+                return Container(
+                  margin: EdgeInsets.only(bottom: 10),
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Color(0xff242424),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Color(0xff3D3D3D), width: 1),
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          file.fileName ?? 'Unknown File',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: Text(
-                        file['size']!,
-                        style: TextStyle(
-                          color: Color(0xff6b7280),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          file.filePath ?? '',
+                          style: TextStyle(
+                            color: Color(0xff6b7280),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.right,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        textAlign: TextAlign.right,
                       ),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: Text(
-                        file['date']!,
-                        style: TextStyle(
-                          color: Color(0xff6b7280),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.right,
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                  ],
-                ),
-              );
-            }).toList(),
+                      SizedBox(width: 10),
+                    ],
+                  ),
+                );
+              }).toList(),
+        ),
       ),
     );
   }
 
   Widget _buildFileTypeStats() {
+    List<int> totalCounts = List.filled(8, 0);
+
+    for (var manager in _managerStats!.managers!) {
+      if (manager.umbrellaCounts != null &&
+          manager.umbrellaCounts!.length >= 8) {
+        for (int i = 0; i < 8; i++) {
+          totalCounts[i] += manager.umbrellaCounts![i];
+        }
+      }
+    }
+
+    int grandTotal = totalCounts.fold(0, (sum, count) => sum + count);
+
+    if (grandTotal == 0) {
+      return Center(
+        child: Text(
+          'No file type data available',
+          style: TextStyle(color: Color(0xff9CA3AF), fontSize: 16),
+        ),
+      );
+    }
+
     List<Map<String, dynamic>> fileTypes = [
-      {'type': 'PDF', 'count': 100, 'total': 230, 'color': Colors.red},
-      {'type': 'XLSX', 'count': 45, 'total': 230, 'color': Colors.green},
-      {'type': 'DOCX', 'count': 30, 'total': 230, 'color': Colors.blue},
-      {'type': 'PPTX', 'count': 25, 'total': 230, 'color': Colors.orange},
-      {'type': 'Images', 'count': 20, 'total': 230, 'color': Colors.purple},
-      {'type': 'Other', 'count': 10, 'total': 230, 'color': Color(0xff9CA3AF)},
+      {'type': 'Documents', 'count': totalCounts[0], 'color': Colors.blue},
+      {'type': 'Images', 'count': totalCounts[1], 'color': Colors.green},
+      {'type': 'Music', 'count': totalCounts[2], 'color': Colors.red},
+      {
+        'type': 'Presentations',
+        'count': totalCounts[3],
+        'color': Colors.orange,
+      },
+      {'type': 'Videos', 'count': totalCounts[4], 'color': Colors.purple},
+      {'type': 'Spreadsheets', 'count': totalCounts[5], 'color': Colors.pink},
+      {'type': 'Archives', 'count': totalCounts[6], 'color': Colors.tealAccent},
+      {'type': 'Other', 'count': totalCounts[7], 'color': Color(0xff9CA3AF)},
     ];
 
     return Column(
       children:
-          fileTypes.map((fileType) {
-            double percentage = fileType['count'] / fileType['total'];
+          fileTypes.where((fileType) => fileType['count'] > 0).map((fileType) {
+            double percentage = fileType['count'] / grandTotal;
 
             return Container(
               margin: EdgeInsets.only(bottom: 16),
@@ -162,7 +352,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                       ),
                       Text(
-                        '${fileType['count']}/${fileType['total']}',
+                        '${fileType['count']}',
                         style: TextStyle(
                           color: Color(0xff9CA3AF),
                           fontSize: 12,
@@ -221,7 +411,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               : itemWidth,
                       child: OverviewWidget(
                         title: 'Total Managers',
-                        value: '4',
+                        value: _managerStats!.managers!.length.toString(),
                         icon: Icons.manage_accounts_rounded,
                       ),
                     ),
@@ -232,7 +422,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               : itemWidth,
                       child: OverviewWidget(
                         title: 'Total Files',
-                        value: '12 483',
+                        value: _sumTotalFiles().toString(),
                         icon: Icons.file_present_rounded,
                       ),
                     ),
@@ -243,7 +433,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               : itemWidth,
                       child: OverviewWidget(
                         title: 'Total Folders',
-                        value: '2 482',
+                        value: _sumTotalFolders().toString(),
                         icon: Icons.folder,
                       ),
                     ),
@@ -254,7 +444,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               : itemWidth,
                       child: OverviewWidget(
                         title: 'Total Storage',
-                        value: '126 Gb',
+                        value: '${_sumTotalSize()} ${_gig ? 'Gb' : 'Mb'}',
                         icon: Icons.storage_rounded,
                       ),
                     ),
@@ -265,26 +455,28 @@ class _DashboardPageState extends State<DashboardPage> {
             SizedBox(height: 20),
             Text("Managers", style: kTitle1),
             Divider(color: Color(0xff3D3D3D)),
-            ManagerItemWidget(
-              managerName: "Manager Name",
-              managerFiles: "1 249",
-              managerFolders: "456",
-              managerSize: "12Gb",
-            ),
-            SizedBox(height: 10),
-            ManagerItemWidget(
-              managerName: "Manager Name",
-              managerFiles: "1 249",
-              managerFolders: "456",
-              managerSize: "12Gb",
-            ),
-            SizedBox(height: 10),
-            ManagerItemWidget(
-              managerName: "Manager Name",
-              managerFiles: "1 249",
-              managerFolders: "456",
-              managerSize: "12Gb",
-            ),
+            ..._managerStats!.managers!.map((manager) {
+              double size = manager.size!.toDouble();
+              String sizeUnit = 'MB';
+              if (size >= _gigInBytes) {
+                size = size / _gigInBytes;
+                sizeUnit = 'GB';
+              } else {
+                size = size / 1e+6;
+              }
+
+              return Column(
+                children: [
+                  ManagerItemWidget(
+                    managerName: manager.managerName ?? "Unknown Manager",
+                    managerFiles: manager.files?.toString() ?? "0",
+                    managerFolders: manager.folders?.toString() ?? "0",
+                    managerSize: "${size.toStringAsFixed(1)}$sizeUnit",
+                  ),
+                  SizedBox(height: 10),
+                ],
+              );
+            }),
 
             SizedBox(height: 20),
             Text("Files", style: kTitle1),
@@ -304,13 +496,33 @@ class _DashboardPageState extends State<DashboardPage> {
                             style: TextStyle(color: Color(0xff9CA3AF)),
                           ),
                           SizedBox(width: 10),
-                          CustomDropdownMenu(
-                            items: [
-                              DropdownMenuItem(child: Text("Recents")),
-                              DropdownMenuItem(child: Text("Oldest")),
-                              DropdownMenuItem(child: Text("Largest")),
-                            ],
-                            hint: "select",
+                          DropdownButton<String>(
+                            value: _selectedFileSort,
+                            dropdownColor: Color(0xff242424),
+                            style: TextStyle(color: Colors.white),
+                            underline: Container(
+                              height: 1,
+                              color: Color(0xff3D3D3D),
+                            ),
+                            items:
+                                [
+                                  "Recents",
+                                  "Largest",
+                                  "Oldest",
+                                ].map<DropdownMenuItem<String>>((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(
+                                      value,
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  );
+                                }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _selectedFileSort = newValue!;
+                              });
+                            },
                           ),
                         ],
                       ),

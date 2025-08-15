@@ -31,6 +31,7 @@ class MainNavigation extends StatefulWidget {
   final List<NavigationItem> items;
   final int selectedIndex;
   final Function(int) onTap;
+  final Function() updateStats;
   final Function(String, FileTreeNode?)? onManagerTap;
   final Function(String, FileTreeNode)? onManagerTreeDataUpdate;
   final Function(List<String>)? onManagerNamesUpdate;
@@ -42,6 +43,7 @@ class MainNavigation extends StatefulWidget {
     required this.items,
     required this.selectedIndex,
     required this.onTap,
+    required this.updateStats,
     this.onManagerTap,
     this.onManagerTreeDataUpdate,
     this.onManagerNamesUpdate,
@@ -207,6 +209,7 @@ class MainNavigationState extends State<MainNavigation> {
       setState(() {
         _isInitialLoading = false;
       });
+      widget.updateStats.call();
     }
   }
 

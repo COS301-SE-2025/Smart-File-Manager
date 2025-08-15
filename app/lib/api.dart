@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'models/file_tree_node.dart';
 import 'models/startup_response.dart';
 import 'models/duplicate_model.dart';
+import 'models/stats_model.dart';
 
 const uri = "http://localhost:51000";
 
@@ -381,6 +382,27 @@ class Api {
       }
     } catch (e, stackTrace) {
       print('Error loading duplicates: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //loadStats
+  static Future<ManagersStatsResponse> loadStatsData() async {
+    try {
+      final response = await http.get(Uri.parse("$uri/returnStats"));
+
+      if (response.statusCode == 200) {
+        print(jsonDecode(response.body) as List<dynamic>);
+
+        return ManagersStatsResponse.fromJson(
+          jsonDecode(response.body) as List<dynamic>,
+        );
+      } else {
+        throw Exception('Failed to load stats: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error loading stats data: $e');
       print(stackTrace);
       rethrow;
     }
