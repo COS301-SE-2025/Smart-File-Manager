@@ -295,12 +295,11 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 
 			//reads json stored keywords and adds to the current composite
 			populateKeywordsFromStoredJsonFile(c)
-			PrettyPrintFolder(c, "")
-			fmt.Println("end of printing comp")
 
 			//starts extracting keywords to cover new files and changes in files
-			go goExtractKeywords(c)
-			fmt.Println("extractedd keywords")
+			goExtractKeywords(c)
+
+			go pythonExtractKeywords(c)
 
 			return
 		}
