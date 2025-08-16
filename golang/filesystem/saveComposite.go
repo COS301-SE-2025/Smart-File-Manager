@@ -55,25 +55,57 @@ func compositeToJsonStorageFormat(folder *Folder) []FileNode {
 	return nodes
 }
 
-// function that stores the composite
+// uses temp files to prevent races / overwritting a file that is being read
 func saveCompositeDetailsToFile(comp DirectoryTreeJson) error {
-	var filePath = filepath.Join("storage", (comp.Name + ".json"))
-	// ensure parent dir exists
-	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
-		return err
-	}
+	filePath := filepath.Join("storage", comp.Name+".json")
+	dir := filepath.Dir(filePath)
 
-	if _, err := os.Stat(filePath); err == nil {
-		if err := os.Remove(filePath); err != nil {
-			return err
-		}
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
 	}
 
 	out, err := json.MarshalIndent(comp, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filePath, out, 0644)
+
+	tmp, err := os.CreateTemp(dir, "tmp-*.json")
+	if err != nil {
+		return err
+	}
+	tmpName := tmp.Name()
+
+	// Clean up temp file on any error.
+	cleanup := func(e error) error {
+		_ = tmp.Close()
+		_ = os.Remove(tmpName)
+		return e
+	}
+
+	if _, err := tmp.Write(out); err != nil {
+		return cleanup(err)
+	}
+
+	if err := tmp.Sync(); err != nil {
+		return cleanup(err)
+	}
+
+	if err := tmp.Close(); err != nil {
+		_ = os.Remove(tmpName)
+		return err
+	}
+
+	if err := os.Rename(tmpName, filePath); err != nil {
+		_ = os.Remove(tmpName)
+		return err
+	}
+
+	if d, err := os.Open(dir); err == nil {
+		_ = d.Sync()
+		_ = d.Close()
+	}
+
+	return nil
 }
 
 func populateKeywordsFromStoredJsonFile(comp *Folder) {
