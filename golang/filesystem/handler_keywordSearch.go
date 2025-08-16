@@ -18,8 +18,8 @@ import (
 	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
 )
 
-const limitKeywordSearch int = 25
-const maxDistKeywordSearch int = 5
+const limitKeywordSearch int = 20
+const maxDistKeywordSearch int = 3
 
 //flow idea:
 // app starts
@@ -29,10 +29,28 @@ const maxDistKeywordSearch int = 5
 // overwrite keywords for all files when python returns
 // save python keywords along with tags and locks
 
+// route to check if keywords have been populated
+func isKeywordSearchReadyHander(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("compositeName")
+	for _, c := range Composites {
+		if c.Name == name {
+			hasKeywords := c.hasKeywords
+			if err := json.NewEncoder(w).Encode(hasKeywords); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
+		}
+	}
+	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
+}
+
 func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	name := r.URL.Query().Get("name")
+	w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins, or specify your frontend origin
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	name := r.URL.Query().Get("compositeName")
 	searchText := r.URL.Query().Get("searchText")
 
 	for _, c := range Composites {
@@ -247,6 +265,7 @@ func pythonExtractKeywords(c *Folder) {
 	}
 
 	saveCompositeDetails(c)
+	c.hasKeywords = true
 
 }
 
@@ -259,6 +278,7 @@ func goExtractKeywords(c *Folder) {
 
 	wg.Wait()
 	saveCompositeDetails(c)
+	c.hasKeywords = true
 }
 
 var keywordSem = make(chan struct{}, 32) // tune limit
