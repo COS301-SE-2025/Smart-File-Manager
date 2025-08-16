@@ -71,6 +71,8 @@ func (f *Folder) RemoveSubfolder(folderPath string) bool {
 	return false
 }
 
+// cant this be faster by actually looking at the path and looking for the folder name until the end?
+// instead of searching the whole composite
 // GetFile returns a file by path, searching recursively
 func (f *Folder) GetFile(filePath string) *File {
 	for _, file := range f.Files {
