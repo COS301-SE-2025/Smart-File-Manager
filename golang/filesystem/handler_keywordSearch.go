@@ -23,8 +23,6 @@ import (
 // overwrite keywords for all files when python returns
 // save python keywords along with tags and locks
 
-var wg sync.WaitGroup
-
 func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -59,30 +57,43 @@ func pythonExtractKeywords(c *Folder) {
 }
 
 func goExtractKeywords(c *Folder) {
-	wg.Add(1)
-	go getKeywords(c)
+	var wg sync.WaitGroup
+
+	// IMPORTANT: do NOT start this as a goroutine.
+	// We need all wg.Adds to happen before Wait begins.
+	getKeywords(c, &wg)
+
 	wg.Wait()
 	saveCompositeDetails(c)
 }
 
-func getKeywords(c *Folder) {
-	defer wg.Done()
+var keywordSem = make(chan struct{}, 32) // tune limit
 
+func getKeywords(c *Folder, wg *sync.WaitGroup) {
 	for _, file := range c.Files {
+		f := file // capture loop var (or pass as param)
+		wg.Add(1)
+		go func(f *File) {
+			defer wg.Done()
+			keywordSem <- struct{}{}
+			defer func() { <-keywordSem }()
 
-		keywords, err := ExtractKeywordsRAKE(ConvertToWSLPath(file.Path), 20, 50*1024*1024)
-
-		if err != nil {
-			fmt.Printf("err")
-		}
-		mu.Lock()
-		file.Keywords = keywords
-		mu.Unlock()
+			kw, err := ExtractKeywordsRAKE(
+				ConvertToWSLPath(f.Path),
+				20,
+				50*1024*1024,
+			)
+			if err != nil {
+				fmt.Printf("extract keywords error for %s: %v\n", f.Path, err)
+				return
+			}
+			f.Keywords = kw
+		}(f)
 	}
 
+	// recurse synchronously so all Adds happen before Wait
 	for _, folder := range c.Subfolders {
-		wg.Add(1)
-		go getKeywords(folder)
+		getKeywords(folder, wg)
 	}
 }
 
