@@ -1,19 +1,25 @@
 package filesystem
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
 )
+
+const limitKeywordSearch int = 25
+const maxDistKeywordSearch int = 5
 
 //flow idea:
 // app starts
@@ -27,11 +33,35 @@ func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	name := r.URL.Query().Get("name")
+	searchText := r.URL.Query().Get("searchText")
 
 	for _, c := range Composites {
 		if c.Name == name {
-			// pythonExtractKeywords(c)
-			goExtractKeywords(c)
+
+			var terms []string = strings.Split(searchText, " ")
+
+			sr := getMatchesByKeywords(terms, c)
+
+			cores := DirectoryTreeJson{
+				Name:     sr.Name,
+				IsFolder: true,
+				Children: make([]FileNode, len(sr.rankedFiles)),
+			}
+
+			for i, rf := range sr.rankedFiles {
+				file := rf.file
+				fileNodeToAdd := FileNode{
+					Name:     file.Name,
+					Path:     file.Path,
+					IsFolder: false,
+					Tags:     file.Tags,
+					Metadata: ConvertMetadataEntries(file.Metadata),
+				}
+				cores.Children[i] = fileNodeToAdd
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(cores)
 			return
 		}
 	}
@@ -39,20 +69,184 @@ func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
 }
 
+func getMatchesByKeywords(searchTerms []string, composite *Folder) *safeResults {
+
+	res := &safeResults{
+		Name: composite.Name,
+	}
+
+	resultChan := make(chan rankedFile)
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go exploreFolderForKeywords(composite, searchTerms, resultChan, &wg)
+
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	seen := make(map[string]struct{})
+	for currentRankedFile := range resultChan {
+
+		key := currentRankedFile.file.Path
+		if _, ok := seen[key]; ok {
+			continue // already inserted this file
+		}
+		seen[key] = struct{}{}
+
+		inserted := false
+		for i, iteratedRankedFile := range res.rankedFiles {
+			//if current is better
+			if iteratedRankedFile.distance > currentRankedFile.distance {
+
+				if len(res.rankedFiles) < limit {
+					//insert by shifting over to make the array sorted
+					res.rankedFiles = append(
+						append(res.rankedFiles[:i], currentRankedFile),
+						res.rankedFiles[i:]...,
+					)
+
+					inserted = true
+					break
+				} else {
+					res.rankedFiles = append(
+						append(
+							res.rankedFiles[:i],
+							currentRankedFile,
+						),
+						res.rankedFiles[i:limit-1]...,
+					)
+					inserted = true
+					break
+				}
+			}
+		}
+		// if limit is not reached and not inserted then we insert at the end
+		if len(res.rankedFiles) < limit {
+			if !inserted {
+				res.rankedFiles = append(res.rankedFiles, currentRankedFile)
+			}
+		}
+	}
+
+	//checks to remove dups (yes if concurrency was perfect there wouldnt be dups)
+	unique := make([]rankedFile, 0, len(res.rankedFiles))
+
+	finalSeen := make(map[string]struct{}, len(res.rankedFiles))
+
+	for _, rf := range res.rankedFiles {
+		key := filepath.Clean(rf.file.Path)
+
+		if _, ok := finalSeen[key]; ok {
+			continue
+		}
+
+		finalSeen[key] = struct{}{}
+		unique = append(unique, rf)
+	}
+	res.rankedFiles = unique
+
+	return res
+}
+
+func exploreFolderForKeywords(f *Folder, searchTerms []string, c chan<- rankedFile, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for _, folder := range f.Subfolders {
+		wg.Add(1)
+		go exploreFolderForKeywords(folder, searchTerms, c, wg)
+	}
+
+	for _, file := range f.Files {
+		finalDist := 100
+		for _, searchTerm := range searchTerms {
+			for _, keyword := range file.Keywords {
+
+				dist := LevenshteinDistForKeywords(searchTerm, keyword.Keyword)
+				if dist <= maxDistKeywordSearch {
+					if dist < finalDist {
+						finalDist = dist
+						fmt.Println("updating dist for FILE: " + file.Name + " with dist: " + strconv.Itoa(finalDist))
+						fmt.Println("distance between: " + searchTerm + " AND " + keyword.Keyword + " = " + strconv.Itoa(dist))
+					}
+
+				}
+			}
+		}
+		if finalDist <= maxDistKeywordSearch {
+			c <- rankedFile{file: *file, distance: finalDist}
+		}
+	}
+}
+
+func LevenshteinDistForKeywords(searchText string, fileKeyword string) int {
+	if len(searchText) == 0 {
+		return len(fileKeyword)
+	}
+	if len(fileKeyword) == 0 {
+		return len(searchText)
+	}
+
+	searchText = strings.ToLower(searchText)
+	fileKeyword = strings.ToLower(fileKeyword)
+
+	//  exact matches should be 0
+	if fileKeyword == searchText {
+		return 0
+	}
+	//this is the name
+	//his ist the
+	//  BOOST exact substrings
+	var boost float32 = 1 //lower boost is better as it makes the distance smaller
+	if strings.Contains(fileKeyword, searchText) {
+		boost = 0.2
+	}
+
+	// now fall back on full Levenshtein
+	lenSearchText, lenFileName := len(searchText), len(fileKeyword)
+
+	prev := make([]int, lenFileName+1)
+	curr := make([]int, lenFileName+1)
+	for j := 0; j <= lenFileName; j++ {
+		prev[j] = j
+	}
+	for i := 1; i <= lenSearchText; i++ {
+		curr[0] = i
+		ai := searchText[i-1]
+		for j := 1; j <= lenFileName; j++ {
+			cost := 0
+			if ai != fileKeyword[j-1] {
+				cost = 1
+			}
+			sub := prev[j-1] + cost
+			ins := curr[j-1] + 1
+			del := prev[j] + 1
+
+			// take the minimum
+			if ins < sub {
+				sub = ins
+			}
+			if del < sub {
+				sub = del
+			}
+			curr[j] = sub
+		}
+		prev, curr = curr, prev
+	}
+
+	return int(math.Round(float64(prev[lenFileName]) * float64(boost)))
+
+}
+
 func pythonExtractKeywords(c *Folder) {
-	fmt.Println("started")
-	grpcStart := time.Now()
 	err := grpcFunc(c, "KEYWORDS")
 	if err != nil {
 		log.Fatalf("grpcFunc failed: %v", err)
 	}
 
 	saveCompositeDetails(c)
-
-	fmt.Println("finished python")
-
-	grpcElapsed := time.Since(grpcStart)
-	fmt.Printf("grpc Code block executed in %s\n", grpcElapsed)
 
 }
 
