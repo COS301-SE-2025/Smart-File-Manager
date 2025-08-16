@@ -116,7 +116,6 @@ func grpcFunc(c *Folder, requestType string) error {
 
 	// convertProtoToFolder(resp.Root)
 	mergeProtoToFolder(resp.Root, c)
-	PrettyPrintFolder(c, "")
 
 	return nil
 }
