@@ -159,6 +159,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
 
 }
 
