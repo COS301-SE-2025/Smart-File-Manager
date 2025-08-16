@@ -130,10 +130,6 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(comp.Name)
 		if comp.Name == compositeName {
 
-			fmt.Println("stat of print with md")
-			// PrettyPrintFolder(comp, "")
-			fmt.Println("end of print with md")
-
 			sr := getMatches(searchText, comp)
 
 			cores := DirectoryTreeJson{
