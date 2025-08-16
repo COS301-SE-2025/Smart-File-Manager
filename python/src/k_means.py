@@ -73,7 +73,7 @@ class KMeansCluster:
         if depth > 0:
             # Assign directory name
             folder_name = self.folder_namer.generateFolderName(files)        
-            dir_name = os.path.join(dir_prefix, folder_name)
+            dir_name = folder_name 
 
             if os.path.basename(dir_prefix) == folder_name:
                 return builder.buildDirectory(dir_prefix,files,[])
