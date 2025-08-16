@@ -22,6 +22,7 @@
   - [Design Patterns](#design-patterns)
   - [Constraints](#constraints)
 - [Technology Requirements](#technology-requirements)
+- [Deployment Model](#deployment-model)
 
 ## Introduction
 
@@ -577,3 +578,19 @@ This sections acts as a brief overview of the various technologies used in our s
     </tr>
   </tbody>
 </table>
+
+## Deployment Model
+Our application will be deployed as an executable desktop app for various operating systems. While we currently have support for Microsoft Windows and GNU Linux we hope to support deployment for MacOS in the future.
+
+### Justification for Deployment model
+Our project's nature requires it to run on the user's machine. Its close dependancy on the filesystem makes it unsuitable for a web-based application which would need to be deployed on a server. Furthermore, by doing all processing on the local machine we avoid the obvious security and privacy risk involved in sending user files (which could contain sensitive information) over a network for processing or (even worse) storing these files on a server.
+At this point it would be important to make the distinction that our project **never** stores any file information permenantly in any other location than the user's filesystem.
+
+To ease the complicated build process on behalf of users we aims to provide exceutables for the various commonly used operating systems by means of an installer.
+
+### How to access our deployments
+Our installers can be found on and downloaded via the google drive link provided on our readme.
+
+
+### Deployment Diagram
+![Deployment-Diagram](assets/sfm_deployment.jpg)
