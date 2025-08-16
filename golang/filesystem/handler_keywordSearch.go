@@ -1,7 +1,6 @@
 package filesystem
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -33,36 +32,8 @@ func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
 
 	for _, c := range Composites {
 		if c.Name == name {
-
-			grpcStart := time.Now()
-			err := grpcFunc(c, "KEYWORDS")
-			if err != nil {
-				log.Fatalf("grpcFunc failed: %v", err)
-				http.Error(w, "internal server error, GRPC CALLED WRONG", http.StatusInternalServerError)
-			}
-			children := createDirectoryJSONStructure(c)
-
-			root := DirectoryTreeJson{
-				Name:     c.Name,
-				IsFolder: true,
-				Children: children,
-			}
-
-			if err := json.NewEncoder(w).Encode(root); err != nil {
-				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-			}
-			grpcElapsed := time.Since(grpcStart)
-
-			goStart := time.Now()
-			extractKeywords(c)
-
-			goElapsed := time.Since(goStart)
-
-			PrettyPrintFolder(c, "")
-
-			fmt.Printf("grpc Code block executed in %s\n", grpcElapsed)
-			fmt.Printf("go Code block executed in %s\n", goElapsed)
-
+			// pythonExtractKeywords(c)
+			goExtractKeywords(c)
 			return
 		}
 	}
@@ -70,10 +41,28 @@ func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
 }
 
-func extractKeywords(c *Folder) {
+func pythonExtractKeywords(c *Folder) {
+	fmt.Println("started")
+	grpcStart := time.Now()
+	err := grpcFunc(c, "KEYWORDS")
+	if err != nil {
+		log.Fatalf("grpcFunc failed: %v", err)
+	}
+
+	saveCompositeDetails(c)
+
+	fmt.Println("finished python")
+
+	grpcElapsed := time.Since(grpcStart)
+	fmt.Printf("grpc Code block executed in %s\n", grpcElapsed)
+
+}
+
+func goExtractKeywords(c *Folder) {
 	wg.Add(1)
 	go getKeywords(c)
 	wg.Wait()
+	saveCompositeDetails(c)
 }
 
 func getKeywords(c *Folder) {

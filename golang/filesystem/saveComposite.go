@@ -2,11 +2,12 @@ package filesystem
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 )
 
-//uses load tree struct directoryTreeJson
+// uses load tree struct directoryTreeJson
 
 func saveCompositeDetails(c *Folder) {
 	children := compositeToJsonStorageFormat(c)
@@ -31,6 +32,7 @@ func compositeToJsonStorageFormat(folder *Folder) []FileNode {
 			Name:     file.Name,
 			Path:     file.Path,
 			IsFolder: false,
+			Keywords: file.Keywords,
 			Tags:     tags,
 			Locked:   file.Locked,
 		})
@@ -45,7 +47,6 @@ func compositeToJsonStorageFormat(folder *Folder) []FileNode {
 			Path:     sub.Path,
 			IsFolder: true,
 			Tags:     sub.Tags,
-			Metadata: &Metadata{},
 			Children: childNodes,
 			Locked:   sub.Locked,
 		})
@@ -54,17 +55,82 @@ func compositeToJsonStorageFormat(folder *Folder) []FileNode {
 	return nodes
 }
 
-var compositeStoragePath = filepath.Join("storage", "composite.json")
-
 // function that stores the composite
 func saveCompositeDetailsToFile(comp DirectoryTreeJson) error {
+	var filePath = filepath.Join("storage", (comp.Name + ".json"))
 	// ensure parent dir exists
-	if err := os.MkdirAll(filepath.Dir(compositeStoragePath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
 		return err
 	}
+
+	if _, err := os.Stat(filePath); err == nil {
+		if err := os.Remove(filePath); err != nil {
+			return err
+		}
+	}
+
 	out, err := json.MarshalIndent(comp, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(compositeStoragePath, out, 0644)
+	return os.WriteFile(filePath, out, 0644)
+}
+
+func populateKeywordsFromStoredJsonFile(comp *Folder) {
+	fmt.Println("populateKeywordsFromStoredJsonFile called")
+	var filePath = filepath.Join("storage", (comp.Name + ".json"))
+	// If the file doesn't exist yet, start with empty
+	data, err := os.ReadFile(filePath)
+
+	if os.IsNotExist(err) {
+		return
+	} else if err != nil {
+		return
+	}
+
+	var structure DirectoryTreeJson
+
+	//populates recs
+	if err := json.Unmarshal(data, &structure); err != nil {
+		fmt.Println("error in unmarshaling of json")
+		return
+	}
+	mergeDirectoryTreeToComposite(comp, &structure)
+
+}
+
+func mergeDirectoryTreeToComposite(comp *Folder, directory *DirectoryTreeJson) {
+
+	fmt.Println("mergeDirectoryTreeToComposite called")
+	for _, node := range directory.Children {
+		if !node.IsFolder {
+			path := node.Path
+
+			var compositeFile *File = comp.GetFile(path)
+			if compositeFile != nil {
+				compositeFile.Keywords = node.Keywords
+			}
+
+		} else {
+			helperMergeDirectoryTreeToComposite(comp, &node)
+		}
+	}
+}
+
+func helperMergeDirectoryTreeToComposite(comp *Folder, fileNode *FileNode) {
+	fmt.Println("helperMergeDirectoryTreeToComposite called")
+	for _, node := range fileNode.Children {
+		if !node.IsFolder {
+			path := node.Path
+
+			var compositeFile *File = comp.GetFile(path)
+			if compositeFile != nil {
+				compositeFile.Keywords = node.Keywords
+			}
+
+		} else {
+			helperMergeDirectoryTreeToComposite(comp, &node)
+		}
+	}
+
 }

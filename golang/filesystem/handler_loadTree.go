@@ -27,14 +27,15 @@ type DirectoryTreeJson struct {
 
 // file or folder
 type FileNode struct {
-	Name     string     `json:"name"`
-	Path     string     `json:"path,omitempty"`
-	IsFolder bool       `json:"isFolder"`
-	Tags     []string   `json:"tags,omitempty"`
-	Metadata *Metadata  `json:"metadata,omitempty"`
-	Children []FileNode `json:"children,omitempty"`
-	Locked   bool       `json:"locked"`
-	NewPath  string     `json:"newPath,omitempty"` // for moving files
+	Name     string        `json:"name"`
+	Path     string        `json:"path,omitempty"`
+	IsFolder bool          `json:"isFolder"`
+	Tags     []string      `json:"tags,omitempty"`
+	Metadata *Metadata     `json:"metadata,omitempty"`
+	Children []FileNode    `json:"children,omitempty"`
+	Keywords []*pb.Keyword `json:"keywords,omitempty"`
+	Locked   bool          `json:"locked"`
+	NewPath  string        `json:"newPath,omitempty"` // for moving files
 }
 
 type Metadata struct {
@@ -291,6 +292,15 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 			if err := json.NewEncoder(w).Encode(root); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			}
+
+			//reads json stored keywords and adds to the current composite
+			populateKeywordsFromStoredJsonFile(c)
+			PrettyPrintFolder(c, "")
+			fmt.Println("end of printing comp")
+
+			//starts extracting keywords to cover new files and changes in files
+			go goExtractKeywords(c)
+			fmt.Println("extractedd keywords")
 
 			return
 		}

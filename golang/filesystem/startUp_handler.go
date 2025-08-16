@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
-	"time"
 )
 
 type ManagerRecord struct {
@@ -35,16 +34,13 @@ func SetManagersFilePath(p string) {
 func startUpHandler(w http.ResponseWriter, r *http.Request) {
 	Composites = nil
 
-	loadStart := time.Now()
 	recs, err := loadManagerRecords()
-	loadDuration := time.Since(loadStart)
 
 	if err != nil {
 		errMsg := "Internal error: " + err.Error()
 		http.Error(w, errMsg, http.StatusBadRequest)
 		return
 	}
-	fmt.Printf("📁 Loaded %d manager records in %s\n", len(recs), loadDuration)
 
 	var (
 		managerNames []string
@@ -66,6 +62,7 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 
 			mu.Lock()
 			Composites = append(Composites, composite)
+			
 			managerNames = append(managerNames, composite.Name)
 			mu.Unlock()
 		}(r)

@@ -1,14 +1,6 @@
 [
   {
-    "name": "hhg",
-    "path": "/mnt/c/Users/bosma/OneDrive/Desktop/Papers/New folder"
-  },
-  {
-    "name": "gfg",
-    "path": "/mnt/c/Users/bosma/OneDrive/Desktop/Papers"
-  },
-  {
-    "name": "test",
-    "path": "/mnt/c/Users/bosma/OneDrive/Desktop/Test"
+    "name": "first",
+    "path": "/mnt/c/Users/jackb/coding/capstone/Smart-File-Manager/golang/filesystem"
   }
 ]
