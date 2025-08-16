@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:app/models/file_tree_node.dart';
 
 GlobalKey<DashboardPageState> globalKey = GlobalKey();
+GlobalKey<MainNavigationState> mainNavigationKey = GlobalKey();
 
 class Shell extends StatefulWidget {
   const Shell({super.key});
@@ -38,6 +39,7 @@ class _ShellState extends State<Shell> {
   List<Widget> get _pages => [
     DashboardPage(managerNames: _managerNames, key: globalKey),
     SmartManagersPage(
+      key: const ValueKey('smart_managers_page'),
       managerTreeData: _managerTreeData,
       managerNames: _managerNames,
       pendingSorts: _pendingSorts,
@@ -45,6 +47,7 @@ class _ShellState extends State<Shell> {
       onManagerSort: _onManagerSort,
       onSortApprove: _onSortApprove,
       onSortDecline: _onSortDecline,
+      onManagerDelete: _onManagerDelete,
     ),
     AdvancedSearchPage(
       managerNames: _managerNames,
@@ -78,7 +81,32 @@ class _ShellState extends State<Shell> {
   }
 
   //when manager is deleted updated values here:
-  void _onManagerDelete(String managerName) {}
+  void _onManagerDelete(String managerName) {
+    setState(() {
+      // Create a new list to ensure Flutter detects the change
+      _managerNames = _managerNames.where((name) => name != managerName).toList();
+      _managerTreeData.remove(managerName);
+      _pendingSorts.remove(managerName);
+      _sortResults.remove(managerName);
+      
+      // If the deleted manager was selected, deselect it
+      if (_selectedManager == managerName) {
+        _selectedManager = null;
+        _selectedIndex = 0; // Go to dashboard
+      }
+      
+      // If the deleted manager was selected for search, clear it
+      if (_selectedManagerForSearch == managerName) {
+        _selectedManagerForSearch = "";
+      }
+    });
+
+    // Remove the manager from the navigation sidebar
+    mainNavigationKey.currentState?.removeManagerFromNavigation(managerName);
+
+    // Update stats to reflect the deletion
+    _updateStats();
+  }
 
   //when manager is sorted(move directory is called, update treedata for manager)
   void _onManagerSort(String managerName, FileTreeNode managerData) async {
@@ -204,9 +232,15 @@ class _ShellState extends State<Shell> {
   void _onManagerAdded(String managerName) {
     setState(() {
       if (!_managerNames.contains(managerName)) {
-        _managerNames.add(managerName);
+        // Create a new list to ensure Flutter detects the change
+        _managerNames = [..._managerNames, managerName];
       }
     });
+    
+    // Force dashboard to update if it's the active page
+    if (_selectedIndex == 0) {
+      _updateStats();
+    }
   }
 
   //find the active page and return its widget
@@ -265,6 +299,7 @@ class _ShellState extends State<Shell> {
         children: [
           //Main Navigation Widget with parmeters used to navigate
           MainNavigation(
+            key: mainNavigationKey,
             items: _navigationItems,
             selectedIndex: _selectedIndex,
             selectedManager: _selectedManager,
@@ -274,6 +309,7 @@ class _ShellState extends State<Shell> {
             onManagerTreeDataUpdate: _onManagerTreeDataUpdate,
             onManagerNamesUpdate: _onManagerNamesUpdate,
             onManagerAdded: _onManagerAdded,
+            onManagerDelete: _onManagerDelete,
           ),
           //Page that needs to be rendered depending on navigation index
           Expanded(child: _getCurrentPage()),

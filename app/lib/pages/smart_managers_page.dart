@@ -3,6 +3,7 @@ import 'package:app/custom_widgets/hoverable_button.dart';
 import 'package:app/custom_widgets/sort_preview_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
+import 'package:app/api.dart';
 
 class SmartManagersPage extends StatefulWidget {
   Map<String, FileTreeNode> managerTreeData = {};
@@ -12,6 +13,7 @@ class SmartManagersPage extends StatefulWidget {
   final Function(String, FileTreeNode) onManagerSort;
   final Function(String, FileTreeNode) onSortApprove;
   final Function(String) onSortDecline;
+  final Function(String)? onManagerDelete;
 
   SmartManagersPage({
     super.key,
@@ -22,6 +24,7 @@ class SmartManagersPage extends StatefulWidget {
     required this.onManagerSort,
     required this.onSortApprove,
     required this.onSortDecline,
+    this.onManagerDelete,
   });
 
   @override
@@ -42,7 +45,9 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
     super.didUpdateWidget(oldWidget);
     if (widget.managerTreeData != oldWidget.managerTreeData ||
         widget.pendingSorts != oldWidget.pendingSorts ||
-        widget.sortResults != oldWidget.sortResults) {
+        widget.sortResults != oldWidget.sortResults ||
+        widget.managerNames.length != oldWidget.managerNames.length ||
+        widget.managerTreeData.length != oldWidget.managerTreeData.length) {
       _updateCurrentItems();
     }
   }
@@ -72,10 +77,99 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
     }
   }
 
+  void _handleDeleteManager(String managerName) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: kScaffoldColor,
+            title: const Text('Delete Smart Manager', style: kTitle1),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Are you sure you want to delete "$managerName"?',
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'This will only remove the Smart Manager from the app. Your actual files and folders will remain untouched on your system.',
+                  style: TextStyle(color: Color(0xff9CA3AF), fontSize: 14),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Color(0xff9CA3AF)),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await _deleteManager(managerName);
+                },
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(color: Color(0xffDC2626)),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
+  Future<void> _deleteManager(String managerName) async {
+    try {
+      final success = await Api.deleteSmartManager(managerName);
+
+      if (success) {
+        widget.onManagerDelete?.call(managerName);
+
+        // Force immediate UI update after parent state is updated
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _updateCurrentItems();
+          }
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Smart Manager "$managerName" deleted successfully'),
+            backgroundColor: kYellowText,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete Smart Manager "$managerName"'),
+            backgroundColor: Colors.redAccent,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting Smart Manager "$managerName": $e'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   void _updateCurrentItems() {
-    setState(() {
-      _currentItems = List.from(widget.managerTreeData.values);
-    });
+    final newItems = List<FileTreeNode>.from(widget.managerTreeData.values);
+    if (mounted) {
+      setState(() {
+        _currentItems = newItems;
+      });
+    }
   }
 
   @override
@@ -131,12 +225,7 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
                           children: [
                             _buildSortButton(item.name),
                             SizedBox(height: 8),
-                            HoverableButton(
-                              name: "Delete Manager",
-                              icon: Icons.delete_forever_rounded,
-                              expanded: true,
-                              onTap: () => {},
-                            ),
+                            _buildDeleteButton(item.name),
                           ],
                         ),
                       ],
@@ -196,5 +285,18 @@ class _SmartManagersPageState extends State<SmartManagersPage> {
         expanded: true,
       );
     }
+  }
+
+  Widget _buildDeleteButton(String managerName) {
+    final isPending = widget.pendingSorts[managerName] ?? false;
+    final hasSortResult = widget.sortResults.containsKey(managerName);
+    final isDisabled = isPending || hasSortResult;
+
+    return HoverableButton(
+      name: "Delete Manager",
+      icon: Icons.delete_forever_rounded,
+      expanded: true,
+      onTap: isDisabled ? null : () => _handleDeleteManager(managerName),
+    );
   }
 }

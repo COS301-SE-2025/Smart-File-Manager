@@ -44,11 +44,6 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
     super.dispose();
   }
 
-  InputBorder _buildBorder() => OutlineInputBorder(
-    borderRadius: BorderRadius.circular(6),
-    borderSide: const BorderSide(color: Color(0xff3D3D3D)),
-  );
-
   @override
   Widget build(BuildContext context) {
     return MouseRegion(

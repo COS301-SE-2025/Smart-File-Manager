@@ -17,8 +17,6 @@ class Api {
       );
 
       if (response.statusCode == 200) {
-        print(jsonDecode(response.body) as Map<String, dynamic>);
-
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
@@ -76,7 +74,6 @@ class Api {
       final response = await http.post(
         Uri.parse("$uri/addDirectory?name=$name&path=$path"),
       );
-      print("$uri/addDirectory?name=$name&path=$path");
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
@@ -95,10 +92,11 @@ class Api {
   static Future<bool> deleteSmartManager(String name) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/deleteDirectory?name=$name"),
+        Uri.parse("$uri/deleteManager?name=$name"),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        print(response.body);
         return true;
       } else {
         throw Exception(
@@ -160,7 +158,6 @@ class Api {
       final response = await http.post(
         Uri.parse("$uri/lock?name=$managerName&path=$path"),
       );
-      print(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
@@ -180,7 +177,6 @@ class Api {
       final response = await http.post(
         Uri.parse("$uri/unlock?name=$managerName&path=$path"),
       );
-      print(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
@@ -204,7 +200,6 @@ class Api {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(response.body);
-        print(jsonDecode(response.body));
         return jsonList
             .map(
               (item) => DuplicateModel.fromJson(item as Map<String, dynamic>),
@@ -230,8 +225,6 @@ class Api {
       );
 
       if (response.statusCode == 200) {
-        print(jsonDecode(response.body) as Map<String, dynamic>);
-
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
@@ -403,6 +396,31 @@ class Api {
       }
     } catch (e, stackTrace) {
       print('Error loading stats data: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //Move directory
+  static Future<bool> moveDirectory(String managerName) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/moveDirectory?name=$managerName"),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print(response.body);
+        if (response.body == "true") {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        throw Exception(
+          'Failed to unlock File/Folder: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error unlocking folder/file: $e');
       print(stackTrace);
       rethrow;
     }

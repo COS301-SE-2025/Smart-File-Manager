@@ -26,20 +26,7 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 			CreateDirectoryStructure(item)
 			// Move the content into new manager folder
 			moveContent(item)
-			children := GoSidecreateDirectoryJSONStructure(item)
-
-			root := DirectoryTreeJson{
-				Name:     item.Name,
-				IsFolder: true,
-				RootPath: item.Path,
-				Children: children,
-			}
-			w.WriteHeader(http.StatusOK)
-			w.Header().Set("Content-Type", "application/json")
-			// Encode the response as JSON
-			if err := json.NewEncoder(w).Encode(root); err != nil {
-				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-			}
+			w.Write([]byte("true"))
 			return
 		}
 	}
@@ -61,8 +48,10 @@ func moveContent(item *Folder) {
 	}
 
 	moveContentRecursive(item)
-	os.RemoveAll(originalPath)
 	item.Path = filepath.Join(root, item.Name)
+	if originalPath != item.Path {
+		os.RemoveAll(originalPath)
+	}
 
 	// Path to managers storage file
 	managersFilePath := filepath.Join(getPath(), "golang", "storage", "main.json")

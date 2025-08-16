@@ -36,6 +36,7 @@ class MainNavigation extends StatefulWidget {
   final Function(String, FileTreeNode)? onManagerTreeDataUpdate;
   final Function(List<String>)? onManagerNamesUpdate;
   final Function(String)? onManagerAdded;
+  final Function(String)? onManagerDelete;
   final String? selectedManager;
 
   const MainNavigation({
@@ -48,6 +49,7 @@ class MainNavigation extends StatefulWidget {
     this.onManagerTreeDataUpdate,
     this.onManagerNamesUpdate,
     this.onManagerAdded,
+    this.onManagerDelete,
     this.selectedManager,
   });
 
@@ -94,6 +96,53 @@ class MainNavigationState extends State<MainNavigation> {
             ],
           ),
     );
+  }
+
+  void _handleDeleteManager(String managerName) async {
+    try {
+      final success = await Api.deleteSmartManager(managerName);
+
+      if (success) {
+        setState(() {
+          _managers.removeWhere((m) => m.label == managerName);
+        });
+
+        // Notify parent about the deletion
+        widget.onManagerDelete?.call(managerName);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Smart Manager "$managerName" deleted successfully'),
+            backgroundColor: kYellowText,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete Smart Manager "$managerName"'),
+            backgroundColor: Colors.redAccent,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting Smart Manager "$managerName": $e'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  void removeManagerFromNavigation(String managerName) {
+    if (mounted) {
+      setState(() {
+        _managers.removeWhere((m) => m.label == managerName);
+      });
+    }
   }
 
   Future<void> loadTreeDataForManager(String managerName) async {
