@@ -11,6 +11,9 @@ from collections import defaultdict
 
 from create_folder_name import FolderNameCreator
 
+# Set random seed (I'm really not sure if this helps)
+np.random.seed(42)
+
 class KMeansCluster:
     def __init__(self, numClusters, max_depth, model, parent_folder):
         self.base_clusters = numClusters
@@ -73,7 +76,7 @@ class KMeansCluster:
         if depth > 0:
             # Assign directory name
             folder_name = self.folder_namer.generateFolderName(files)        
-            dir_name = os.path.join(dir_prefix, folder_name)
+            dir_name = folder_name 
 
             if os.path.basename(dir_prefix) == folder_name:
                 return builder.buildDirectory(dir_prefix,files,[])
@@ -205,7 +208,7 @@ class KMeansCluster:
             #    print("Continue")
                 continue
             try:
-                kmeans = KMeans(n_clusters=k, random_state=random_state, n_init="auto")
+                kmeans = KMeans(n_clusters=k, random_state=42, n_init="auto", init="k-means++", tol=1e-5)
                 labels = kmeans.fit_predict(X)
 
                 score = silhouette_score(X, labels)
