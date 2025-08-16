@@ -143,16 +143,21 @@ Master-Slave architecture leverages a central node (master) to delegate tasks to
 * **Modifiability:**
    - Not applicable 
 
+### Client-Server Architecture Pattern
 
+In order to allow our different codebases to communicate we leverage the standard client-server architecture pattern. To keep our architecture technology agonstic we refer to the filesystem server and clustering server. For practical purposes these refer to our go and python server respectively. The filesystem server interacts with the user's computer directly via the endpoints referred to in our service contracts while the clustering service is responsible for our "smart" sorting functionality. Furthemore both these servers run on localhost due to the application being a monolithic desktop app.
+
+#### How it supports our quality requirements
+* **Reliability & Performance:**
+   - Using various servers we benefit from the advantages of using different technologies for what they are best at. For example: Go for its fast and easy concurrency via goroutines and python for its rich AI library ecosystem. Please refer to technology choices in [our SRS document](srs.md). Using technologies for what they are designed for improves both performance and reliability.
+* **Scalability:**
+    - N/A 
+* **Usability:**
+   - N/A
+* **Modifiability:**
+   - N/A 
 
 ### System Components
-
-#### Website Component
-
-- User-friendly interface for application download
-- Account registration and management functionality
-
-#### Application Component
 
 - File explorer functionality
 - File/folder sorting by tags and metadata
@@ -160,12 +165,7 @@ Master-Slave architecture leverages a central node (master) to delegate tasks to
 - Advanced search capabilities
 - File and folder management operations
 
-#### Sub-Architectural Patterns
-
-- **Layered Architecture (N-tier):** Separates concerns into Presentation, Application, and Data layers
-
-![Website Architecture](assets/websiteArchitecure.png)
-![Application Architecture](assets/applicationArchitecture.png)
+![Application Architecture](assets/applicationArchitectureV2.png)
 
 ---
 
