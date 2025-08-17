@@ -117,7 +117,7 @@ func PrettyPrintFolder(f *Folder, indent string) {
 	}
 }
 
-// todo error if comp not found
+
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	compositeName := r.URL.Query().Get("compositeName")
