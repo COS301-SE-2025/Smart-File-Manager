@@ -41,7 +41,7 @@ func moveContent(item *Folder) {
 	//change root back to original path
 	item.Path = root
 	managersFilePath := getPath()
-	managersFilePath = filepath.Join(managersFilePath, "golang", "storage", "main.json")
+	managersFilePath = filepath.Join(managersFilePath, "golang", "storage", managersFilePath)
 	//read storage
 	data, err := os.ReadFile(managersFilePath)
 	var exist bool
