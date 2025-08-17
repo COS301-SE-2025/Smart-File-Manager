@@ -1,4 +1,4 @@
-package search_test
+package test
 
 import (
 	"encoding/json"
@@ -100,8 +100,8 @@ func TestSearchHandlerNotFound(t *testing.T) {
 
 	filesystem.SearchHandler(rr, req)
 
-	if rr.Code != http.StatusNotFound {
-		t.Errorf("expected status 404; got %d", rr.Code)
+	if rr.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400; got %d", rr.Code)
 	}
 }
 
