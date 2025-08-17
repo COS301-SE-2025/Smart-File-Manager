@@ -30,12 +30,12 @@ const maxDistKeywordSearch int = 3
 // save python keywords along with tags and locks
 
 // route to check if keywords have been populated
-func isKeywordSearchReadyHander(w http.ResponseWriter, r *http.Request) {
+func IsKeywordSearchReadyHander(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("compositeName")
 
 	for _, c := range Composites {
 		if c.Name == name {
-			hasKeywords := c.hasKeywords
+			hasKeywords := c.HasKeywords
 			if err := json.NewEncoder(w).Encode(hasKeywords); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			}
@@ -45,7 +45,7 @@ func isKeywordSearchReadyHander(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
 }
 
-func keywordSearchHadler(w http.ResponseWriter, r *http.Request) {
+func KeywordSearchHadler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins, or specify your frontend origin
@@ -267,11 +267,11 @@ func pythonExtractKeywords(c *Folder) {
 	}
 
 	saveCompositeDetails(c)
-	c.hasKeywords = true
+	c.HasKeywords = true
 
 }
 
-func goExtractKeywords(c *Folder) {
+func GoExtractKeywords(c *Folder) {
 	var wg sync.WaitGroup
 
 	// IMPORTANT: do NOT start this as a goroutine.
@@ -280,7 +280,7 @@ func goExtractKeywords(c *Folder) {
 
 	wg.Wait()
 	saveCompositeDetails(c)
-	c.hasKeywords = true
+	c.HasKeywords = true
 }
 
 var keywordSem = make(chan struct{}, 32) // tune limit

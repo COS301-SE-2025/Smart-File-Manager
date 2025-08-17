@@ -17,7 +17,7 @@ func ConvertToObject(managerName, folderPath string) (*Folder, error) {
 	root := &Folder{
 		Name:         managerName,
 		Path:         cleanPath,
-		hasKeywords:  false,
+		HasKeywords:  false,
 		CreationDate: time.Now(),
 	}
 
