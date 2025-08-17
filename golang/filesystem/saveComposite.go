@@ -150,7 +150,6 @@ func mergeDirectoryTreeToComposite(comp *Folder, directory *DirectoryTreeJson) {
 }
 
 func helperMergeDirectoryTreeToComposite(comp *Folder, fileNode *FileNode) {
-	fmt.Println("helperMergeDirectoryTreeToComposite called")
 	for _, node := range fileNode.Children {
 		if !node.IsFolder {
 			path := node.Path
