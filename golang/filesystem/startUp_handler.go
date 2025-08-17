@@ -23,7 +23,7 @@ type startUpResponse struct {
 	ManagerNames    []string `json:"managerNames"`
 }
 
-var managersFilePath = filepath.Join("storage", "main.json")
+var managersFilePath = filepath.Join("storage", "startUpStorageFile.json")
 
 // used to change directory during testing
 func SetManagersFilePath(p string) {
@@ -40,6 +40,12 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 		errMsg := "Internal error: " + err.Error()
 		http.Error(w, errMsg, http.StatusBadRequest)
 		return
+	}
+
+	// Clean up any JSON files in storage/ that aren't for a known manager.
+	if err := cleanupOrphanCompositeJSONs(recs); err != nil {
+		// Best-effort cleanup; don't fail startup
+		fmt.Printf("cleanupOrphanCompositeJSONs warning: %v\n", err)
 	}
 
 	var (
@@ -62,7 +68,7 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 
 			mu.Lock()
 			Composites = append(Composites, composite)
-			
+
 			managerNames = append(managerNames, composite.Name)
 			mu.Unlock()
 		}(r)
@@ -96,12 +102,14 @@ func loadManagerRecords() ([]ManagerRecord, error) {
 	//populates recs
 	if err := json.Unmarshal(data, &recs); err != nil {
 		fmt.Println("error in unmarshaling of json")
+		//delete save file to restart managers
+		os.Remove(managersFilePath)
 		return nil, err
 	}
 	return recs, nil
 }
 
-// writes to the json file
+// writes to the json file that tracks which managers exist
 func saveManagerRecords(recs []ManagerRecord) error {
 	// ensure parent dir exists
 	if err := os.MkdirAll(filepath.Dir(managersFilePath), 0755); err != nil {
@@ -128,6 +136,9 @@ func AddManager(name, path string) error {
 	for _, f := range Composites {
 		recs = append(recs, ManagerRecord{Name: f.Name, Path: f.Path})
 	}
+	//starts to get keywords
+	go goExtractKeywords(composite)
+
 	return saveManagerRecords(recs)
 }
 
@@ -143,5 +154,55 @@ func RemoveManager(path string) error {
 	for _, f := range Composites {
 		recs = append(recs, ManagerRecord{Name: f.Name, Path: f.Path})
 	}
-	return saveManagerRecords(recs)
+	if err := saveManagerRecords(recs); err != nil {
+		return err
+	}
+
+	if err := cleanupOrphanCompositeJSONs(recs); err != nil {
+		fmt.Printf("cleanupOrphanCompositeJSONs warning: %v\n", err)
+	}
+	return nil
+
+}
+
+func cleanupOrphanCompositeJSONs(recs []ManagerRecord) error {
+	dir := filepath.Dir(managersFilePath)
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	// Build allowed set: manager JSONs + the managers file itself.
+	allowed := make(map[string]struct{}, len(recs)+1)
+	allowed[filepath.Base(managersFilePath)] = struct{}{}
+	for _, r := range recs {
+		if r.Name != "" {
+			allowed[r.Name+".json"] = struct{}{}
+		}
+	}
+
+	var firstErr error
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if filepath.Ext(name) != ".json" {
+			continue
+		}
+		if _, ok := allowed[name]; ok {
+			continue
+		}
+		path := filepath.Join(dir, name)
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			if firstErr == nil {
+				firstErr = err
+			}
+		}
+	}
+	return firstErr
 }
