@@ -32,7 +32,7 @@ type Folder struct {
 	NewPath      string
 	CreationDate time.Time
 	Locked       bool // Lock status for folder
-	hasKeywords  bool
+	HasKeywords  bool
 	Files        []*File
 	Subfolders   []*Folder
 	Tags         []string
