@@ -141,6 +141,8 @@ func mergeDirectoryTreeToComposite(comp *Folder, directory *DirectoryTreeJson) {
 			var compositeFile *File = comp.GetFile(path)
 			if compositeFile != nil {
 				compositeFile.Keywords = node.Keywords
+				compositeFile.Tags = node.Tags
+				compositeFile.Locked = node.Locked
 			}
 
 		} else {
@@ -164,4 +166,15 @@ func helperMergeDirectoryTreeToComposite(comp *Folder, fileNode *FileNode) {
 		}
 	}
 
+}
+
+func deleteCompositeDetailsFile(compName string) error {
+	filePath := filepath.Join("storage", compName+".json")
+	if err := os.Remove(filePath); err != nil {
+		if os.IsNotExist(err) {
+			return nil // already gone
+		}
+		return err
+	}
+	return nil
 }
