@@ -32,12 +32,14 @@ const maxDistKeywordSearch int = 3
 // route to check if keywords have been populated
 func isKeywordSearchReadyHander(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("compositeName")
+
 	for _, c := range Composites {
 		if c.Name == name {
 			hasKeywords := c.hasKeywords
 			if err := json.NewEncoder(w).Encode(hasKeywords); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			}
+			return
 		}
 	}
 	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
@@ -219,7 +221,7 @@ func LevenshteinDistForKeywords(searchText string, fileKeyword string) int {
 	//  BOOST exact substrings
 	var boost float32 = 1 //lower boost is better as it makes the distance smaller
 	if strings.Contains(fileKeyword, searchText) {
-		boost = 0.2
+		boost = 0.1
 	}
 
 	// now fall back on full Levenshtein
