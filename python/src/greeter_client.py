@@ -5,7 +5,6 @@ from __future__ import print_function
 import logging
 
 import grpc
-import message_structure_pb2
 import message_structure_pb2_grpc
 
 from message_structure_pb2 import DirectoryRequest, Directory, File, Tag, MetadataEntry

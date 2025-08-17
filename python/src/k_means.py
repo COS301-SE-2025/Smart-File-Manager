@@ -7,7 +7,6 @@ import numpy as np
 from math import ceil
 
 from directory_builder import DirectoryCreator
-from collections import defaultdict
 
 from create_folder_name import FolderNameCreator
 

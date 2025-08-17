@@ -1,5 +1,6 @@
 # tests/conftest.py
-import os, sys
+import os
+import sys
 import pytest
 from concurrent import futures
 import grpc
