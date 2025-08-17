@@ -296,7 +296,7 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 			populateKeywordsFromStoredJsonFile(c)
 
 			//starts extracting keywords to cover new files and changes in files
-			goExtractKeywords(c)
+			GoExtractKeywords(c)
 
 			go pythonExtractKeywords(c)
 
