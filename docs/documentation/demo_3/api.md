@@ -1,8 +1,40 @@
 # Smart File Manager – Flutter API Client Documentation
-Version 2.0.0
+**Version:** 3.0.0.0  
+**Prepared By:** Spark Industries  
+**Prepared For:** Southern Cross Solutions & Personal Development team use  
 
+## Content
+* [Introduction](#introduction)
+* [A note on security](#a-note-on-security)
+* [General Notes](#general-notes)
+* [loadTreeData](#loadtreedata)
+* [sortTree](#sorttree)
+* [moveDiretory](#movedirectory)
+* [addSmartManager](#addsmartmanager)
+* [deleteSmartManager](#deletesmartmanager)
+* [addTagToFile](#addtagtofile)
+* [deleteTagFromFile](#deletetagfromfile)
+* [Locking](#locking)
+* [Unlocking](#unlocking)
+* [StartUp](#startup)
+
+## Introduction
+Our team makes uses of standard Rest API endpoints to connect our filesystem server (go backend) to our frontend. The reasons we did not use gRPC for these endpoints (like our connection from the filesystem server to the clustering server) is as follows:
+
+* The size of requests are much smaller than the ones sent to the filesystem server.
+* It is easier to use traditional JSON based payloads for frontend development.
 
 > **Base URI**: `http://localhost:51000/`
+
+## A note on security
+Our application is deployed as a standalone desktop application which does not rely on (or use) internet connection. All servers simply run on localhost and cannot be accessed by any malicious user, except possibly the user of the app themselves. Should the user (for some reason) decide to do so they can do no more damage to their system then what they could do using the standard file explorer. Like any application it is protected from unauthorized use by the standard system login functionality. It is for this reason that our endpoints are unprotected and does not require authentication via a secret key based solution or other similar methods. Please note that we have discussed this decision with Mr. Avinash Singh who is both, involved in both the COS301 lecturing team, and COS330 module coordinator. He has approved this decision from a security point of view, noting that we should perhaps add a login to the application itself, a feature we will be adding for demo4.
+
+## General Notes 
+
+* All `POST` endpoints use query parameters; no request body is sent.
+* Make sure to URI-encode query parameter values when needed.
+* The backend must be running at the defined base URI for requests to succeed.
+
 
 ---
 
@@ -371,11 +403,6 @@ Unlocks a file or folder. When unlocking a folder all sub-folders, -files are al
 * Exception if removal fails.
 ---
 
-## Notes
-
-* All `POST` endpoints use query parameters; no request body is sent.
-* Make sure to URI-encode query parameter values when needed.
-* The backend must be running at the defined base URI for requests to succeed.
 
 
 # startUp

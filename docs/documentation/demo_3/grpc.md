@@ -10,6 +10,7 @@
 
 ## Content
 * [Introduction](#introduction)
+* [A note on security](#a-note-on-security)
 * [Data_Sent_and_Received](#data-sent-and-received)
 * [Protocol_Buffer_Files](#protocol-buffer-files-proto)
 
@@ -22,6 +23,9 @@ Our team makes use of gRPC for communication between Go and Python. Our team dec
 * Reduced network usage: Protocol buffers use binary serialization which reduces network traffic.
 
 This document serves as the exact documentation for the services and messages sent and received. 
+
+## A note on security
+Our application is deployed as a standalone desktop application which does not rely on (or use) internet connection. All servers simply run on localhost and cannot be accessed by any malicious user, except possibly the user of the app themselves. Should the user (for some reason) decide to do so they can do no more damage to their system then what they could do using the standard file explorer. Like any application it is protected from unauthorized use by the standard system login functionality. It is for this reason that our endpoints are unprotected and does not require authentication via a secret key based solution or other similar methods. Please note that we have discussed this decision with Mr. Avinash Singh who is both, involved in both the COS301 lecturing team, and COS330 module coordinator. He has approved this decision from a security point of view, noting that we should perhaps add a login to the application itself, a feature we will be adding for demo4.
 
 ## Data sent and received
 Go must extract and send the following information to python processor:

@@ -332,6 +332,10 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
    8.1 Users must be able to rollback to how folder structure looked before applying smart organization.
 
 ## Service Contract
+As explained in our architecture below, our project has two "servers" for which we provide service contracts.
+
+* Filesystem Server (Go codebase) | REST API | [Documentation](api.md)
+* Clustering Server (Python codebase) | gRPC API | [Documentation](grpc.md)
 
 ## Domain Model
 
