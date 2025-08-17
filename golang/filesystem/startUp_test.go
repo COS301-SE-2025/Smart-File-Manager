@@ -16,7 +16,7 @@ import (
 // helper to reset globals between tests
 func resetState(t *testing.T, tempDir string) {
 	Composites = nil
-	SetManagersFilePath(filepath.Join(tempDir, "main.json"))
+	SetManagersFilePath(filepath.Join(tempDir, managersFilePath))
 }
 
 // Test loadManagerRecords when file does not exist
