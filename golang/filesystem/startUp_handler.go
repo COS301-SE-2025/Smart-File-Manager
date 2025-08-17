@@ -137,7 +137,7 @@ func AddManager(name, path string) error {
 		recs = append(recs, ManagerRecord{Name: f.Name, Path: f.Path})
 	}
 	//starts to get keywords
-	go goExtractKeywords(composite)
+	go GoExtractKeywords(composite)
 
 	return saveManagerRecords(recs)
 }
