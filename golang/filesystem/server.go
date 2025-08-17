@@ -18,21 +18,17 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Println("addDirectory called")
 	managerName := r.URL.Query().Get("name")
 	filePath := r.URL.Query().Get("path")
-	// fmt.Println("PATH", filePath)
-	composite, err := ConvertToObject(managerName, filePath)
-	if err != nil || composite == nil {
-		w.Write([]byte("false"))
-		return
-	}
 
 	mu.Lock()
 	// Composites = append(Composites, composite)
 	//appendng happens in this:
-	AddManager(managerName, filePath)
+	err := AddManager(managerName, filePath)
+	if err != nil {
+		w.Write([]byte("false"))
+		return
+	}
 	mu.Unlock()
 
-	// fmt.Println("Composite added:")
-	// composite.Display(0)
 	w.Write([]byte("true"))
 }
 
@@ -44,6 +40,7 @@ func removeCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	for i, item := range Composites {
 		if item.Path == convertedPath {
 			Composites = slices.Delete(Composites, i, i+1)
+			deleteCompositeDetailsFile(item.Name)
 			break
 		}
 	}
