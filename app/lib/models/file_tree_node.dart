@@ -54,8 +54,36 @@ class FileTreeNode {
   }
 
   @override
-  String toString() =>
-      'FileTreeNode(name: $name, isFolder: $isFolder, locked: $locked)';
+  String toString() {
+    return _stringify(this, 0);
+  }
+
+  String _stringify(FileTreeNode node, int indent) {
+    final indentStr = '  ' * indent;
+
+    final buffer = StringBuffer();
+    buffer.writeln('$indentStr- FileTreeNode(');
+    buffer.writeln('$indentStr  name: ${node.name}');
+    buffer.writeln('$indentStr  path: ${node.path}');
+    buffer.writeln('$indentStr  rootPath: ${node.rootPath}');
+    buffer.writeln('$indentStr  isFolder: ${node.isFolder}');
+    buffer.writeln('$indentStr  locked: ${node.locked}');
+    buffer.writeln('$indentStr  tags: ${node.tags}');
+    buffer.writeln('$indentStr  metadata: ${node.metadata}');
+
+    if (node.children != null && node.children!.isNotEmpty) {
+      buffer.writeln('$indentStr  children: [');
+      for (var child in node.children!) {
+        buffer.write(_stringify(child, indent + 2));
+      }
+      buffer.writeln('$indentStr  ]');
+    } else {
+      buffer.writeln('$indentStr  children: []');
+    }
+
+    buffer.writeln('$indentStr)');
+    return buffer.toString();
+  }
 
   // Function used to set the locked state of the structure to true (dependent on api lock endpoint)
   void lockItem(String path) {

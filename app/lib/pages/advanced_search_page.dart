@@ -1,6 +1,5 @@
 import 'package:app/api.dart';
 import 'package:flutter/material.dart';
-import 'package:app/custom_widgets/hoverable_button.dart';
 import 'package:app/custom_widgets/file_details_panel.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/pages/search_sub_page/folder_view_search.dart';
@@ -29,6 +28,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   bool _isLoading = false;
   String managername = "";
   bool _searchHappened = false;
+  bool _isAdvancedSearchReady = false;
 
   @override
   void initState() {
@@ -67,29 +67,59 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
       _isLoading = true;
       _searchHappened = true;
     });
-
-    try {
-      FileTreeNode response = await Api.searchGo(managername, query);
-      if (mounted) {
-        setState(() {
-          _treeData = response;
-          _isLoading = false;
-        });
+    if (_isAdvancedSearchReady) {
+      try {
+        FileTreeNode response = await Api.searchAdvanced(managername, query);
+        if (mounted) {
+          setState(() {
+            _treeData = response;
+            _isLoading = false;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _treeData = null;
+            _isLoading = false;
+          });
+        }
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _treeData = null;
-          _isLoading = false;
-        });
+    } else {
+      try {
+        FileTreeNode response = await Api.searchGo(managername, query);
+        if (mounted) {
+          setState(() {
+            _treeData = response;
+            _isLoading = false;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _treeData = null;
+            _isLoading = false;
+          });
+        }
       }
     }
   }
 
-  void _updateSelectedManager(String selectedManager) {
+  void _updateSelectedManager(String selectedManager) async {
     setState(() {
       managername = selectedManager;
     });
+    var response = await Api.searchAdvancedReady(selectedManager);
+    print(response);
+
+    if (response) {
+      setState(() {
+        _isAdvancedSearchReady = true;
+      });
+    } else {
+      setState(() {
+        _isAdvancedSearchReady = false;
+      });
+    }
   }
 
   @override
@@ -124,13 +154,20 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Text(
-                          'Advanced Search',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            color: Colors.white,
+                        Expanded(
+                          child: Text(
+                            'Advanced Search',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: Colors.white,
+                            ),
                           ),
+                        ),
+                        Text(
+                          _isAdvancedSearchReady
+                              ? "Advanced Search Activated"
+                              : "Advanced Search Starting Up",
                         ),
                       ],
                     ),

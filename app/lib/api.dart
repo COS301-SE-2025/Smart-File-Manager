@@ -225,9 +225,62 @@ class Api {
       );
 
       if (response.statusCode == 200) {
+        print("Normal Search Used");
+
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
+      } else {
+        throw Exception('Failed to load data: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error loading tree data from loadTreeData: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //Endpoint to use Advanced search (keywords)
+  static Future<FileTreeNode> searchAdvanced(
+    String name,
+    String searchString,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          "$uri/keywordSearch?compositeName=$name&searchText=$searchString",
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        print("Advanced Search Used");
+        print(
+          FileTreeNode.fromJson(
+            jsonDecode(response.body) as Map<String, dynamic>,
+          ),
+        );
+        return FileTreeNode.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to load data: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error loading tree data from loadTreeData: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //return true/false depending if advanced search is ready
+  static Future<bool> searchAdvancedReady(String name) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$uri/isKeywordSearchReady?compositeName=$name"),
+      );
+      if (response.statusCode == 200) {
+        final body = response.body.trim().toLowerCase();
+        return body == "true" || body == "1";
       } else {
         throw Exception('Failed to load data: HTTP ${response.statusCode}');
       }

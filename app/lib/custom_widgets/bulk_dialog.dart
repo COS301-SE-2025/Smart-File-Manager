@@ -78,7 +78,8 @@ class _BulkDialogState extends State<BulkDialog> {
     if (_selectedBulkOperation == "Bulk Remove Tag") {
       _loadBulkData(widget.name, "TAGS", widget.umbrella);
     } else {
-      String apiType = _selectedCategory == "All Files" ? "ALL" : _selectedCategory;
+      String apiType =
+          _selectedCategory == "All Files" ? "ALL" : _selectedCategory;
       _loadBulkData(widget.name, apiType, widget.umbrella);
     }
   }
@@ -106,7 +107,8 @@ class _BulkDialogState extends State<BulkDialog> {
         _selectedCategory = newCategory;
         _selectedFileType = null;
       });
-      String apiType = _selectedCategory == "All Files" ? "ALL" : _selectedCategory;
+      String apiType =
+          _selectedCategory == "All Files" ? "ALL" : _selectedCategory;
       _loadBulkData(widget.name, apiType, true);
     }
   }
@@ -123,7 +125,8 @@ class _BulkDialogState extends State<BulkDialog> {
       if (newBulkOperation == "Bulk Remove Tag") {
         _loadBulkData(widget.name, "TAGS", true);
       } else {
-        String apiType = _selectedCategory == "All Files" ? "ALL" : _selectedCategory;
+        String apiType =
+            _selectedCategory == "All Files" ? "ALL" : _selectedCategory;
         _loadBulkData(widget.name, apiType, true);
       }
     }
@@ -137,7 +140,8 @@ class _BulkDialogState extends State<BulkDialog> {
       if (newFileType != null) {
         _loadBulkData(widget.name, newFileType, false);
       } else {
-        String apiType = _selectedCategory == "All Files" ? "ALL" : _selectedCategory;
+        String apiType =
+            _selectedCategory == "All Files" ? "ALL" : _selectedCategory;
         _loadBulkData(widget.name, apiType, true);
       }
     }
@@ -273,14 +277,11 @@ class _BulkDialogState extends State<BulkDialog> {
 
   String _convertToJsonRemoveTag(String? tag) {
     List<Map<String, dynamic>> fileList = [];
-    
+
     for (FileModel file in _currentSelectedFiles) {
       if (tag == null) {
         // Remove all tags from this file
-        fileList.add({
-          "file_path": file.filePath,
-          "tags": file.fileTags ?? [],
-        });
+        fileList.add({"file_path": file.filePath, "tags": file.fileTags ?? []});
       } else {
         // Only include this file if it has the specific tag to remove
         if (file.fileTags != null && file.fileTags!.contains(tag)) {
@@ -291,7 +292,7 @@ class _BulkDialogState extends State<BulkDialog> {
         }
       }
     }
-    
+
     return jsonEncode(fileList);
   }
 
@@ -330,7 +331,6 @@ class _BulkDialogState extends State<BulkDialog> {
               onPressed: () {
                 final tag = tagController.text.trim();
                 if (tag.isNotEmpty) {
-                  Navigator.of(dialogContext).pop();
                   _tagMultipleFiles(widget.name, tag);
                 }
                 tagController.dispose();
@@ -380,7 +380,7 @@ class _BulkDialogState extends State<BulkDialog> {
                     style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
-                  Container(
+                  SizedBox(
                     width: double.maxFinite,
                     child: CustomDropdownMenu<String>(
                       items: [
@@ -413,13 +413,19 @@ class _BulkDialogState extends State<BulkDialog> {
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
                   },
-                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
                 ElevatedButton(
-                  onPressed: selectedTag != null ? () {
-                    Navigator.of(dialogContext).pop();
-                    _removeTagsFromFiles(widget.name, selectedTag);
-                  } : null,
+                  onPressed:
+                      selectedTag != null
+                          ? () {
+                            Navigator.of(dialogContext).pop();
+                            _removeTagsFromFiles(widget.name, selectedTag);
+                          }
+                          : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kYellowText,
                     foregroundColor: Colors.black,
@@ -466,7 +472,7 @@ class _BulkDialogState extends State<BulkDialog> {
 
   void _removeTagsFromFiles(String managerName, String? selectedTag) async {
     String? tagToRemove = selectedTag == "ALL_TAGS" ? null : selectedTag;
-    
+
     // Count how many files will be affected
     int affectedFilesCount = 0;
     for (FileModel file in _currentSelectedFiles) {
@@ -482,11 +488,12 @@ class _BulkDialogState extends State<BulkDialog> {
         }
       }
     }
-    
+
     if (affectedFilesCount == 0) {
-      String message = selectedTag == "ALL_TAGS" 
-          ? 'No tags found on selected files'
-          : 'Tag "$selectedTag" not found on any selected files';
+      String message =
+          selectedTag == "ALL_TAGS"
+              ? 'No tags found on selected files'
+              : 'Tag "$selectedTag" not found on any selected files';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -496,7 +503,7 @@ class _BulkDialogState extends State<BulkDialog> {
       );
       return;
     }
-    
+
     String jsonPaths = _convertToJsonRemoveTag(tagToRemove);
     FileTreeNode response = await Api.bulkRemoveTag(managerName, jsonPaths);
     if (response.name == managerName) {
@@ -508,9 +515,10 @@ class _BulkDialogState extends State<BulkDialog> {
       if (mounted) {
         Navigator.pop(context);
       }
-      String message = selectedTag == "ALL_TAGS" 
-          ? 'Successfully removed all tags from $affectedFilesCount file(s)'
-          : 'Successfully removed tag "$selectedTag" from $affectedFilesCount file(s)';
+      String message =
+          selectedTag == "ALL_TAGS"
+              ? 'Successfully removed all tags from $affectedFilesCount file(s)'
+              : 'Successfully removed tag "$selectedTag" from $affectedFilesCount file(s)';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -580,7 +588,9 @@ class _BulkDialogState extends State<BulkDialog> {
                     Expanded(
                       child: CustomDropdownMenu<String>(
                         items:
-                            _fileTypeMap[_selectedCategory]!.map((String fileType) {
+                            _fileTypeMap[_selectedCategory]!.map((
+                              String fileType,
+                            ) {
                               return DropdownMenuItem<String>(
                                 value: fileType,
                                 child: Text(fileType.toUpperCase()),
