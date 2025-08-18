@@ -297,7 +297,6 @@ func getKeywords(c *Folder, wg *sync.WaitGroup) {
 				50*1024*1024,
 			)
 			if err != nil {
-				fmt.Printf("extract keywords error for %s: %v\n", f.Path, err)
 				return
 			}
 			f.Keywords = kw

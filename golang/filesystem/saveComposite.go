@@ -109,7 +109,6 @@ func saveCompositeDetailsToFile(comp DirectoryTreeJson) error {
 }
 
 func populateKeywordsFromStoredJsonFile(comp *Folder) {
-	fmt.Println("populateKeywordsFromStoredJsonFile called")
 	var filePath = filepath.Join("storage", (comp.Name + ".json"))
 	// If the file doesn't exist yet, start with empty
 	data, err := os.ReadFile(filePath)

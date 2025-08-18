@@ -127,7 +127,6 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	for _, comp := range Composites {
-		fmt.Println(comp.Name)
 		if comp.Name == compositeName {
 
 			sr := getMatches(searchText, comp)
