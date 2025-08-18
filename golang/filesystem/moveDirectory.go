@@ -56,7 +56,6 @@ func moveContent(item *Folder) {
 	}
 
 	// Path to managers storage file
-	managersFilePath := filepath.Join(getPath(), "golang", "storage", managersFilePath)
 	data, err := os.ReadFile(managersFilePath)
 	var recs []ManagerRecord
 
