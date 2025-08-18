@@ -380,7 +380,7 @@ class _BulkDialogState extends State<BulkDialog> {
                     style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
-                  Container(
+                  SizedBox(
                     width: double.maxFinite,
                     child: CustomDropdownMenu<String>(
                       items: [
