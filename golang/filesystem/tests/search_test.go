@@ -91,20 +91,19 @@ func fakeFolder(name string) *filesystem.Folder {
 }
 
 // // TestSearchHandlerNotFound tests that an unknown compositeName returns 404
-// func TestSearchHandlerNotFound(t *testing.T) {
-// 	// clear Composites
-// 	filesystem.Composites = []*filesystem.Folder{}
+func TestSearchHandlerNotFound(t *testing.T) {
+	// clear Composites
+	filesystem.Composites = []*filesystem.Folder{}
 
-// 	req := httptest.NewRequest("GET", "/search?compositeName=foo&searchText=bar", nil)
-// 	rr := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/search?compositeName=foo&searchText=bar", nil)
+	rr := httptest.NewRecorder()
 
-// 	filesystem.SearchHandler(rr, req)
+	filesystem.SearchHandler(rr, req)
 
 	if rr.Code != http.StatusBadRequest {
 		t.Errorf("expected status 400; got %d", rr.Code)
 	}
 }
-
 
 // TestSearchHandlerEmpty tests that a known composite with no files returns empty children list
 func TestSearchHandlerEmpty(t *testing.T) {
