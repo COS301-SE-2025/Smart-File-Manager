@@ -28,6 +28,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   bool _isLoading = false;
   String managername = "";
   bool _searchHappened = false;
+  bool _isAdvancedSearchReady = false;
 
   @override
   void initState() {
@@ -66,29 +67,59 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
       _isLoading = true;
       _searchHappened = true;
     });
-
-    try {
-      FileTreeNode response = await Api.searchGo(managername, query);
-      if (mounted) {
-        setState(() {
-          _treeData = response;
-          _isLoading = false;
-        });
+    if (_isAdvancedSearchReady) {
+      try {
+        FileTreeNode response = await Api.searchAdvanced(managername, query);
+        if (mounted) {
+          setState(() {
+            _treeData = response;
+            _isLoading = false;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _treeData = null;
+            _isLoading = false;
+          });
+        }
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _treeData = null;
-          _isLoading = false;
-        });
+    } else {
+      try {
+        FileTreeNode response = await Api.searchGo(managername, query);
+        if (mounted) {
+          setState(() {
+            _treeData = response;
+            _isLoading = false;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _treeData = null;
+            _isLoading = false;
+          });
+        }
       }
     }
   }
 
-  void _updateSelectedManager(String selectedManager) {
+  void _updateSelectedManager(String selectedManager) async {
     setState(() {
       managername = selectedManager;
     });
+    var response = await Api.searchAdvancedReady(selectedManager);
+    print(response);
+
+    if (response) {
+      setState(() {
+        _isAdvancedSearchReady = true;
+      });
+    } else {
+      setState(() {
+        _isAdvancedSearchReady = false;
+      });
+    }
   }
 
   @override
@@ -123,12 +154,25 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
+                        Expanded(
+                          child: Text(
+                            'Advanced Search',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                         Text(
-                          'Advanced Search',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            color: Colors.white,
+                          _isAdvancedSearchReady
+                              ? "Advanced Search Active"
+                              : "Advanced Search Starting Up",
+                          style: TextStyle(
+                            color:
+                                _isAdvancedSearchReady
+                                    ? Colors.green
+                                    : Colors.amber,
                           ),
                         ),
                       ],
@@ -223,7 +267,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Search results will appear here',
+              'Search for keywords in your files',
               style: const TextStyle(color: Color(0xff9CA3AF)),
             ),
           ],

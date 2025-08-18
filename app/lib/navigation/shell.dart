@@ -72,7 +72,6 @@ class _ShellState extends State<Shell> {
     });
   }
 
-
   //update stats
   void _updateStats() {
     if (_managerNames.isNotEmpty) {
@@ -84,17 +83,18 @@ class _ShellState extends State<Shell> {
   void _onManagerDelete(String managerName) {
     setState(() {
       // Create a new list to ensure Flutter detects the change
-      _managerNames = _managerNames.where((name) => name != managerName).toList();
+      _managerNames =
+          _managerNames.where((name) => name != managerName).toList();
       _managerTreeData.remove(managerName);
       _pendingSorts.remove(managerName);
       _sortResults.remove(managerName);
-      
+
       // If the deleted manager was selected, deselect it
       if (_selectedManager == managerName) {
         _selectedManager = null;
         _selectedIndex = 0; // Go to dashboard
       }
-      
+
       // If the deleted manager was selected for search, clear it
       if (_selectedManagerForSearch == managerName) {
         _selectedManagerForSearch = "";
@@ -162,6 +162,7 @@ class _ShellState extends State<Shell> {
 
   void _onSortApprove(String managerName, FileTreeNode sortedData) {
     setState(() {
+      sortedData.replaceOldPath();
       _managerTreeData[managerName] = sortedData;
       _sortResults.remove(managerName);
     });
@@ -236,7 +237,7 @@ class _ShellState extends State<Shell> {
         _managerNames = [..._managerNames, managerName];
       }
     });
-    
+
     // Force dashboard to update if it's the active page
     if (_selectedIndex == 0) {
       _updateStats();
