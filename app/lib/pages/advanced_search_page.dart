@@ -166,8 +166,14 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                         ),
                         Text(
                           _isAdvancedSearchReady
-                              ? "Advanced Search Activated"
+                              ? "Advanced Search Active"
                               : "Advanced Search Starting Up",
+                          style: TextStyle(
+                            color:
+                                _isAdvancedSearchReady
+                                    ? Colors.green
+                                    : Colors.amber,
+                          ),
                         ),
                       ],
                     ),
@@ -261,7 +267,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Search results will appear here',
+              'Search for keywords in your files',
               style: const TextStyle(color: Color(0xff9CA3AF)),
             ),
           ],

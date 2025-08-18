@@ -3,10 +3,11 @@ class FileTreeNode {
   final bool isFolder;
   final List<FileTreeNode>? children;
   final List<String>? tags;
-  final String? path;
+  String? path;
   final String? rootPath;
   final Map<String, String>? metadata;
   bool locked;
+  final String? newPath;
 
   FileTreeNode({
     required this.name,
@@ -17,6 +18,7 @@ class FileTreeNode {
     this.rootPath,
     this.metadata,
     required this.locked,
+    this.newPath,
   });
 
   factory FileTreeNode.fromJson(Map<String, dynamic> json) {
@@ -37,6 +39,7 @@ class FileTreeNode {
               ? Map<String, String>.from(json['metadata'])
               : {},
       locked: json['locked'] ?? false,
+      newPath: json['newPath'] ?? '',
     );
   }
 
@@ -50,6 +53,7 @@ class FileTreeNode {
       'tags': tags,
       'metadata': metadata,
       'locked': locked,
+      'newPath': newPath,
     };
   }
 
@@ -70,6 +74,7 @@ class FileTreeNode {
     buffer.writeln('$indentStr  locked: ${node.locked}');
     buffer.writeln('$indentStr  tags: ${node.tags}');
     buffer.writeln('$indentStr  metadata: ${node.metadata}');
+    buffer.writeln('$indentStr  newPath: ${node.newPath}');
 
     if (node.children != null && node.children!.isNotEmpty) {
       buffer.writeln('$indentStr  children: [');
@@ -145,6 +150,31 @@ class FileTreeNode {
     if (node.children != null) {
       for (var child in node.children!) {
         _unlockNodeAndDescendants(child);
+      }
+    }
+  }
+
+  void replaceOldPath() {
+    if (rootPath != null && rootPath!.isNotEmpty) {
+      _updateNodePathsAndDescendants(this, rootPath!);
+    }
+  }
+
+  void _updateNodePathsAndDescendants(FileTreeNode node, String baseRoot) {
+    if (node.rootPath == null || node.rootPath!.isEmpty) {
+      int lastSlash = baseRoot.lastIndexOf("/");
+      if (lastSlash != -1) {
+        String parentDir = baseRoot.substring(0, lastSlash);
+        node.path = "$parentDir/${node.newPath}";
+      } else {
+        // No slash found → treat baseRoot as root
+        node.path = "${node.newPath}";
+      }
+    }
+
+    if (node.children != null) {
+      for (var child in node.children!) {
+        _updateNodePathsAndDescendants(child, node.path ?? baseRoot);
       }
     }
   }
