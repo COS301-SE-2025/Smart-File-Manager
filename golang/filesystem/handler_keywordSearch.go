@@ -2,7 +2,6 @@ package filesystem
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"math"
