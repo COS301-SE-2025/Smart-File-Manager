@@ -14,9 +14,11 @@
 * [deleteSmartManager](#deletesmartmanager)
 * [addTagToFile](#addtagtofile)
 * [deleteTagFromFile](#deletetagfromfile)
+* [bulkAddTag & bulkRemoveTag](#bulk-add-and-bulk-remove-tags)
 * [Locking](#locking)
 * [Unlocking](#unlocking)
 * [StartUp](#startup)
+* [Search](#search)
 
 ## Introduction
 Our team makes uses of standard Rest API endpoints to connect our filesystem server (go backend) to our frontend. The reasons we did not use gRPC for these endpoints (like our connection from the filesystem server to the clustering server) is as follows:
@@ -31,10 +33,8 @@ Our application is deployed as a standalone desktop application which does not r
 
 ## General Notes 
 
-* All `POST` endpoints use query parameters; no request body is sent.
 * Make sure to URI-encode query parameter values when needed.
 * The backend must be running at the defined base URI for requests to succeed.
-
 
 ---
 
@@ -42,19 +42,17 @@ Our application is deployed as a standalone desktop application which does not r
 
 Fetches the file tree structure for a Smart Manager.
 
-**Parameters:**
+### Usage
+```GET /loadTreeData?name={name}```
 
-* `name`: The name of the Smart Manager.
+### Parameters
 
-**Endpoint:**
+* name: The name of the Smart Manager.
 
-```
-GET /loadTreeData?name={name}
-```
+### Returns
 
-**Returns:**
-
-* A nested JSON structure representing the full directory tree and tags. Example Below of response:
+A nested JSON structure representing the full directory tree and tags.
+Example response:
 
 ```json
 {
@@ -66,7 +64,7 @@ GET /loadTreeData?name={name}
       "path": "c:://",
       "isFolder": false,
       "tags": ["work", "important"],
-      "metadata" : {
+      "metadata": {
         "size": "12KB",
         "dateCreated": "2023-11-08T14:20:00Z",
         "mimeType": "Tiaan/Bosman",
@@ -78,7 +76,7 @@ GET /loadTreeData?name={name}
       "path": "c:://",
       "isFolder": false,
       "tags": ["document"],
-      "metadata" : {
+      "metadata": {
         "size": "12KB",
         "dateCreated": "2023-11-08T14:20:00Z",
         "mimeType": "Tiaan/Bosman",
@@ -94,7 +92,7 @@ GET /loadTreeData?name={name}
           "path": "c:://",
           "isFolder": false,
           "tags": ["personal", "career"],
-          "metadata" : {
+          "metadata": {
             "size": "12KB",
             "dateCreated": "2023-11-08T14:20:00Z",
             "mimeType": "Tiaan/Bosman",
@@ -110,7 +108,7 @@ GET /loadTreeData?name={name}
               "path": "c:://",
               "isFolder": false,
               "tags": ["report", "finance"],
-              "metadata" : {
+              "metadata": {
                 "size": "12KB",
                 "dateCreated": "2023-11-08T14:20:00Z",
                 "mimeType": "Tiaan/Bosman",
@@ -122,7 +120,7 @@ GET /loadTreeData?name={name}
               "path": "c:://",
               "isFolder": false,
               "tags": ["summary", "q1"],
-              "metadata" : {
+              "metadata": {
                 "size": "12KB",
                 "dateCreated": "2023-11-08T14:20:00Z",
                 "mimeType": "Tiaan/Bosman",
@@ -137,28 +135,25 @@ GET /loadTreeData?name={name}
 }
 ```
 
-**Throws:**
+### Throws
 
-* Exception if the request fails.
+Exception if the request fails.
 
----
 ## sortTree
 
-Fetches the sorted version of file tree structure for a Smart Manager.
+Fetches the sorted version of the file tree structure for a Smart Manager.
 
-**Parameters:**
+### Usage
+```GET /sortTree?name={name}```
 
-* `name`: The name of the Smart Manager.
+### Parameters
 
-**Endpoint:**
+* name: The name of the Smart Manager.
 
-```
-GET /sortTree?name={name}
-```
+### Returns
 
-**Returns:**
-
-* A nested JSON structure representing the full directory tree and tags. Example Below of response:
+A nested JSON structure representing the full directory tree and tags.
+Example response:
 
 ```json
 {
@@ -170,7 +165,7 @@ GET /sortTree?name={name}
       "path": "c:://",
       "isFolder": false,
       "tags": ["work", "important"],
-      "metadata" : {
+      "metadata": {
         "size": "12KB",
         "dateCreated": "2023-11-08T14:20:00Z",
         "mimeType": "Tiaan/Bosman",
@@ -182,7 +177,7 @@ GET /sortTree?name={name}
       "path": "c:://",
       "isFolder": false,
       "tags": ["document"],
-      "metadata" : {
+      "metadata": {
         "size": "12KB",
         "dateCreated": "2023-11-08T14:20:00Z",
         "mimeType": "Tiaan/Bosman",
@@ -198,7 +193,7 @@ GET /sortTree?name={name}
           "path": "c:://",
           "isFolder": false,
           "tags": ["personal", "career"],
-          "metadata" : {
+          "metadata": {
             "size": "12KB",
             "dateCreated": "2023-11-08T14:20:00Z",
             "mimeType": "Tiaan/Bosman",
@@ -214,7 +209,7 @@ GET /sortTree?name={name}
               "path": "c:://",
               "isFolder": false,
               "tags": ["report", "finance"],
-              "metadata" : {
+              "metadata": {
                 "size": "12KB",
                 "dateCreated": "2023-11-08T14:20:00Z",
                 "mimeType": "Tiaan/Bosman",
@@ -226,7 +221,7 @@ GET /sortTree?name={name}
               "path": "c:://",
               "isFolder": false,
               "tags": ["summary", "q1"],
-              "metadata" : {
+              "metadata": {
                 "size": "12KB",
                 "dateCreated": "2023-11-08T14:20:00Z",
                 "mimeType": "Tiaan/Bosman",
@@ -241,212 +236,188 @@ GET /sortTree?name={name}
 }
 ```
 
-**Throws:**
+### Throws
 
-* Exception if the request fails.
+Exception if the request fails.
 
----
 ## moveDirectory
 
-After sorting a Smart Manager the user can choose to actually move the files that were sorted into a new sorted directory.
+After sorting a Smart Manager, the user can choose to actually move the files that were sorted into a new sorted directory.
 
-**Parameters:**
+### Usage
+````GET /moveDirectory?name={name}```
 
-* `name` : Smart Manager name
+### Parameters
 
-**Endpoint:**
+* name: Smart Manager name
 
-```
-GET /moveDirectory?name={name}
-```
+### Returns
 
-**Returns:**
+true on success.
 
-* `true` on success.
-* `false` on failure.
+false on failure.
 
-**Throws:**
+### Throws
 
-* Exception if invalid.
----
+Exception if invalid.
 
 ## addSmartManager
 
 Creates and registers a new Smart Manager by mounting a specified folder path.
 
-**Parameters:**
+### Usage
+```GET /addDirectory?name={name}&path={path}```
 
-* `name`: Unique identifier for the Smart Manager.
-* `path`: Absolute path to the folder to mount.
+### Parameters
 
-**Endpoint:**
+* name: Unique identifier for the Smart Manager.
 
-```
-POST /addDirectory?name={name}&path={path}
-```
+* path: Absolute path to the folder to mount.
 
-**Returns:**
+### Returns
 
-* `true` on success.
+true on success.
 
-**Throws:**
+### Throws
 
-* Exception if creation fails.
+Exception if creation fails.
 
----
-
-## deleteSmartManager
+## deleteManager
 
 Deletes a Smart Manager and any associated data.
 
-**Parameters:**
+### Usage
+```GET /deleteManager?name={name}```
 
-* `name`: Name of the Smart Manager to delete.
+### Parameters
 
-**Endpoint:**
+* name: Name of the Smart Manager to delete.
 
-```
-POST /deleteDirectory?name={name}
-```
+### Returns
 
-**Returns:**
+true on success.
 
-* `true` on success.
+Manager not found on failure.
 
-**Throws:**
+### Throws
 
-* Exception if deletion fails.
-
----
+Exception if deletion fails.
 
 ## addTagToFile
 
 Adds a tag to a specific file under a Smart Manager.
 
-**Parameters:**
+### Usage
+```GET /addTag?path={path}&tag={tag}```
 
-* `path`: Path to the file.
-* `tag`: Tag to assign.
+### Parameters
 
-**Endpoint:**
+path: Path to the file.
 
-```
-POST /addTag?path={path}&tag={tag}
-```
+tag: Tag to assign.
 
-**Returns:**
+### Returns
 
-* `true` on success.
+true on success.
 
-**Throws:**
+### Throws
 
-* Exception if tagging fails.
-
----
+Exception if tagging fails.
 
 ## deleteTagFromFile
 
 Removes a tag from a specific file.
 
-**Parameters:**
+### Usage
+```GET /removeTag?path={path}&tag={tag}```
 
-* `path`: Path to the file.
-* `tag`: Tag to remove.
+### Parameters
 
-**Endpoint:**
+* path: Path to the file.
 
-```
-POST /removeTag?path={path}&tag={tag}
-```
+* tag: Tag to remove.
 
-**Returns:**
+### Returns
 
-* `true` on success.
+true on success.
 
-**Throws:**
+### Throws
 
-* Exception if removal fails.
+Exception if removal fails.
 
 ## Locking
 
-Locks a file or folder. When locking a folder all sub-folders, -files are also locked.
+Locks a file or folder. When locking a folder all sub-folders and files are also locked.
 
-**Endpoint**
+### Usage
+```/lock?name={name}&path=../../testRootFolder```
 
-```
-/lock?name={name}&path=../../testRootFolder
-```
+### Returns
 
-**Returns:**
+true on success.
 
-* `true` on success.
+### Throws
 
-**Throws:**
+Exception if removal fails.
 
-* Exception if removal fails.
-  
 ## Unlocking
 
-Unlocks a file or folder. When unlocking a folder all sub-folders, -files are also unlocked
+Unlocks a file or folder. When unlocking a folder all sub-folders and files are also unlocked.
 
-**Endpoint**
-```
-/unlock?name={name}&path=../../testRootFolder
-```
+### Usage
+```/unlock?name={name}&path=../../testRootFolder```
 
-**Returns:**
+### Returns
 
-* `true` on success.
+true on success.
 
-**Throws:**
+### Throws
 
-* Exception if removal fails.
----
+Exception if removal fails.
 
+## startUp
 
+Loads smart managers into memory and returns the respective names
 
-# startUp
+### Usage
+GET /startUp
 
-** No parameters **
+### Parameters
 
-** Endpoint: **
-get /startUp
+None
 
-** response: **
-
+### Response
+```json
 {
   "responseMessage": "Request successful!, composites: 1",
   "managerNames": [
     "first2"
   ]
 }
-
----
+```
 
 ## findDuplicates
 
 Identifies and returns a list of files that are considered duplicates based on file size, hash, and content matching.
 
-**Parameters:**
+### Usage
+```GET /findDuplicates?name={name}```
 
-* `name`: The name of the Smart Manager to search for duplicates in.
+### Parameters
 
-**Endpoint:**
+* name: The name of the Smart Manager to search for duplicates in.
 
-```
-GET /findDuplicates?name={name}
-```
+### Returns
 
-**Returns:**
+A JSON array of duplicate file pairs. Each object includes:
 
-* A JSON array of duplicate file pairs. Each object includes:
+* name: The common file name.
 
-  * `name`: The common file name.
-  * `original`: The full path to the original file.
-  * `duplicate`: The full path to the detected duplicate.
+* original: The full path to the original file.
 
-**Example Response:**
+* duplicate: The full path to the detected duplicate.
 
+Example Response
 ```json
 [
   {
@@ -462,46 +433,177 @@ GET /findDuplicates?name={name}
 ]
 ```
 
-**Throws:**
+### Throws
 
-* Exception if the request fails or if the Smart Manager name is invalid.
-
----
+Exception if the request fails or if the Smart Manager name is invalid.
 
 ## Bulk add and Bulk Remove tags
-**Summary:**
-This pull request contains the added functionality of adding tags and removing tags in bulk.
 
-**Usage:**
-"POST /bulkAddTag/name{manager name},json body"
-"POST /bulkRemoveTag/name{manager name},json body"
+This functionality allows adding and removing tags in bulk.
 
-**Parameters:**
-* "name" - name of the SmartManager
-* JSON body of all files that require tags
-example of json body:
-'''
+### Usage
+```
+POST /bulkAddTag?name{manager name}, json body
+POST /bulkRemoveTag?name{manager name}, json body
+```
+
+### Parameters
+
+* name: Name of the Smart Manager.
+
+* JSON body of all files that require tags.
+
+Example JSON body:
+```json
 [
-
-{
-  "file_path": "/home/user/documents/report.pdf",
-  "tags": ["work", "important", "pdf"]
-},
-{
-  "file_path": "/home/user/photos/vacation.jpg",
-  "tags": ["holiday", "family", "2025"]
-},
-{
-  "file_path": "/home/user/music/song.mp3",
-  "tags": ["music", "mp3", "favorites"]
-}
+  {
+    "file_path": "/home/user/documents/report.pdf",
+    "tags": ["work", "important", "pdf"]
+  },
+  {
+    "file_path": "/home/user/photos/vacation.jpg",
+    "tags": ["holiday", "family", "2025"]
+  },
+  {
+    "file_path": "/home/user/music/song.mp3",
+    "tags": ["music", "mp3", "favorites"]
+  }
 ]
-'''
+```
 
-Returns:
-Add
-"Tags added successfully" - on success
-"Failed to add tags" - on failure
-remove
-"Tags removed successfully" - on success
-"Failed to remove tags" - on failure
+### Returns
+
+A JSON structure consisting of all files with the included tags.
+
+```json
+{
+  "name": "TagManager",
+  "isFolder": true,
+  "rootPath": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers",
+  "children": [
+    {
+      "name": "Chapter-9-World-War-I-1914-1918.pdf",
+      "path": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers/Chapter-9-World-War-I-1914-1918.pdf",
+      "isFolder": false,
+      "tags": [
+        "history",
+        "world-war-1",
+        "pdf",
+        "academic",
+        "chapter-9"
+      ],
+      "metadata": {
+        "size": "10297185",
+        "dateCreated": "2025-06-27 07:57",
+        "mimeType": ".pdf",
+        "lastModified": "2025-06-27 07:57"
+      },
+      "locked": false
+    }
+  ]
+}
+```
+
+### Throws
+
+Exception "Manager not found" if Smart Manager could not be found.
+
+## Search
+
+Finds files of a given name inside a specific Smart Manager.
+
+### Usage
+```GET /search?compositeName={name}&searchText={fileToSearch}```
+
+### Parameters
+
+* compositeName: Unique identifier for the Smart Manager.
+
+* searchText: File name to search for.
+
+### Returns
+
+A JSON array of all the files that match the specified search criteria. Each file includes:
+
+* name: string
+
+* path: string
+
+* isFolder: boolean
+
+* tags: string[] (All user-defined tags for the file)
+
+* metadata: string[] (All metadata extracted for the file)
+
+```json
+{
+  "name": "Josh",
+  "isFolder": true,
+  "children": [
+    {
+      "name": "tiaan.jpeg",
+      "path": "/home/henco/Documents/University-Files/Third-year/COS-301/GIT/Smart-File-Manager/docs/documentation/demo_2/assets/readmeAssets/tiaan.jpeg",
+      "isFolder": false,
+      "metadata": {
+        "size": "202624",
+        "dateCreated": "2025-07-08 13:19",
+        "mimeType": "",
+        "lastModified": "2025-07-08 13:19"
+      },
+      "locked": false
+    },
+    {
+      "name": "tiaan.jpeg",
+      "path": "/home/henco/Documents/University-Files/Third-year/COS-301/GIT/Smart-File-Manager/docs/documentation/demo_1/assets/readmeAssets/tiaan.jpeg",
+      "isFolder": false,
+      "metadata": {
+        "size": "202624",
+        "dateCreated": "2025-07-08 13:19",
+        "mimeType": "",
+        "lastModified": "2025-07-08 13:19"
+      },
+      "locked": false
+    }
+  ]
+}
+```
+
+### Throws
+
+Not applicable (returns empty structure if nothing found).
+
+## Find Duplicate Files
+
+Finds and returns all duplicate files (duplicate content checked via hashing).
+
+### Usage
+```GET /findDuplicates?name={name}```
+
+### Parameters
+
+* name: Unique Identifier for the Smart Manager.
+
+### Returns
+
+A JSON array of duplicate file pairs where objects consist of:
+
+* name: The common file name
+
+* original: The absolute path to the original file
+
+* duplicate: The absolute path to the duplicated file (the first file found is considered the original)
+
+```json
+[
+  {
+    "name": "The Man of Steel.docx",
+    "original": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers2/The Man of Steel (another copy).docx",
+    "duplicate": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers2/The Man of Steel.docx"
+  },
+  {
+    "name": "pyramid-technology.pdf",
+    "original": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers2/pyramid-technology (copy).pdf",
+    "duplicate": "/home/henco/Documents/University-Files/Third-year/COS-301/Papers2/pyramid-technology.pdf"
+  }
+]
+```
