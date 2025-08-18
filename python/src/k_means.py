@@ -1,4 +1,5 @@
 # the actual clustering that will make a directory to send back to go
+from collections import Counter
 import os
 
 from sklearn.cluster import KMeans
@@ -53,89 +54,143 @@ class KMeansCluster:
         self.remove_locked_files(files,full_vecs)
         print("Locked files ", len(self.locked_files))
         
-        unlocked_dirs = self._recursive_clustering(full_vecs, files, 0, self.parent_folder, builder)
+        unlocked_dirs = self._recursive_clustering(full_vecs, files, 0, "", builder)
 
         locked_dirs = self.buildLockedDirs(self.locked_files, builder)
 
 
         root_dir = builder.merge(unlocked_dirs, locked_dirs)
-        #print(root_dir)
-        #self.printMetaData(root_dir)
         return root_dir 
         
-    
 
+    def _recursive_clustering(self, full_vecs, files, depth, rel_path, builder):
+        """
+        rel_path: relative path from the root ("" at root).
+        """
+        # Base case: Directory too small or directory too deep
+        if len(full_vecs) < self.min_size or depth > self.max_depth:
+            return builder.buildDirectory(rel_path, files, [])
 
-    def _recursive_clustering(self,full_vecs,files, depth, dir_prefix, builder):
-
-        # Quit if not enough folders  # Base condition: shallow depth or too few vectors
-        if len(full_vecs) < self.min_size or depth > self.max_depth: # depth can be changed on init of kmeans
-            return builder.buildDirectory(dir_prefix, files, []) 
-
-        if depth > 0:
-            # Assign directory name
-            folder_name = self.folder_namer.generateFolderName(files)        
-            dir_name = folder_name 
-
-            if os.path.basename(dir_prefix) == folder_name:
-                return builder.buildDirectory(dir_prefix,files,[])
-        else:
-            dir_name = dir_prefix
-                    
-
-        
+        # Find K (number of clusters) using elbow method
         bias_factor = (1 / (depth + 1)) * 0.02
-#        get optimal amount of clusters
         k = self.get_num_clusters(
-                full_vecs, 
-                k_min = self.min_size, 
-                bias_factor = bias_factor,
-                cluster_fraction = 5
-                )
-       # print("Best k values found: ", k)
+            full_vecs,
+            k_min=self.min_size,
+            bias_factor=bias_factor,
+            cluster_fraction=5
+        )
         if k <= 1:
-            return builder.buildDirectory(dir_name, files, [])
+            return builder.buildDirectory(rel_path, files, [])
 
-        
-        # cluster and get labels
+        # Cluster
         labels = self.fit_kmeans(full_vecs, k)
 
-        # label -> files
-        label_to_entries = {}
+        # Group files by label (carry vectors along)
+        groups = {}
         for i, label in enumerate(labels):
-            label_to_entries.setdefault(label, []).append(files[i])
- 
+            groups.setdefault(label, []).append((files[i], full_vecs[i]))
 
-        subdirs = []
+        # Separate valid clusters vs small ones (retained in parent)
+        valid_groups = []
         retained_files = []
-
-
-        for label, entries in label_to_entries.items():
+        for entries in groups.values():
             if len(entries) < self.min_size:
-                retained_files.extend(entries)
+                retained_files.extend([f for f, _ in entries])
+            else:
+                valid_groups.append(entries)
+
+        # Stop splitting for clusters that only have 1 cluster (so we don't get group/group/etc...)
+        if len(valid_groups) <= 1:
+            return builder.buildDirectory(rel_path, files, [])
+
+        # Build children
+        parent_name = os.path.basename(rel_path) if rel_path else self.parent_folder
+        sibling_counts = {}
+        subdirs = []
+
+        for entries in valid_groups:
+            child_files = [f for f, _ in entries]
+            child_vecs = [v for _, v in entries]
+
+            # Try to generateActualName
+            proposed = (self.folder_namer.generateFolderName(child_files) or "").strip()
+
+            # Avoid duplicates
+            child_name = self._normalize_child_name(proposed, parent_name, child_files)
+
+            # If name would duplicate parent (or ends up empty) -> skip splitting this cluster and keep files at the current level.
+            if child_name is None:
+                retained_files.extend(child_files)
                 continue
 
-            sub_vecs = [entry["full_vector"] for entry in entries]
-            sub_dir = self._recursive_clustering(sub_vecs, entries, depth + 1, dir_name, builder)
+            # Keep track of same names using map so it becomes group_1, group_2 etc...
+            key = child_name.lower()
+            sibling_counts[key] = sibling_counts.get(key, 0) + 1
+            if sibling_counts[key] > 1:
+                child_name = f"{child_name}_{sibling_counts[key]}"
+
+            child_rel_path = os.path.join(rel_path, child_name) if rel_path else child_name
+            sub_dir = self._recursive_clustering(child_vecs, child_files, depth + 1, child_rel_path, builder)
             subdirs.append(sub_dir)
 
-        return builder.buildDirectory(dir_name, retained_files, subdirs)
-   
+        # If subdirs are useless then stop creating deeper firs
+        if not subdirs:
+            return builder.buildDirectory(rel_path, files, [])
+
+        return builder.buildDirectory(rel_path, retained_files, subdirs)
+
+
+    def _normalize_child_name(self, candidate, parent_name, entry_files):
+        """
+        Returns a safe child folder name or None if we should NOT split to avoid 'X/X' or generic noise.
+        - If candidate is empty/generic ('group', 'cluster'), derive from file extensions.
+        - If equal to parent (case-insensitive), return None to avoid duplicate nesting.
+        """
+        name = (candidate or "").strip()
+
+        # Names like group or cluster should rather use filetypes
+        if not name or name.lower() in {"group", "cluster"}:
+            name = self._name_from_extensions(entry_files)
+
+        # Don't split if empty
+        if not name:
+            return None
+
+        # Don't split if nested group names
+        if parent_name and name.lower() == parent_name.lower():
+            return None
+
+        return name
+
+
+    def _name_from_extensions(self, entry_files):
+
+        exts = []
+        for f in entry_files:
+            _, ext = os.path.splitext(f["filename"])
+            if ext:
+                exts.append(ext.lstrip(".").lower())
+
+        if not exts:
+            return None
+
+        top_ext, _ = Counter(exts).most_common(1)[0]
+
+        # Map file types
+        buckets = {
+            "png": "images", "jpg": "images", "jpeg": "images", "gif": "images", "webp": "images",
+            "pdf": "pdfs",
+            "doc": "docs", "docx": "docs",
+            "txt": "notes", "md": "notes", "rtf": "notes",
+            "csv": "data", "xlsx": "data", "xls": "data",
+            "ppt": "slides", "pptx": "slides"
+        }
+        return buckets.get(top_ext, top_ext)
+
 
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
 
-    """
-    def printDirectoryTree(self, directory, indent=""):
-
-        for file in directory.files:
-           # print(f"{file.name} ")
-          #  print(f"{indent} - {file.original_path} ")
-            print(f'"{file.new_path}",')
-
-        for subdir in directory.directories:
-            self.printDirectoryTree(subdir, indent + "  ")
-    """
 
     def printDirectoryTree(self, directory, indent=""):
 
@@ -273,37 +328,42 @@ class KMeansCluster:
                 del files[i]
                 del full_vecs[i]
 
+
     def buildLockedDirs(self, files, builder):
-        def add_to_tree(tree, parts, file):
-            current = tree
-            current = current.setdefault(os.path.join(*parts), {})
-            current.setdefault("_files", []).append(file)
-
-        def build_dirs_from_tree(tree):
-            dirs = []
-            for name, subtree in tree.items():
-                if name == "_files":
-                    continue
-                subdirs = build_dirs_from_tree(subtree) 
-                files = subtree.get("_files", [])
-                dirs.append(builder.buildDirectory(name, files, subdirs))
-            return dirs
-
+        # Build a nested tree keyed by relative path parts
         dir_tree = {}
+    
         for f in files:
             full_path = os.path.normpath(f["original_path"])
-            path_parts = full_path.split(os.sep)
+            parts = full_path.split(os.sep)
             try:
-                parent_index = path_parts.index(self.parent_folder)
-                relative_parts = path_parts[parent_index + 1 : -1]
-                if not relative_parts:
-                    relative_parts = ["(root)"]
+                parent_index = parts.index(self.parent_folder)
+                # Relative parts: directories under root (exclude filename at the end)
+                relative_parts = parts[parent_index + 1 : -1]
             except (ValueError, IndexError):
-                relative_parts = ["Unkown"]
+                relative_parts = ["Unknown"]
+    
+            node = dir_tree
+            for part in relative_parts:
+                node = node.setdefault(part, {})
+            node.setdefault("_files", []).append(f)
+    
+        def build_dirs(node, rel_prefix=""):
+            children = []
+            for name, sub in node.items():
+                if name == "_files":
+                    continue
+                rel_path = os.path.join(rel_prefix, name) if rel_prefix else name
+                subdirs = build_dirs(sub, rel_path)
+                files_here = sub.get("_files", [])
+                children.append(builder.buildDirectory(rel_path, files_here, subdirs))
+            return children
 
-            add_to_tree(dir_tree, relative_parts,f)
+        root_files = dir_tree.get("_files", [])
+        return builder.buildDirectory("", root_files, build_dirs(dir_tree, ""))
 
-        return builder.buildDirectory(self.parent_folder, [], build_dirs_from_tree(dir_tree))
+
+
 
     def get_num_clusters(self, X, k_min = 2, k_max = None, random_state = 42, bias_factor = 0.01, bad_threshold=0.2, cluster_fraction = 4):
         """
