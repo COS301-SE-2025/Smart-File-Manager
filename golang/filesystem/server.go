@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"slices"
 	"sync"
 )
 
@@ -39,24 +38,6 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	mu.Unlock()
 
-	w.Write([]byte("true"))
-}
-
-func removeCompositeHandler(w http.ResponseWriter, r *http.Request) {
-	filePath := r.URL.Query().Get("path")
-	convertedPath := ConvertToWSLPath(filePath)
-
-	mu.Lock()
-	for i, item := range Composites {
-		if item.Path == convertedPath {
-			Composites = slices.Delete(Composites, i, i+1)
-			deleteCompositeDetailsFile(item.Name)
-			break
-		}
-	}
-	mu.Unlock()
-
-	// fmt.Println("Composite removed:", convertedPath)
 	w.Write([]byte("true"))
 }
 
@@ -255,7 +236,7 @@ func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
 			delete(ObjectMap, c.Path)
 
 			// Remove from main.json
-			managersFilePath := filepath.Join(getPath(), "golang", "storage", "main.json")
+			managersFilePath := filepath.Join(getPath(), "golang", "storage", managersFilePath)
 			data, err := os.ReadFile(managersFilePath)
 			var recs []ManagerRecord
 
@@ -285,6 +266,8 @@ func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
 			if err := os.WriteFile(managersFilePath, out, 0644); err != nil {
 				panic(err)
 			}
+			//remove storage file
+			deleteCompositeDetailsFile(c.Name)
 			fmt.Println("Deleted manager")
 			w.Write([]byte("true"))
 			return
@@ -302,7 +285,6 @@ func HandleRequests() {
 	// fmt.Println("THE PATH: " + path)
 
 	http.HandleFunc("/addDirectory", addCompositeHandler)
-	http.HandleFunc("/removeDirectory", removeCompositeHandler)
 
 	http.HandleFunc("/addTag", addTagHandler)
 	http.HandleFunc("/removeTag", removeTagHandler)
