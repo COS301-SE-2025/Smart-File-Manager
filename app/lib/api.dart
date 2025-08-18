@@ -1,8 +1,10 @@
+import 'package:app/models/file_model.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'models/file_tree_node.dart';
 import 'models/startup_response.dart';
 import 'models/duplicate_model.dart';
+import 'models/stats_model.dart';
 
 const uri = "http://localhost:51000";
 
@@ -15,8 +17,6 @@ class Api {
       );
 
       if (response.statusCode == 200) {
-        print(jsonDecode(response.body) as Map<String, dynamic>);
-
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
@@ -74,7 +74,6 @@ class Api {
       final response = await http.post(
         Uri.parse("$uri/addDirectory?name=$name&path=$path"),
       );
-      print("$uri/addDirectory?name=$name&path=$path");
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
@@ -93,10 +92,11 @@ class Api {
   static Future<bool> deleteSmartManager(String name) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/deleteDirectory?name=$name"),
+        Uri.parse("$uri/deleteManager?name=$name"),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        print(response.body);
         return true;
       } else {
         throw Exception(
@@ -158,7 +158,6 @@ class Api {
       final response = await http.post(
         Uri.parse("$uri/lock?name=$managerName&path=$path"),
       );
-      print(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
@@ -178,7 +177,6 @@ class Api {
       final response = await http.post(
         Uri.parse("$uri/unlock?name=$managerName&path=$path"),
       );
-      print(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
@@ -202,7 +200,6 @@ class Api {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(response.body);
-        print(jsonDecode(response.body));
         return jsonList
             .map(
               (item) => DuplicateModel.fromJson(item as Map<String, dynamic>),
@@ -228,8 +225,6 @@ class Api {
       );
 
       if (response.statusCode == 200) {
-        print(jsonDecode(response.body) as Map<String, dynamic>);
-
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
@@ -238,6 +233,194 @@ class Api {
       }
     } catch (e, stackTrace) {
       print('Error loading tree data from loadTreeData: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<FileTreeNode> deleteSingleFile(
+    String managerName,
+    String path,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/deleteFile?name=$managerName&path=$path"),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return FileTreeNode.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to delete File: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error deleting file: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<FileTreeNode> bulkDeleteFiles(
+    String managerName,
+    String jsonPaths,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/bulkDeleteFiles?name=$managerName"),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonPaths,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return FileTreeNode.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to delete files: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error deleting files: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //Bulk add Tag
+  static Future<FileTreeNode> bulkAddTag(
+    String managerName,
+    String jsonPaths,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/bulkAddTag?name=$managerName"),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonPaths,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return FileTreeNode.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to delete files: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error deleting files: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //Bulk remove Tag
+  static Future<FileTreeNode> bulkRemoveTag(
+    String managerName,
+    String jsonPaths,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/bulkRemoveTag?name=$managerName"),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonPaths,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return FileTreeNode.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to remove tags: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error removing tags: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<List<FileModel>> bulkOperation(
+    String name,
+    String type,
+    bool umbrella,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$uri/returnType?name=$name&type=$type&umbrella=$umbrella"),
+      );
+
+      if (response.statusCode == 200) {
+        if (response.body == "" || response.body == "null") {
+          return <FileModel>[];
+        }
+        try {
+          final dynamic jsonData = jsonDecode(response.body);
+          print(jsonData);
+
+          if (jsonData == null) {
+            return <FileModel>[];
+          }
+
+          if (jsonData is! List) {
+            return <FileModel>[];
+          }
+
+          final List<dynamic> jsonList = jsonData;
+          return jsonList
+              .map((item) => FileModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        } catch (e) {
+          print('Error parsing JSON: $e');
+          return <FileModel>[];
+        }
+      } else {
+        throw Exception(
+          'Failed to load duplicate data: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error loading duplicates: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //loadStats
+  static Future<ManagersStatsResponse> loadStatsData() async {
+    try {
+      final response = await http.get(Uri.parse("$uri/returnStats"));
+
+      if (response.statusCode == 200) {
+        print(jsonDecode(response.body) as List<dynamic>);
+
+        return ManagersStatsResponse.fromJson(
+          jsonDecode(response.body) as List<dynamic>,
+        );
+      } else {
+        throw Exception('Failed to load stats: HTTP ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error loading stats data: $e');
+      print(stackTrace);
+      rethrow;
+    }
+  }
+
+  //Move directory
+  static Future<bool> moveDirectory(String managerName) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$uri/moveDirectory?name=$managerName"),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print(response.body);
+        if (response.body == "true") {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        throw Exception(
+          'Failed to unlock File/Folder: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error unlocking folder/file: $e');
       print(stackTrace);
       rethrow;
     }

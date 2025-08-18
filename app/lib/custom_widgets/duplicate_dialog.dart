@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:app/models/file_tree_node.dart';
 import 'package:flutter/material.dart';
 import 'package:app/constants.dart';
 import 'package:app/models/duplicate_model.dart';
@@ -5,9 +7,15 @@ import 'package:app/api.dart';
 
 class DuplicateDialog extends StatefulWidget {
   List<DuplicateModel>? duplicates;
+  final Function(String, FileTreeNode) updateOnDuplicateDelete;
   final String name;
 
-  DuplicateDialog({required this.name, super.key, this.duplicates});
+  DuplicateDialog({
+    required this.name,
+    required this.updateOnDuplicateDelete,
+    super.key,
+    this.duplicates,
+  });
 
   @override
   State<DuplicateDialog> createState() => _DuplicateDialogState();
@@ -16,6 +24,7 @@ class DuplicateDialog extends StatefulWidget {
 class _DuplicateDialogState extends State<DuplicateDialog> {
   final TextEditingController _duplicateController = TextEditingController();
   bool _isLoading = true;
+  final List<DuplicateModel> _currentDuplicatePaths = [];
 
   @override
   void dispose() {
@@ -39,8 +48,81 @@ class _DuplicateDialogState extends State<DuplicateDialog> {
     if (mounted) {
       setState(() {
         widget.duplicates = duplicates;
+        for (DuplicateModel duplicate in duplicates) {
+          _currentDuplicatePaths.add(duplicate);
+        }
         _isLoading = false;
       });
+    }
+  }
+
+  void _deleteDuplicate(String managerName, String filePath) async {
+    FileTreeNode response = await Api.deleteSingleFile(managerName, filePath);
+    if (response.name == managerName) {
+      setState(() {
+        widget.duplicates?.removeWhere(
+          (item) => item.duplicatePath == filePath,
+        );
+        _currentDuplicatePaths.removeWhere(
+          (item) => item.duplicatePath == filePath,
+        );
+      });
+      widget.updateOnDuplicateDelete.call(managerName, response);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Deleted duplicate successfully'),
+          backgroundColor: kYellowText,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not delete duplicate '),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  String _convertToJsonDuplicates() {
+    List<Map<String, String>> fileList = _currentDuplicatePaths
+        .map((duplicate) => {"file_path": duplicate.duplicatePath})
+        .toList();
+    return jsonEncode(fileList);
+  }
+
+  void _deleteMultipleDuplicates(
+    String managerName,
+    List<DuplicateModel> duplicates,
+  ) async {
+    String jsonPaths = _convertToJsonDuplicates();
+    FileTreeNode response = await Api.bulkDeleteFiles(
+      managerName,
+      jsonPaths,
+    );
+    if (response.name == managerName) {
+      setState(() {
+        widget.duplicates?.clear();
+        _currentDuplicatePaths.clear();
+      });
+      widget.updateOnDuplicateDelete.call(managerName, response);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Deleted all duplicates successfully'),
+          backgroundColor: kYellowText,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not delete duplicates'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -51,7 +133,7 @@ class _DuplicateDialogState extends State<DuplicateDialog> {
       title: const Text('Duplicates', style: kTitle1),
       content: SizedBox(
         width: double.maxFinite,
-        height: 400,
+        height: double.maxFinite,
         child:
             _isLoading
                 ? Center(
@@ -111,6 +193,25 @@ class _DuplicateDialogState extends State<DuplicateDialog> {
                                           color: Color(0xff9CA3AF),
                                         ),
                                       ),
+                                      SizedBox(height: 20),
+                                      TextButton(
+                                        onPressed:
+                                            () => _deleteDuplicate(
+                                              widget.name,
+                                              object.duplicatePath,
+                                            ),
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: Colors.grey,
+                                          side: const BorderSide(
+                                            color: Colors.grey,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 24,
+                                            vertical: 12,
+                                          ),
+                                        ),
+                                        child: const Text('Delete Duplicate'),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -118,20 +219,64 @@ class _DuplicateDialogState extends State<DuplicateDialog> {
                             }).toList(),
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        if (mounted) {
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: const Text(
-                        "Close",
-                        style: TextStyle(color: Color(0xffFFB400)),
-                      ),
-                    ),
                   ],
                 ),
       ),
+      actions: [
+        if (widget.duplicates == null || widget.duplicates!.isEmpty)
+          TextButton(
+            onPressed: () {
+              if (mounted) {
+                Navigator.pop(context);
+              }
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey,
+              side: const BorderSide(color: Colors.grey),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text('Close'),
+          )
+        else
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () {
+                  if (mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.grey,
+                  side: const BorderSide(color: Colors.grey),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: const Text('Close'),
+              ),
+              SizedBox(width: 20),
+              ElevatedButton(
+                onPressed:
+                    () => _deleteMultipleDuplicates(
+                      widget.name,
+                      _currentDuplicatePaths,
+                    ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kYellowText,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: const Text('Delete All Duplicates'),
+              ),
+            ],
+          ),
+      ],
     );
   }
 }

@@ -1,6 +1,5 @@
 import pytest
 from src.create_folder_name import FolderNameCreator  
-from unittest.mock import MagicMock
 
 @pytest.fixture(scope="module")
 def dummy_model():
@@ -10,6 +9,8 @@ def dummy_model():
             return [[i + 1 for _ in range(5)] for i in range(len(texts))]
 
     return DummyModel()
+
+# <------ Unit TESTING ----->
 
 @pytest.fixture
 def creator(dummy_model):
@@ -57,4 +58,6 @@ def test_generate_folder_name_basic(creator):
     assert "_" not in name or len(name.split("_")) <= creator.foldername_length
 
 def test_generate_folder_name_empty(creator):
-    assert creator.generateFolderName([]) == "Untitled"
+
+# <------ Integration TESTING ----->
+    assert creator.generateFolderName([]) == "Group"

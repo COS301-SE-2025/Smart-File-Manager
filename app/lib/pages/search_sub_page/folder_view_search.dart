@@ -229,15 +229,16 @@ class _FolderViewSearchState extends State<FolderViewSearch> {
 
   void _goToFolder(FileTreeNode node) {
     final fileFullPath = node.path ?? '';
-
+    print(fileFullPath);
+    print(widget.managerPath);
     //change full system path to path only from root
-    final RootPath = fileFullPath.replaceAll(widget.managerPath, "");
-
-    final parts = RootPath.split(RegExp(r'[/\\]'));
-
+    final rootPath = fileFullPath.replaceAll(widget.managerPath, "");
+    print(rootPath);
+    final parts = rootPath.split(RegExp(r'[/\\]'));
+    print(parts);
     //remove file from path
     parts.removeLast();
-
+    print(parts);
     //clear Breadcrumbs
     widget.currentBreadcrumbs.clear();
     for (String part in parts) {

@@ -11,3 +11,9 @@ const kTitle1 = TextStyle(
   fontWeight: FontWeight.bold,
   fontSize: 20,
 );
+
+const kTitle2 = TextStyle(
+  color: Colors.white,
+  fontWeight: FontWeight.bold,
+  fontSize: 20,
+);

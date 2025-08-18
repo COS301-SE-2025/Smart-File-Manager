@@ -9,8 +9,13 @@ import 'package:app/custom_widgets/custom_dropdown_menu.dart';
 
 class AdvancedSearchPage extends StatefulWidget {
   final List<String> managerNames;
+  final String selectedManager;
 
-  const AdvancedSearchPage({super.key, this.managerNames = const []});
+  const AdvancedSearchPage({
+    super.key,
+    this.managerNames = const [],
+    this.selectedManager = "",
+  });
 
   @override
   State<AdvancedSearchPage> createState() => _AdvancedSearchPageState();
@@ -24,6 +29,14 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
   bool _isLoading = false;
   String managername = "";
   bool _searchHappened = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.selectedManager != "") {
+      _updateSelectedManager(widget.selectedManager ?? "");
+    }
+  }
 
   void _handleFileSelect(FileTreeNode file) {
     if (!_disposed && mounted) {
@@ -123,11 +136,6 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                     ),
                   ),
                 ),
-                HoverableButton(
-                  onTap: () {},
-                  name: "Clear All",
-                  icon: Icons.clear_all_rounded,
-                ),
               ],
             ),
           ),
@@ -162,6 +170,10 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                             )
                             .toList(),
                     onChanged: (v) => _updateSelectedManager(v ?? ""),
+                    value:
+                        widget.selectedManager == ""
+                            ? null
+                            : widget.selectedManager,
                   ),
                   const SizedBox(width: 12),
                   CustomSearchBar(

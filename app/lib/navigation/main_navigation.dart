@@ -31,9 +31,12 @@ class MainNavigation extends StatefulWidget {
   final List<NavigationItem> items;
   final int selectedIndex;
   final Function(int) onTap;
+  final Function() updateStats;
   final Function(String, FileTreeNode?)? onManagerTap;
   final Function(String, FileTreeNode)? onManagerTreeDataUpdate;
   final Function(List<String>)? onManagerNamesUpdate;
+  final Function(String)? onManagerAdded;
+  final Function(String)? onManagerDelete;
   final String? selectedManager;
 
   const MainNavigation({
@@ -41,17 +44,20 @@ class MainNavigation extends StatefulWidget {
     required this.items,
     required this.selectedIndex,
     required this.onTap,
+    required this.updateStats,
     this.onManagerTap,
     this.onManagerTreeDataUpdate,
     this.onManagerNamesUpdate,
+    this.onManagerAdded,
+    this.onManagerDelete,
     this.selectedManager,
   });
 
   @override
-  State<MainNavigation> createState() => _MainNavigationState();
+  State<MainNavigation> createState() => MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class MainNavigationState extends State<MainNavigation> {
   //has a list of managers that are created
   final List<ManagerNavigationItem> _managers = [];
   bool _isInitialized = false;
@@ -90,6 +96,53 @@ class _MainNavigationState extends State<MainNavigation> {
             ],
           ),
     );
+  }
+
+  void _handleDeleteManager(String managerName) async {
+    try {
+      final success = await Api.deleteSmartManager(managerName);
+
+      if (success) {
+        setState(() {
+          _managers.removeWhere((m) => m.label == managerName);
+        });
+
+        // Notify parent about the deletion
+        widget.onManagerDelete?.call(managerName);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Smart Manager "$managerName" deleted successfully'),
+            backgroundColor: kYellowText,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete Smart Manager "$managerName"'),
+            backgroundColor: Colors.redAccent,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting Smart Manager "$managerName": $e'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  void removeManagerFromNavigation(String managerName) {
+    if (mounted) {
+      setState(() {
+        _managers.removeWhere((m) => m.label == managerName);
+      });
+    }
   }
 
   Future<void> loadTreeDataForManager(String managerName) async {
@@ -205,6 +258,7 @@ class _MainNavigationState extends State<MainNavigation> {
       setState(() {
         _isInitialLoading = false;
       });
+      widget.updateStats.call();
     }
   }
 
@@ -405,7 +459,7 @@ class _MainNavigationState extends State<MainNavigation> {
                     );
 
                     if (success) {
-                      // Update manager to remove loading state
+                      // Update manager to remove loading state and load treedata
                       setState(() {
                         final index = _managers.indexWhere(
                           (m) => m.label == result.name,
@@ -419,6 +473,12 @@ class _MainNavigationState extends State<MainNavigation> {
                           );
                         }
                       });
+
+                      //load data
+                      loadTreeDataForManager(result.name);
+
+                      // Notify parent that a new manager was added
+                      widget.onManagerAdded?.call(result.name);
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

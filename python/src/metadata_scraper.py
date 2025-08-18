@@ -3,12 +3,6 @@ import os
 import datetime
 from pathlib import Path
 import magic # Used for MIME-Type
-from PIL import Image # Used for images
-from PIL.ExifTags import TAGS, GPSTAGS
-import mutagen # Used for audio and video
-from pypdf import PdfReader # used for pdf (shocker)
-import docx
-from pymediainfo import MediaInfo
 
 # Used to extract metadata from various files
 class MetaDataScraper:
@@ -43,6 +37,7 @@ class MetaDataScraper:
             "inode": stat.st_ino
         })
 
+"""
     # Extracts image file metadata
     def get_image_metadata(self) -> dict:
         return_data = {}
@@ -164,3 +159,4 @@ class MetaDataScraper:
             self.metadata.update(self.get_pdf_metadata())
         elif mime_type in ["application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
             self.metadata.update(self.get_docx_metadata())
+"""

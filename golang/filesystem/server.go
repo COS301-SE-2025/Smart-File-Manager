@@ -2,8 +2,11 @@ package filesystem
 
 import (
 	// "encoding/json"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"slices"
 	"sync"
 )
@@ -129,11 +132,9 @@ func lockHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("LOCKED FILE")
 			w.Write([]byte("true"))
 			return
-		} else {
-			w.Write([]byte("false"))
-			return
 		}
 	}
+	w.Write([]byte("false"))
 
 }
 
@@ -153,12 +154,143 @@ func unlockHandler(w http.ResponseWriter, r *http.Request) {
 			c.UnlockByPath(path)
 			w.Write([]byte("true"))
 			return
-		} else {
-			w.Write([]byte("false"))
+		}
+	}
+	w.Write([]byte("false"))
+
+}
+
+func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Query().Get("path")
+	name := r.URL.Query().Get("name")
+	mu.Lock()
+	defer mu.Unlock()
+	if path == "" || name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
+	}
+	for _, c := range Composites {
+		if c.Name == name {
+			err := os.RemoveAll(path)
+			if err == nil {
+				c.RemoveFile(path)
+			} else {
+				fmt.Println("Error removing folder:", path, "Error:", err)
+			}
+			children := GoSidecreateDirectoryJSONStructure(c)
+
+			root := DirectoryTreeJson{
+				Name:     c.Name,
+				IsFolder: true,
+				RootPath: c.Path,
+				Children: children,
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			// Encode the response as JSON
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
 			return
 		}
 	}
 
+	w.Write([]byte("false"))
+
+}
+
+func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Query().Get("path")
+	name := r.URL.Query().Get("name")
+	mu.Lock()
+	defer mu.Unlock()
+	if path == "" || name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
+	}
+	for _, c := range Composites {
+		if c.Name == name {
+			err := os.RemoveAll(path)
+			if err == nil {
+				c.RemoveSubfolder(path)
+			} else {
+				fmt.Println("Error removing folder:", path, "Error:", err)
+			}
+			children := GoSidecreateDirectoryJSONStructure(c)
+
+			root := DirectoryTreeJson{
+				Name:     c.Name,
+				IsFolder: true,
+				RootPath: c.Path,
+				Children: children,
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			// Encode the response as JSON
+			if err := json.NewEncoder(w).Encode(root); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
+			return
+		}
+	}
+	w.Write([]byte("false"))
+
+}
+
+func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	mu.Lock()
+	defer mu.Unlock()
+	if name == "" {
+		w.Write([]byte("Parameter missing"))
+		return
+	}
+	for i, c := range Composites {
+		if c.Name == name {
+			// Delete folder
+			// os.RemoveAll(c.Path)
+			// Remove from list of managers
+			Composites = append(Composites[:i], Composites[i+1:]...)
+			// Remove from type storage
+			delete(ObjectMap, c.Path)
+
+			// Remove from main.json
+			managersFilePath := filepath.Join(getPath(), "golang", "storage", "main.json")
+			data, err := os.ReadFile(managersFilePath)
+			var recs []ManagerRecord
+
+			if err == nil {
+				// File exists — update entry
+				if err := json.Unmarshal(data, &recs); err != nil {
+					fmt.Println("error in unmarshaling of json")
+					panic(err)
+				}
+				// Remove the record with the matching name
+				for j := range recs {
+					if recs[j].Name == name {
+						recs = append(recs[:j], recs[j+1:]...)
+						break
+					}
+				}
+			} else if os.IsNotExist(err) {
+				// Nothing to do if file doesn't exist
+			} else {
+				panic(err)
+			}
+
+			out, err := json.MarshalIndent(recs, "", "  ")
+			if err != nil {
+				panic(err)
+			}
+			if err := os.WriteFile(managersFilePath, out, 0644); err != nil {
+				panic(err)
+			}
+			fmt.Println("Deleted manager")
+			w.Write([]byte("true"))
+			return
+		}
+	}
+	w.Write([]byte("Manager not found"))
 }
 
 func HandleRequests() {
@@ -171,21 +303,39 @@ func HandleRequests() {
 
 	http.HandleFunc("/addDirectory", addCompositeHandler)
 	http.HandleFunc("/removeDirectory", removeCompositeHandler)
+
 	http.HandleFunc("/addTag", addTagHandler)
 	http.HandleFunc("/removeTag", removeTagHandler)
+
 	http.HandleFunc("/loadTreeData", loadTreeDataHandlerGoOnly)
-	// http.HandleFunc("/loadTreeData", loadTreeDataHandler)
+
 	http.HandleFunc("/sortTree", sortTreeHandler)
 	http.HandleFunc("/startUp", startUpHandler)
+
 	http.HandleFunc("/lock", lockHandler)
 	http.HandleFunc("/unlock", unlockHandler)
+
 	http.HandleFunc("/search", SearchHandler)
+
 	http.HandleFunc("/keywordSearch", KeywordSearchHadler)
 	http.HandleFunc("/isKeywordSearchReady", IsKeywordSearchReadyHander)
+
 	http.HandleFunc("/moveDirectory", moveDirectoryHandler)
+
 	http.HandleFunc("/findDuplicateFiles", findDuplicateFilesHandler)
+
 	http.HandleFunc("/bulkAddTag", BulkAddTagHandler)
 	http.HandleFunc("/bulkRemoveTag", BulkRemoveTagHandler)
+
+	http.HandleFunc("/deleteFile", deleteFileHandler)
+	http.HandleFunc("/deleteFolder", deleteFolderHandler)
+	http.HandleFunc("/bulkDeleteFolders", BulkDeleteFolderHandler)
+	http.HandleFunc("/bulkDeleteFiles", BulkDeleteFileHandler)
+	http.HandleFunc("/deleteManager", deleteManagerHandler)
+
+	http.HandleFunc("/returnType", ReturnTypeHandler)
+	http.HandleFunc("/returnStats", StatHandler)
+
 	fmt.Println("Server started on port 51000")
 
 	// http.ListenAndServe(":51000", nil)

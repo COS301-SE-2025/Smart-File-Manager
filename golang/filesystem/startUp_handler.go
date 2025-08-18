@@ -32,9 +32,11 @@ func SetManagersFilePath(p string) {
 
 // api entry
 func startUpHandler(w http.ResponseWriter, r *http.Request) {
+
 	Composites = nil
 
 	recs, err := loadManagerRecords()
+
 
 	if err != nil {
 		errMsg := "Internal error: " + err.Error()
@@ -48,11 +50,13 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("cleanupOrphanCompositeJSONs warning: %v\n", err)
 	}
 
+
 	var (
 		managerNames []string
 		mu           sync.Mutex
 		wg           sync.WaitGroup
 	)
+
 
 	for _, r := range recs {
 		wg.Add(1)
@@ -66,6 +70,7 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+
 			mu.Lock()
 			Composites = append(Composites, composite)
 
@@ -76,7 +81,9 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	wg.Wait()
 
+  
 	w.WriteHeader(http.StatusOK)
+
 
 	res := startUpResponse{
 		ResponseMessage: "Request successful!, Composites: " + strconv.Itoa(len(managerNames)),
@@ -85,6 +92,7 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
+
 }
 
 func loadManagerRecords() ([]ManagerRecord, error) {

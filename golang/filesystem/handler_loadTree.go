@@ -45,46 +45,6 @@ type Metadata struct {
 	LastModified string `json:"lastModified"`
 }
 
-func printFolderDetails(folder *Folder, indent int) {
-	if folder == nil {
-		return
-	}
-
-	prefix := strings.Repeat("  ", indent)
-
-	fmt.Printf("%sFolder: %s\n", prefix, folder.Name)
-	fmt.Printf("%sPath: %s\n", prefix, folder.Path)
-	fmt.Printf("%sNewPath: %s\n", prefix, folder.NewPath)
-	fmt.Printf("%sCreationDate: %s\n", prefix, folder.CreationDate.Format(time.RFC3339))
-	fmt.Printf("%sLocked: %v\n", prefix, folder.Locked)
-	if len(folder.Tags) > 0 {
-		fmt.Printf("%sTags: %v\n", prefix, folder.Tags)
-	} else {
-		fmt.Println("NO TGS")
-	}
-	fmt.Println()
-
-	for _, file := range folder.Files {
-		fmt.Printf("%s  File: %s\n", prefix, file.Name)
-		fmt.Printf("%s  Path: %s\n", prefix, file.Path)
-		fmt.Printf("%s  NewPath: %s\n", prefix, file.NewPath)
-		if len(file.Tags) > 0 {
-			fmt.Printf("%s  Tags: %v\n", prefix, file.Tags)
-		}
-		if len(file.Metadata) > 0 {
-			fmt.Printf("%s  Metadata:\n", prefix)
-			for _, md := range file.Metadata {
-				fmt.Printf("%s    %s: %s\n", prefix, md.Key, md.Value)
-			}
-		}
-		fmt.Println()
-	}
-
-	// for _, sub := range folder.Subfolders {
-	// 	printFolderDetails(sub, indent+1)
-	// }
-}
-
 func grpcFunc(c *Folder, requestType string) error {
 
 	if requestType != "METADATA" && requestType != "CLUSTERING" && requestType != "KEYWORDS" {
@@ -114,7 +74,6 @@ func grpcFunc(c *Folder, requestType string) error {
 
 	fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
 
-	// convertProtoToFolder(resp.Root)
 	mergeProtoToFolder(resp.Root, c)
 
 	return nil
@@ -124,6 +83,38 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 	if dir == nil || existing == nil {
 
 		fmt.Println("mergeProtoToFolder called with nil")
+		return
+	}
+
+	existing.Files = nil
+	existing.Subfolders = nil
+
+	for _, file := range dir.Files {
+		existing.Files = append(existing.Files, &File{
+			Name:     file.Name,
+			Path:     file.OriginalPath,
+			Tags:     tagsToStrings(file.Tags),
+			Metadata: metadataConverter(file.Metadata),
+			Locked:   file.IsLocked,
+			NewPath:  file.NewPath,
+		})
+	}
+
+	for _, sub := range dir.Directories {
+		child := &Folder{
+			Name:   sub.Name,
+			Path:   sub.Path,
+			Locked: sub.IsLocked,
+		}
+		mergeProtoToFolderHelper(sub, child)
+		existing.Subfolders = append(existing.Subfolders, child)
+	}
+}
+
+func mergeProtoToFolderHelper(dir *pb.Directory, existing *Folder) {
+	if dir == nil || existing == nil {
+
+		fmt.Println("mergeProtoToFolderHelper called with nil")
 		return
 	}
 	existing.Name = dir.Name
@@ -150,7 +141,7 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 			Path:   sub.Path,
 			Locked: sub.IsLocked,
 		}
-		mergeProtoToFolder(sub, child)
+		mergeProtoToFolderHelper(sub, child)
 		existing.Subfolders = append(existing.Subfolders, child)
 	}
 }
@@ -299,6 +290,7 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 			GoExtractKeywords(c)
 
 			go pythonExtractKeywords(c)
+
 
 			return
 		}
