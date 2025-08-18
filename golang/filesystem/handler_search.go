@@ -6,7 +6,6 @@ import (
 	"math"
 	"net/http"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 )
@@ -100,15 +99,15 @@ type rankedFile struct {
 
 // gpt given
 func PrettyPrintFolder(f *Folder, indent string) {
-	fmt.Printf("%s📁 %s (locked=%v)\n", indent, f.Name, f.Locked)
+	fmt.Printf("%s📁 %s (path = %v)\n", indent, f.Name, f.Path)
 	// print files
 	for _, file := range f.Files {
-		fmt.Printf("%s  📄 %s (locked=%v)\n", indent, file.Name, file.Locked)
-		fmt.Println("keywords: ")
-		for _, i := range file.Keywords {
-			fmt.Println(indent, "keyword: "+i.Keyword+" with score: "+strconv.FormatFloat(float64(i.Score), 'f', 5, 32))
+		fmt.Printf("%s  📄 %s\n", indent, file.Name)
+		fmt.Println("old path: ")
+		fmt.Println(file.Path)
+		fmt.Println("new path: ")
+		fmt.Println(file.NewPath)
 
-		}
 		fmt.Println("----")
 	}
 	// recurse into subfolders
@@ -116,7 +115,6 @@ func PrettyPrintFolder(f *Folder, indent string) {
 		PrettyPrintFolder(sub, indent+"  ")
 	}
 }
-
 
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
 

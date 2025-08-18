@@ -1,6 +1,5 @@
 import 'package:app/api.dart';
 import 'package:flutter/material.dart';
-import 'package:app/custom_widgets/hoverable_button.dart';
 import 'package:app/custom_widgets/file_details_panel.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/pages/search_sub_page/folder_view_search.dart';
