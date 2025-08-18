@@ -30,3 +30,4 @@ app/pubspec.lock
 profiling/
 
 
+/golang/storage/*
