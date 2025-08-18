@@ -27,14 +27,15 @@ type DirectoryTreeJson struct {
 
 // file or folder
 type FileNode struct {
-	Name     string     `json:"name"`
-	Path     string     `json:"path,omitempty"`
-	IsFolder bool       `json:"isFolder"`
-	Tags     []string   `json:"tags,omitempty"`
-	Metadata *Metadata  `json:"metadata,omitempty"`
-	Children []FileNode `json:"children,omitempty"`
-	Locked   bool       `json:"locked"`
-	NewPath  string     `json:"newPath,omitempty"` // for moving files
+	Name     string        `json:"name"`
+	Path     string        `json:"path,omitempty"`
+	IsFolder bool          `json:"isFolder"`
+	Tags     []string      `json:"tags,omitempty"`
+	Metadata *Metadata     `json:"metadata,omitempty"`
+	Children []FileNode    `json:"children,omitempty"`
+	Keywords []*pb.Keyword `json:"keywords,omitempty"`
+	Locked   bool          `json:"locked"`
+	NewPath  string        `json:"newPath,omitempty"` // for moving files
 }
 
 type Metadata struct {
@@ -45,10 +46,8 @@ type Metadata struct {
 }
 
 func grpcFunc(c *Folder, requestType string) error {
-	// fmt.Println("+++++pretty print start+++++")
-	// printFolderDetails(c, 0)
-	// fmt.Println("+++++pretty print end+++++")
-	if requestType != "METADATA" && requestType != "CLUSTERING" {
+
+	if requestType != "METADATA" && requestType != "CLUSTERING" && requestType != "KEYWORDS" {
 		return fmt.Errorf("invalid requestType: %s", requestType)
 	}
 
@@ -132,6 +131,7 @@ func mergeProtoToFolderHelper(dir *pb.Directory, existing *Folder) {
 			Metadata: metadataConverter(file.Metadata),
 			Locked:   file.IsLocked,
 			NewPath:  file.NewPath,
+			Keywords: file.Keywords,
 		})
 	}
 
@@ -242,9 +242,11 @@ func printDirectoryWithMetadata(dir *pb.Directory, num int) {
 
 	for _, file := range dir.Files {
 		fmt.Println(space + "File name: " + file.Name)
-		fmt.Println(space + "File original path: " + file.OriginalPath)
-		fmt.Println(space + "File new path: " + file.NewPath)
+		fmt.Println("keywords: ")
+		for _, i := range file.Keywords {
+			fmt.Println("keyword: " + i.Keyword + "with score: " + strconv.FormatFloat(float64(i.Score), 'f', 5, 32))
 
+		}
 		fmt.Println("----")
 	}
 
@@ -280,6 +282,15 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 			if err := json.NewEncoder(w).Encode(root); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			}
+
+			//reads json stored keywords and adds to the current composite
+			populateKeywordsFromStoredJsonFile(c)
+
+			//starts extracting keywords to cover new files and changes in files
+			GoExtractKeywords(c)
+
+			go pythonExtractKeywords(c)
+
 
 			return
 		}

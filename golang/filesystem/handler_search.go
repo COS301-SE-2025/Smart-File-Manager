@@ -6,6 +6,7 @@ import (
 	"math"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -103,11 +104,12 @@ func PrettyPrintFolder(f *Folder, indent string) {
 	// print files
 	for _, file := range f.Files {
 		fmt.Printf("%s  📄 %s (locked=%v)\n", indent, file.Name, file.Locked)
-		fmt.Printf("%s  Metadata:\n", indent)
+		fmt.Println("keywords: ")
+		for _, i := range file.Keywords {
+			fmt.Println(indent, "keyword: "+i.Keyword+" with score: "+strconv.FormatFloat(float64(i.Score), 'f', 5, 32))
 
-		for _, md := range file.Metadata {
-			fmt.Printf("%s    • %s: %s\n", indent, md.Key, md.Value)
 		}
+		fmt.Println("----")
 	}
 	// recurse into subfolders
 	for _, sub := range f.Subfolders {
@@ -115,7 +117,7 @@ func PrettyPrintFolder(f *Folder, indent string) {
 	}
 }
 
-// todo error if comp not found
+
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	compositeName := r.URL.Query().Get("compositeName")
@@ -125,12 +127,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	for _, comp := range Composites {
-		fmt.Println(comp.Name)
 		if comp.Name == compositeName {
-
-			fmt.Println("stat of print with md")
-			// PrettyPrintFolder(comp, "")
-			fmt.Println("end of print with md")
 
 			sr := getMatches(searchText, comp)
 
@@ -157,6 +154,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
 
 }
 

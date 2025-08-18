@@ -32,3 +32,4 @@ profiling/
 # swap files
 *.swp
 
+/golang/storage/*

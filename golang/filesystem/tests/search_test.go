@@ -1,4 +1,4 @@
-package search_test
+package test
 
 import (
 	"encoding/json"
@@ -100,10 +100,11 @@ func fakeFolder(name string) *filesystem.Folder {
 
 // 	filesystem.SearchHandler(rr, req)
 
-// 	if rr.Code != http.StatusNotFound {
-// 		t.Errorf("expected status 404; got %d", rr.Code)
-// 	}
-// }
+	if rr.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400; got %d", rr.Code)
+	}
+}
+
 
 // TestSearchHandlerEmpty tests that a known composite with no files returns empty children list
 func TestSearchHandlerEmpty(t *testing.T) {

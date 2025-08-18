@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
 )
 
 // MetadataEntry holds file metadata key and value
@@ -20,6 +22,7 @@ type File struct {
 	Metadata []*MetadataEntry
 	Tags     []string
 	Locked   bool // Lock status for file
+	Keywords []*pb.Keyword
 }
 
 // Folder represents a directory in the filesystem
@@ -29,6 +32,7 @@ type Folder struct {
 	NewPath      string
 	CreationDate time.Time
 	Locked       bool // Lock status for folder
+	HasKeywords  bool
 	Files        []*File
 	Subfolders   []*Folder
 	Tags         []string
@@ -137,6 +141,8 @@ func (f *Folder) RemoveMultipleSubfolders(folderPaths []string) map[string]error
 	return errors
 }
 
+// cant this be faster by actually looking at the path and looking for the folder name until the end?
+// instead of searching the whole composite
 // GetFile returns a file by path, searching recursively
 func (f *Folder) GetFile(filePath string) *File {
 	for _, file := range f.Files {

@@ -30,7 +30,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:51000/search?compositeName=first2&searchText=${encodeURIComponent(searchText)}`);
+                const response = await fetch(`http://localhost:51000/keywordSearch?compositeName=first&searchText=${encodeURIComponent(searchText)}`);
                 const data = await response.json();
                 
                 // Clear previous results

@@ -17,7 +17,7 @@ import (
 // helper to reset globals between tests
 func resetState(t *testing.T, tempDir string) {
 	Composites = nil
-	SetManagersFilePath(filepath.Join(tempDir, "main.json"))
+	SetManagersFilePath(filepath.Join(tempDir, managersFilePath))
 }
 
 // Test loadManagerRecords when file does not exist
@@ -37,10 +37,17 @@ func TestLoadManagerRecords_NoFile(t *testing.T) {
 // Test loadManagerRecords with invalid JSON
 func TestLoadManagerRecords_InvalidJSON(t *testing.T) {
 	dir := t.TempDir()
-	resetState(t, dir)
+	// Point managersFilePath into the temp dir
+	p := filepath.Join(dir, "storage", "startUpStorageFile.json")
+	SetManagersFilePath(p)
 
-	// write invalid JSON
-	if err := os.WriteFile(managersFilePath, []byte(`{bad json`), 0644); err != nil {
+	// Ensure parent directory exists before writing
+	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Write invalid JSON
+	if err := os.WriteFile(p, []byte(`{bad json`), 0644); err != nil {
 		t.Fatal(err)
 	}
 
