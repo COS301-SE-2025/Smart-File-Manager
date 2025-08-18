@@ -13,14 +13,11 @@ class DirectoryCreator:
       * rel_path == ""   -> the root directory node
       * rel_path == "a"  -> child "a"
       * rel_path == "a/b"-> grandchild "a/b"
-    - For compatibility with print, the root directory's
-      Directory.path is rendered as '<root>/<root>'.
-    - File.new_path is always '<root>/<full relative path>/<filename>'.
-      For the root level files: '<root>/<root>/<filename>'.
+    - Directory.path is always '<root>/<rel_path>'
+    - File.new_path is always '<root>/<rel_path>/<filename>'
     """
 
     def __init__(self, directoryName, fileMap):
-        self.directory_name_idx = 0
         self.directory_name = directoryName   # display name of the root
         self.FILE_DIR = directoryName         # root folder
         self.file_map = defaultdict()
@@ -28,20 +25,21 @@ class DirectoryCreator:
             self.file_map[file["filename"]] = file
 
     def get_path(self, rel_name: str) -> str:
-
+        """
+        Root: 'test_files_3'
+        Child: 'test_files_3/a'
+        Grandchild: 'test_files_3/a/b'
+        """
         return os.path.join(self.FILE_DIR, rel_name) if rel_name else self.FILE_DIR
 
     def buildDirectory(self, rel_path: str, files, children):
         """
         rel_path: '' for root, otherwise 'a', 'a/b', ...
         """
-        # Display name for the printing
+        # Display name is last component (or root name if empty)
         display_name = self.directory_name if rel_path == "" else os.path.basename(rel_path)
 
-        # Path formatting:
-        #  - Root dir path shows as '<root>/<root>' (matches your sample)
-        #  - Others: '<root>/<rel_path>'
-        dir_path = self.get_path(self.directory_name if rel_path == "" else rel_path)
+        dir_path = self.get_path(rel_path)
 
         file_objs = [self.createFile(f["filename"], rel_path) for f in files]
 
@@ -58,7 +56,7 @@ class DirectoryCreator:
 
         merged_dir = Directory()
         merged_dir.name = dir1.name
-        merged_dir.path = self.get_path(self.directory_name)  # keep root '<root>/<root>' style
+        merged_dir.path = dir1.path  # keep same path
 
         merged_dir.files.extend(list(dir1.files))
         merged_dir.files.extend(list(dir2.files))
@@ -76,10 +74,8 @@ class DirectoryCreator:
         original_file_path = file_info["absolute_path"]
         is_locked = file_info.get("is_locked", False)
 
-        # For root, new files appear under '<root>/<root>/<filename>'
-        # For others: '<root>/<rel_path>/<filename>'
-        path_base = self.directory_name if rel_path == "" else rel_path
-        new_file_path = self.get_path(os.path.join(path_base, filename))
+        # '<root>/<rel_path>/<filename>' (root has rel_path == "")
+        new_file_path = self.get_path(os.path.join(rel_path, filename)) if rel_path else self.get_path(filename)
 
         return File(
             name=filename,
