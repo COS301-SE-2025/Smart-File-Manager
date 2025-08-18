@@ -52,6 +52,7 @@ class DirectoryCreator:
         file_info = self.file_map[filename]
         original_file_path = file_info["absolute_path"]
         new_file_path = self.get_path(f"{dirName}/{filename}")
+        is_locked = file_info.get("is_locked", False)
 
         my_tags = self.createTags(file_info)
         return File(
@@ -59,7 +60,9 @@ class DirectoryCreator:
             original_path=original_file_path,
             new_path=new_file_path,
             tags=my_tags,  
-            metadata=self.createMetaData(file_info)
+            metadata=self.createMetaData(file_info),
+            is_locked = is_locked
+
         )
 
 
