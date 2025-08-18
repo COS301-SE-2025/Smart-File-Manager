@@ -236,7 +236,7 @@ func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
 			delete(ObjectMap, c.Path)
 
 			// Remove from main.json
-			managersFilePath := filepath.Join(getPath(), "golang", "storage", managersFilePath)
+			managersFilePath := filepath.Join(getPath(), "golang", managersFilePath)
 			data, err := os.ReadFile(managersFilePath)
 			var recs []ManagerRecord
 
