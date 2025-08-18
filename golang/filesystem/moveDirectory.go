@@ -26,6 +26,12 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 			CreateDirectoryStructure(item)
 			// Move the content into new manager folder
 			moveContent(item)
+			//update composite in memory
+			newObj, err := ConvertToObject(item.Name, item.Path)
+			if err != nil {
+				log.Printf("Error converting to object: %v", err)
+			}
+			*item = *newObj
 			w.Write([]byte("true"))
 			return
 		}
@@ -56,7 +62,7 @@ func moveContent(item *Folder) {
 	}
 
 	// Path to managers storage file
-	managersFilePath := filepath.Join(getPath(), "golang", "storage", managersFilePath)
+	managersFilePath := filepath.Join(getPath(), "golang", managersFilePath)
 	data, err := os.ReadFile(managersFilePath)
 	var recs []ManagerRecord
 
@@ -104,7 +110,7 @@ func moveContentRecursive(item *Folder) {
 		targetPath := filepath.Join(root, cleanedNewPath)
 
 		// Also update the composite
-		file.NewPath = cleanedNewPath
+		// file.NewPath = cleanedNewPath
 
 		os.MkdirAll(filepath.Dir(targetPath), os.ModePerm)
 		if err := os.Rename(sourcePath, targetPath); err != nil {
