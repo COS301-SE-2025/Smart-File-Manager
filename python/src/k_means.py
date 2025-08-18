@@ -125,7 +125,7 @@ class KMeansCluster:
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
 
-
+    """
     def printDirectoryTree(self, directory, indent=""):
 
         for file in directory.files:
@@ -135,6 +135,133 @@ class KMeansCluster:
 
         for subdir in directory.directories:
             self.printDirectoryTree(subdir, indent + "  ")
+    """
+
+    def printDirectoryTree(self, directory, indent=""):
+
+        def human_bytes(n):
+            try:
+                n = int(n)
+            except Exception:
+                return None
+            units = ["B", "KiB", "MiB", "GiB", "TiB", "PiB"]
+            i = 0
+            f = float(n)
+            while f >= 1024 and i < len(units) - 1:
+                f /= 1024.0
+                i += 1
+            if i == 0:
+                return f"{int(f)} {units[i]}"
+            return f"{f:.2f} {units[i]}"
+
+        def dir_label(d):
+            name = getattr(d, "name", None) or "<unnamed>"
+            path = getattr(d, "path", "") or ""
+            is_locked = bool(
+                getattr(d, "is_locked", False) or getattr(d, "locked", False)
+            )
+            subdirs = getattr(d, "directories", None) or []
+            files = getattr(d, "files", None) or []
+
+            label = f"[DIR] {name}"
+            if path and path != name:
+                label += f" - {path}"
+            label += f" [dirs={len(subdirs)} files={len(files)}]"
+            if is_locked:
+                label += " [locked]"
+            return label
+
+        def file_label(f):
+            # Name
+            name = getattr(f, "name", None)
+            if name is None and isinstance(f, dict):
+                name = f.get("name") or f.get("filename")
+            if not name or str(name).strip() == "":
+                name = "<unnamed>"
+
+            # Path-ish
+            path = getattr(f, "new_path", None)
+            if path is None and isinstance(f, dict):
+                path = f.get("new_path") or f.get("path") or f.get("original_path")
+
+            # Size (optional)
+            size = getattr(f, "size", None)
+            if size is None and isinstance(f, dict):
+                size = f.get("size") or f.get("size_bytes") or f.get("bytes")
+
+            # Locked (optional)
+            locked = getattr(f, "is_locked", None)
+            if locked is None and isinstance(f, dict):
+                locked = f.get("is_locked") or f.get("locked")
+
+            label = f"[FILE] {name}"
+            if size not in (None, 0, "0"):
+                hb = human_bytes(size)
+                if hb:
+                    label += f" ({hb})"
+            if path and path != name:
+                label += f" - {path}"
+            if locked:
+                label += " [locked]"
+            return label
+
+        def sort_key_dir(sd):
+            n = getattr(sd, "name", "") or getattr(sd, "path", "") or ""
+            return str(n).lower()
+
+        def sort_key_file(f):
+            n = getattr(f, "name", None)
+            if n is None and isinstance(f, dict):
+                n = f.get("name") or f.get("filename")
+            if not n:
+                n = getattr(f, "new_path", None)
+                if n is None and isinstance(f, dict):
+                    n = (
+                        f.get("new_path")
+                        or f.get("path")
+                        or f.get("original_path")
+                        or ""
+                    )
+            return str(n).lower()
+
+        def walk(d, prefix):
+            if d is None:
+                print(f"{prefix}(nil directory)")
+                return
+
+            subdirs = list(getattr(d, "directories", None) or [])
+            files = list(getattr(d, "files", None) or [])
+
+            subdirs.sort(key=sort_key_dir)
+            files.sort(key=sort_key_file)
+
+            entries = [("dir", sd) for sd in subdirs] + [
+                ("file", f) for f in files
+            ]
+
+            if not entries:
+                print(f"{prefix}└── (empty)")
+                return
+
+            for i, (kind, item) in enumerate(entries):
+                is_last = i == len(entries) - 1
+                branch = "└── " if is_last else "├── "
+                next_prefix = prefix + ("    " if is_last else "│   ")
+
+                if kind == "dir":
+                    print(f"{prefix}{branch}{dir_label(item)}")
+                    walk(item, next_prefix)
+                else:
+                    print(f"{prefix}{branch}{file_label(item)}")
+
+        base = indent or ""
+        if directory is None:
+            print("(nil directory)")
+            return
+
+        # Print root and recurse
+        print(f"{base}{dir_label(directory)}")
+        walk(directory, base)
 
     def remove_locked_files(self, files, full_vecs):        
         # Iterate in reversed since we are modifying indices
