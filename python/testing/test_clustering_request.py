@@ -7,9 +7,7 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 
-from src import message_structure_pb2, message_structure_pb2_grpc
-from src.message_structure_pb2 import Directory, File, Tag, MetadataEntry, DirectoryRequest
-from src.request_handler import RequestHandler
+from src.message_structure_pb2 import Directory, File, Tag, DirectoryRequest
 
 
 

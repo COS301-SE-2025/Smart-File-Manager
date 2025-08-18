@@ -1,8 +1,8 @@
-from typing import Callable, Tuple
+from typing import Callable
 from message_structure_pb2 import DirectoryResponse, Directory
 from concurrent.futures import ThreadPoolExecutor
 from metadata_scraper import MetaDataScraper
-from message_structure_pb2 import DirectoryRequest, Directory, File, Tag, MetadataEntry, Keyword
+from message_structure_pb2 import DirectoryRequest, MetadataEntry, Keyword
 from kw_extractor import KWExtractor
 from full_vector import FullVector
 import os

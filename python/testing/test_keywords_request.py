@@ -1,7 +1,5 @@
 from typing import Dict, List
-import grpc
 import pytest
-from concurrent import futures
 import sys
 import os
 import time
@@ -9,9 +7,7 @@ import time
 # Add src to path temporarily so the generated grpc file can find message_structure_pb2
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from src import message_structure_pb2, message_structure_pb2_grpc
-from src.message_structure_pb2 import Directory, File, DirectoryRequest, Keyword
-from src.request_handler import RequestHandler
+from src.message_structure_pb2 import Directory, File, DirectoryRequest
 
 
 # <------ INTEGRATION TESTING ----->

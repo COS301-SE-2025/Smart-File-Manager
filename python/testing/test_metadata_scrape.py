@@ -1,10 +1,6 @@
 import os
-import datetime
-from unittest.mock import patch, MagicMock
 
-import pytest
 
-from src.metadata_scraper import MetaDataScraper
 
 TEST_DIR = os.path.dirname(__file__)
 TEST_FILES_DIR = os.path.join(TEST_DIR, "test_files")

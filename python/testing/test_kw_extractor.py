@@ -282,7 +282,7 @@ def test_extract_kw_all_types(mime_type):
 # < ------ INTEGRATION TESTING ------ >
 #Tests the files as if they are passed through a single directory
 def test_real_data_all_files():
-    from src.message_structure_pb2 import Directory, File, Tag, MetadataEntry, DirectoryRequest
+    from src.message_structure_pb2 import File, Tag, MetadataEntry
     from src.kw_extractor import KWExtractor
     tag1 = Tag(name="ImFixed")
     meta1 = MetadataEntry(key="author", value="johnny")
@@ -357,7 +357,7 @@ def test_real_data_all_files():
     ("myWordDoc.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", {"docker", "class", "diagram", "uml", "rest", "architecture", "deployment", "frontend"}),
 ])
 def test_extract_kw_per_file_type(filename, mime_type, expected_keywords):
-    from src.message_structure_pb2 import File, Tag, MetadataEntry, Directory, DirectoryRequest
+    from src.message_structure_pb2 import File, Tag, MetadataEntry
     from src.kw_extractor import KWExtractor
 
     path = get_test_file(filename)
