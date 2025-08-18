@@ -153,29 +153,4 @@ class FileTreeNode {
       }
     }
   }
-
-  void replaceOldPath() {
-    if (rootPath != null && rootPath!.isNotEmpty) {
-      _updateNodePathsAndDescendants(this, rootPath!);
-    }
-  }
-
-  void _updateNodePathsAndDescendants(FileTreeNode node, String baseRoot) {
-    if (node.rootPath == null || node.rootPath!.isEmpty) {
-      int lastSlash = baseRoot.lastIndexOf("/");
-      if (lastSlash != -1) {
-        String parentDir = baseRoot.substring(0, lastSlash);
-        node.path = "$parentDir/${node.newPath}";
-      } else {
-        // No slash found → treat baseRoot as root
-        node.path = "${node.newPath}";
-      }
-    }
-
-    if (node.children != null) {
-      for (var child in node.children!) {
-        _updateNodePathsAndDescendants(child, node.path ?? baseRoot);
-      }
-    }
-  }
 }

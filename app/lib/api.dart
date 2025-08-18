@@ -17,11 +17,6 @@ class Api {
       );
 
       if (response.statusCode == 200) {
-        print(
-          FileTreeNode.fromJson(
-            jsonDecode(response.body) as Map<String, dynamic>,
-          ),
-        );
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
@@ -60,11 +55,6 @@ class Api {
       final response = await http.get(Uri.parse("$uri/sortTree?name=$name"));
 
       if (response.statusCode == 200) {
-        print(
-          FileTreeNode.fromJson(
-            jsonDecode(response.body) as Map<String, dynamic>,
-          ),
-        );
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
