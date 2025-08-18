@@ -19,6 +19,13 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	managerName := r.URL.Query().Get("name")
 	filePath := r.URL.Query().Get("path")
 
+	for _, comp := range Composites {
+		if comp.Name == managerName {
+			http.Error(w, "A smart file manager with that name already exists", http.StatusBadRequest)
+			return
+		}
+	}
+
 	mu.Lock()
 	// Composites = append(Composites, composite)
 	//appendng happens in this:
