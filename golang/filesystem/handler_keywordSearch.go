@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -188,8 +187,6 @@ func exploreFolderForKeywords(f *Folder, searchTerms []string, c chan<- rankedFi
 				if dist <= maxDistKeywordSearch {
 					if dist < finalDist {
 						finalDist = dist
-						fmt.Println("updating dist for FILE: " + file.Name + " with dist: " + strconv.Itoa(finalDist))
-						fmt.Println("distance between: " + searchTerm + " AND " + keyword.Keyword + " = " + strconv.Itoa(dist))
 					}
 
 				}
