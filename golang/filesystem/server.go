@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"sync"
 )
 
@@ -235,8 +234,6 @@ func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
 			// Remove from type storage
 			delete(ObjectMap, c.Path)
 
-			// Remove from main.json
-			managersFilePath := filepath.Join(getPath(), "golang", managersFilePath)
 			data, err := os.ReadFile(managersFilePath)
 			var recs []ManagerRecord
 
