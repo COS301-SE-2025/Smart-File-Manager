@@ -23,7 +23,10 @@ func sortTreeHandler(w http.ResponseWriter, r *http.Request) {
 				log.Fatalf("grpcFunc failed: %v", err)
 				http.Error(w, "internal server error, GRPC CALLED WRONG", http.StatusInternalServerError)
 			}
-			children := createDirectoryJSONStructure(c)
+
+			// PrettyPrintFolder(c, "")
+
+			children := GoSidecreateDirectoryJSONStructure(c)
 
 			root := DirectoryTreeJson{
 				Name:     c.Name,
