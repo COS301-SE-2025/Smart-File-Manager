@@ -56,6 +56,9 @@ jobs:
 
       - name: Install Python dependencies
         run: |
+          # Install CPU only PyTorch
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+
           pip install \
             pytest \
             python-magic \
