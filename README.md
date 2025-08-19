@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-Smart File Manager (SFM) is a digital housekeeper that uses metadata, natural language processing, and AI clustering algorithms to automate file management. SFM can perform smart context searches, navigate directories with an intuitive graph view, and perform smart context searches for important files. It's a versatile AI file finder and a new best friend for modern computer users.
+Smart File Manager (SFM) is a digital housekeeper that uses metadata, natural language processing, and AI clustering algorithms to automate file management. SFM can perform smart context searches, navigate directories with an intuitive graph view, and automatically sort your files for you. It's a versatile AI file finder and a new best friend for modern computer users.
 </p>
 
 <div align="center">
@@ -26,6 +26,9 @@ Smart File Manager (SFM) is a digital housekeeper that uses metadata, natural la
 - [📁 Git Structure](#-git-structure)
 - [🌳 Branching Strategy](#-branching-strategy)
 - [✔️ Quality Badges](#️-quality-badges)
+
+## 📩 Get our installer here
+- [link to our installer](https://drive.google.com/drive/folders/1KlQ3yYhmHYFbv0vVpLBJv5CjVyD5idO4?usp=drive_link)
 
 ## 🎥 Demo Videos
 
@@ -68,7 +71,6 @@ Smart File Manager (SFM) is a digital housekeeper that uses metadata, natural la
 🔗 [Architectural Specifications](docs/documentation/demo_3/Architecture.md) <br>
 🔗 [Wireframe Documentation](docs/documentation/demo_3/wireframe.md) <br>
 🔗 [Research Document](docs/documentation/demo_3/researchDoc.md) <br>
-🔗 [Go API](docs/documentation/demo_3/api.md) <br>
 🔗 [User Manual](docs/documentation/demo_3/user_manual.md) <br>
 🔗 [Coding Standards](docs/documentation/demo_3/coding_standards.md) <br>
 🔗 [Technical Installation Manual](docs/documentation/demo_3/technical_installation.md) <br>
