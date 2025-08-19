@@ -12,7 +12,7 @@ class RequestHandler(message_structure_pb2_grpc.DirectoryServiceServicer):
 
     def __init__(self):
         # Early initialize sentence transformer
-        transformer = SentenceTransformer('all-MiniLM-L6-v2', local_files_only=True)
+        transformer = SentenceTransformer('all-MiniLM-L6-v2')
         self.master = master.Master(10, transformer)
 
 

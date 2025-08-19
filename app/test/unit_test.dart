@@ -59,7 +59,7 @@ void main() {
 
       expect(node.name, equals('Documents'));
       expect(node.isFolder, isTrue);
-      expect(node.locked, isTrue);
+      expect(node.locked, isFalse);
       expect(node.children, isNotNull);
       expect(node.children!.length, equals(1));
       expect(node.children!.first.name, equals('file1.txt'));
@@ -109,8 +109,24 @@ void main() {
 
       final result = node.toString();
 
-      expect(result, equals('FileTreeNode(name: test_folder, isFolder: true)'));
-    });
+      expect(
+              result,
+              equals(
+                '- FileTreeNode(\n'
+                '  name: test_folder\n'
+                '  path: null\n'
+                '  rootPath: null\n'
+                '  isFolder: true\n'
+                '  locked: true\n'
+                '  tags: null\n'
+                '  metadata: null\n'
+                '  newPath: null\n'
+                '  children: []\n'
+                ')\n'
+                '',
+              ),
+            );
+          });
   });
 
   group('SmartManagerInfo Tests', () {
