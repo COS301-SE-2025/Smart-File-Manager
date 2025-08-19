@@ -106,7 +106,7 @@ func PrettyPrintFolder(f *Folder, indent string) {
 		for _, tag := range file.Tags {
 			fmt.Printf("%s  TAG: %s\n", indent, tag)
 		}
-		fmt.Printf("%s  locked: %s\n", indent, file.Locked)
+		// fmt.Printf("%s  locked: %s\n", indent, file.Locked)
 
 		fmt.Println("----")
 	}
