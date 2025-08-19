@@ -395,3 +395,67 @@ func ExtractKeywordsRAKE(filePath string, topN int, maxSize int64) ([]*pb.Keywor
 
 	return ExtractKeywordsFromText(string(data), topN), nil
 }
+
+// Appends unique keywords from src into dst (by exact Keyword string match),
+// and caps the result at maxKeywords (30). Does not alter order of existing dst.
+func AppendUniqueKeywords(dst, src []*pb.Keyword) []*pb.Keyword {
+	const maxKeywords = 30
+
+	if len(dst) >= maxKeywords || len(src) == 0 {
+		if len(dst) > maxKeywords {
+			return dst[:maxKeywords]
+		}
+		return dst
+	}
+
+	// Small merge path: linear scan to avoid map overhead.
+	if len(dst)+len(src) <= 12 {
+		for _, k := range src {
+			if k == nil || k.Keyword == "" {
+				continue
+			}
+			exists := false
+			kw := k.Keyword
+			for _, ek := range dst {
+				if ek != nil && ek.Keyword == kw {
+					exists = true
+					break
+				}
+			}
+			if !exists {
+				dst = append(dst, k)
+				if len(dst) >= maxKeywords {
+					return dst[:maxKeywords]
+				}
+			}
+		}
+		return dst
+	}
+
+	// General fast path: set of existing keywords, append until cap.
+	set := make(map[string]struct{}, len(dst)+len(src))
+	for _, k := range dst {
+		if k == nil {
+			continue
+		}
+		set[k.Keyword] = struct{}{}
+	}
+	for _, k := range src {
+		if k == nil || k.Keyword == "" {
+			continue
+		}
+		kw := k.Keyword
+		if _, ok := set[kw]; ok {
+			continue
+		}
+		set[kw] = struct{}{}
+		dst = append(dst, k)
+		if len(dst) >= maxKeywords {
+			return dst[:maxKeywords]
+		}
+	}
+	if len(dst) > maxKeywords {
+		return dst[:maxKeywords]
+	}
+	return dst
+}

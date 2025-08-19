@@ -2,10 +2,12 @@ package test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -260,5 +262,126 @@ func TestKeywordSearchHandler_MissingComposite_BadRequest(t *testing.T) {
 	// to use http.StatusNotFound, update this assertion to 404.
 	if rec.Code != 400 {
 		t.Fatalf("status = %d, want 400", rec.Code)
+	}
+}
+
+func TestAppendUniqueKeywords_SmallMerge_UniqueAndSkip(t *testing.T) {
+	dst := kws("a", "b", "c", "d", "e")
+	src := []*pb.Keyword{
+		nil,
+		{Keyword: "c"}, // dup
+		{Keyword: ""},  // empty -> skip
+		{Keyword: "f"},
+		{Keyword: "a"}, // dup
+		{Keyword: "g"},
+	}
+
+	got := filesystem.AppendUniqueKeywords(dst, src)
+	want := []string{"a", "b", "c", "d", "e", "f", "g"}
+
+	mustEqual(t, namesOf(got), want)
+}
+
+func TestAppendUniqueKeywords_LargeMerge_UniqueAndOrder(t *testing.T) {
+	dst := kws("k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k10")
+	src := kws("k5", "k11", "k12", "k1", "k13", "k14") // dups: k5, k1
+
+	got := filesystem.AppendUniqueKeywords(dst, src)
+	want := []string{
+		"k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k10",
+		"k11", "k12", "k13", "k14",
+	}
+
+	mustEqual(t, namesOf(got), want)
+}
+
+func TestAppendUniqueKeywords_CapAt30_WhenAppending(t *testing.T) {
+	// dst has 28, src has 4 (2 unique) -> result should be 30 with s1, s2
+	dst := seq("d", 28) // d1..d28
+	src := kws("d28", "s1", "s2", "s3", "s4")
+
+	got := filesystem.AppendUniqueKeywords(dst, src)
+
+	want := append(namesOf(seq("d", 28)), "s1", "s2")
+	if len(got) != 30 {
+		t.Fatalf("cap not applied: got len=%d, want len=30", len(got))
+	}
+	mustEqual(t, namesOf(got), want)
+}
+
+func TestAppendUniqueKeywords_DstExactlyAtCap_Unchanged(t *testing.T) {
+	dst := seq("x", 30)
+	base := namesOf(dst)
+
+	got := filesystem.AppendUniqueKeywords(dst, kws("new1", "new2"))
+	mustEqual(t, namesOf(got), base)
+}
+
+func TestAppendUniqueKeywords_DstOverCap_IsTrimmedTo30(t *testing.T) {
+	dst := seq("x", 35)
+	got := filesystem.AppendUniqueKeywords(dst, kws("new1", "new2"))
+
+	if len(got) != 30 {
+		t.Fatalf("expected trim to 30, got len=%d", len(got))
+	}
+	want := namesOf(seq("x", 30))
+	mustEqual(t, namesOf(got), want)
+}
+
+func TestAppendUniqueKeywords_CaseSensitive(t *testing.T) {
+	dst := kws("Dog")
+	src := kws("dog") // case-sensitive -> should append
+
+	got := filesystem.AppendUniqueKeywords(dst, src)
+	want := []string{"Dog", "dog"}
+
+	mustEqual(t, namesOf(got), want)
+}
+
+func TestAppendUniqueKeywords_EmptySrc_NoChange(t *testing.T) {
+	dst := kws("a", "b")
+	base := namesOf(dst)
+
+	got := filesystem.AppendUniqueKeywords(dst, nil)
+	mustEqual(t, namesOf(got), base)
+
+	got = filesystem.AppendUniqueKeywords(dst, []*pb.Keyword{})
+	mustEqual(t, namesOf(got), base)
+}
+
+// Helpers
+
+func kws(ss ...string) []*pb.Keyword {
+	out := make([]*pb.Keyword, 0, len(ss))
+	for _, s := range ss {
+		out = append(out, &pb.Keyword{Keyword: s})
+	}
+	return out
+}
+
+func seq(prefix string, n int) []*pb.Keyword {
+	out := make([]*pb.Keyword, 0, n)
+	for i := 1; i <= n; i++ {
+		out = append(out, &pb.Keyword{Keyword: fmt.Sprintf("%s%d", prefix, i)})
+	}
+	return out
+}
+
+func namesOf(kws []*pb.Keyword) []string {
+	out := make([]string, 0, len(kws))
+	for _, k := range kws {
+		if k == nil {
+			out = append(out, "<nil>")
+			continue
+		}
+		out = append(out, k.Keyword)
+	}
+	return out
+}
+
+func mustEqual(t *testing.T, got, want []string) {
+	t.Helper()
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("mismatch:\n got:  %#v\n want: %#v", got, want)
 	}
 }

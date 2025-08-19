@@ -88,16 +88,15 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 		return
 	}
 
-	existing.Files = nil
-	existing.Subfolders = nil
-
 	for _, file := range dir.Files {
+		compFile := existing.GetFile(file.OriginalPath)
+
 		existing.Files = append(existing.Files, &File{
 			Name:     file.Name,
 			Path:     file.OriginalPath,
 			Tags:     tagsToStrings(file.Tags),
 			Metadata: metadataConverter(file.Metadata),
-			Keywords: file.Keywords,
+			Keywords: AppendUniqueKeywords(compFile.Keywords, file.Keywords),
 			Locked:   file.IsLocked,
 			NewPath:  file.NewPath,
 		})
