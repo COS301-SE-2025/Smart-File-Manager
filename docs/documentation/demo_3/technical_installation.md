@@ -55,4 +55,86 @@ You have now successfully installed Smart File Manager!
 
 ## Building the project from scratch
 
+This section details how the project can be built and run from scratch by cloning the repo and running all the various services required for the application to function. While we primarily suggest use of an installer this might be useful should you wish to run the application on a non supported operating system.
 
+### Required Installs
+
+The following must be installed on the local system before using this installation.
+
+**Programming Languages:**
+* Python 3 ([installation instructions here](https://www.python.org/downloads/))
+* Golang ([installation instructions here](https://go.dev/doc/install))
+* Flutter & Dart ([installation instructions here](https://docs.flutter.dev/install))
+
+**Python Packages:**
+* pytest 
+* python-magic 
+* mutagen 
+* pypdf 
+* python-docx 
+* Pillow 
+* pymediainfo 
+* yake 
+* scikit-learn 
+* sentence-transformers 
+* grpcio 
+* grpcio-tools
+
+Note: Using pip you may install all these as follows:
+
+```bash
+pip install \
+  pytest \
+  python-magic \
+  mutagen \
+  pypdf \
+  python-docx \
+  Pillow \
+  pymediainfo \
+  yake \
+  scikit-learn \
+  sentence-transformers \
+  grpcio \
+  grpcio-tools
+```
+
+**gRPC:**
+
+gRPC must be installed for both go and python. Note the python install is included in the section above. Documentation for installing gRPC may be found [here](https://grpc.io/blog/installation/)
+
+### Building the project
+
+**Cloning the Repository**
+Clone the repository onto your local device using the following command
+```bash
+git clone https://github.com/COS301-SE-2025/Smart-File-Manager
+```
+
+**Generating the gRPC protos:**
+Having cloned the repository we must now generate the gRPC proto files required for running the project. Ensure you are in the root directory then run the following command
+```bash
+make proto_gen
+make go_proto_gen
+```
+
+**Compling and running the go server:**
+Next the go server must be compiled and started. From the root directory run the following command
+```bash
+make go_api
+```
+
+**Compiling and running the python server:**
+Run the python server by running the following command from the root directory
+```bash
+make python_server
+```
+Ensure that you wait for the terminal to output __python server started__ before proceeding to the next step.
+
+**Running the flutter app:**
+Now that both the python and go server are running we can compile and run the actual flutter application using the following command from root:
+```
+flutter build 
+flutter run
+```  
+
+The application should now be running and working as intended.
