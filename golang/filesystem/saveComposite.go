@@ -14,6 +14,7 @@ import (
 // uses load tree struct directoryTreeJson
 
 func saveCompositeDetails(c *Folder) {
+
 	children := compositeToJsonStorageFormat(c)
 
 	root := DirectoryTreeJson{
@@ -113,6 +114,7 @@ func saveCompositeDetailsToFile(comp DirectoryTreeJson) error {
 }
 
 func populateKeywordsFromStoredJsonFile(comp *Folder) {
+
 	var filePath = filepath.Join("storage", (comp.Name + ".json"))
 	// If the file doesn't exist yet, start with empty
 	data, err := os.ReadFile(filePath)
@@ -136,10 +138,9 @@ func populateKeywordsFromStoredJsonFile(comp *Folder) {
 }
 
 func mergeDirectoryTreeToComposite(comp *Folder, directory *DirectoryTreeJson) {
-
-	fmt.Println("mergeDirectoryTreeToComposite called")
 	for _, node := range directory.Children {
 		if !node.IsFolder {
+			fmt.Println(node.Name)
 			path := node.Path
 
 			compositeFile := comp.GetFile(path)
@@ -149,10 +150,18 @@ func mergeDirectoryTreeToComposite(comp *Folder, directory *DirectoryTreeJson) {
 				compositeFile.Locked = node.Locked
 			}
 
+			// fmt.Println("is locked for file : " + compositeFile.Name)
+			// fmt.Println(strconv.FormatBool(compositeFile.Locked))
+			// fmt.Println("\n ====")
+
 		} else {
 			helperMergeDirectoryTreeToComposite(comp, &node)
 		}
 	}
+	fmt.Println("======END OFmergeDirectoryTreeToComposite========")
+
+	// PrettyPrintFolder(comp, "")
+
 }
 
 func helperMergeDirectoryTreeToComposite(comp *Folder, fileNode *FileNode) {
@@ -160,10 +169,13 @@ func helperMergeDirectoryTreeToComposite(comp *Folder, fileNode *FileNode) {
 		if !node.IsFolder {
 			path := node.Path
 
-			var compositeFile *File = comp.GetFile(path)
+			compositeFile := comp.GetFile(path)
 			if compositeFile != nil {
 				compositeFile.Keywords = node.Keywords
+				compositeFile.Tags = node.Tags
+				compositeFile.Locked = node.Locked
 			}
+			// fmt.Println("path : " + compositeFile.Path)
 
 		} else {
 			helperMergeDirectoryTreeToComposite(comp, &node)
@@ -263,11 +275,11 @@ func nodeLabel(n FileNode) string {
 		}
 	}
 
-	if kws := keywordNames(n.Keywords); kws != "" {
-		b.WriteString(" [kw: ")
-		b.WriteString(kws)
-		b.WriteString("]")
-	}
+	// if kws := keywordNames(n.Keywords); kws != "" {
+	// 	b.WriteString(" [kw: ")
+	// 	b.WriteString(kws)
+	// 	b.WriteString("]")
+	// }
 
 	if n.Locked {
 		b.WriteString(" [locked]")
