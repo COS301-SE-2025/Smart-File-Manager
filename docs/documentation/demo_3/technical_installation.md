@@ -134,7 +134,8 @@ Ensure that you wait for the terminal to output __python server started__ before
 **Running the flutter app:**
 Now that both the python and go server are running we can compile and run the actual flutter application using the following command from root:
 ```
-flutter build 
+flutter build
+cd build 
 flutter run
 ```  
 

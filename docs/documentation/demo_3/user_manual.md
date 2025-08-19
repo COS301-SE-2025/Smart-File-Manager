@@ -15,6 +15,10 @@
 * [Graph View](#graph-view)
 * [Search](#search)
 * [Advanced Search](#advanced-search)
+* [Sorting a Manager](#sort-manager)
+* [Tagging and Locking](#tagging-locking-and-viewing-details)
+* [Bulk Operations](#bulk-operations)
+* [Statistics Dashboard](#statistics-dashboards)
 * [Glossary](#glossary)
 
 ## Introduction
@@ -94,13 +98,91 @@ For any created manager SFM allows you to search for any file at breakneck speed
 As can be seen from the example searching for "books" returned the exact match, followed by close results (words starting in "b").
 
 ## Advanced Search
-SFM also provides an advanced search which considers keywords extracted from text-based files. To acces this feature select Advanced Search in the sidebar. In the top right corner wait for the page to display **Advanced Search Active**. Using the left dropdown select the name of the manager that you want to perform the advance search on. Using the right input, enter the search text which will be compared to the file's keywords. Note that advanced search still makes use of a [fuzzy search](#glossary). After performing an advanced search the output will display similar to below.
+SFM also provides an advanced search which considers keywords extracted from text-based files. To access this feature select Advanced Search in the sidebar. In the top right corner wait for the page to display **Advanced Search Active**. Using the left dropdown select the name of the manager that you want to perform the advance search on. Using the right input, enter the search text which will be compared to the file's keywords. Note that advanced search still makes use of a [fuzzy search](#glossary). After performing an advanced search the output will display similar to below.
 
 <p align="center">
   <img src="assets/manualAssets/advanced_search.png" alt="Create_Manager_done" style="width:100%; max-width:800px;">
 </p>
 
 Note the difference in the files returned for the same search text. Here the a file on world-war-1 was returned since the search text was compared to keywords and the document contains terms such as  "textbook", "workbook" etc...
+
+## Sort Manager
+One of SFM's most powerful features is the ability to automatically perform a [semantic sort](#glossary). The sorting is influenced by tags added by the user as well as whether a file is locked or not (explained below). SFM will make a best effort to sort files semantically. Note that this operations does work on any file type but is considerably more accurate for text based files, due to the keywords they contain. Suggested use cases include sorting large collections of unrelated files into neatly organised smaller groups e.g. sorting research papers by topic. <br>
+
+To access this feature navigate to the **Smart Managers** tab on the sidebar. On this page all your smart managers will appear with options for the manager and deleting the manager. The page will look comparable to below
+
+<p align="center">
+  <img src="assets/manualAssets/sort_1.png" alt="sort_1" style="width:100%; max-width:800px;">
+</p>
+
+After clicking the sort button (allow a reasonable time for it to complete) the top button will change allowing the user to **view sorted** as shown below.
+
+<p align="center">
+  <img src="assets/manualAssets/sort_2.png" alt="sort2" style="width:100%; max-width:800px;">
+</p>
+
+When clicking on the **view sorted** button a preview of the sorted files will appear, allowing you to traverse through the sorted files using the folder view or graph view.
+
+<p align="center">
+  <img src="assets/manualAssets/sort_3.png" alt="sort3" style="width:100%; max-width:800px;">
+</p>
+
+From here you may choose to either **Aprove and Apply** the changes or **Decline**. Choosing to approve and apply will move the actual files on the filesystem to be consitent with the preview shown. **Important Note:** This action cannot be undone. Choosing to decline the sort will not apply the sorting. After choosing to apply the changes the updated structure may be viewed by going to the relevant manager on the sidebar as can be seen.
+
+<p align="center">
+  <img src="assets/manualAssets/sort_4.png" alt="sort3" style="width:100%; max-width:800px;">
+</p>
+
+## Tagging, Locking and viewing Details
+SFM allows you to perfrom various other operations of files and folder. To access these additional operations right click on any file or folder using either the folder viewer or graph view. A pop-up as shown below provides you with these options.
+
+<p align="center">
+  <img src="assets/manualAssets/additional_features.png" alt="sort3" style="width:100%; max-width:800px;">
+</p>
+
+A short explanation of these features are:
+
+* Details: Provides you with a list of metadata extracted for the files.
+* Add Tag: Allows you to add a user defined [tag](#glossary) to a file.
+* Lock: Allows you to [lock](#glossary) the file or folder. Note that locking a folder recursively locks all files inside it.
+* Unlock: Allows you to unlock a file. 
+
+
+## Bulk Operations 
+Some of the additional features might be tedious to apply to single files at a time. We provide functionality to provide these operations in bulk. To access this feature navigate to the relevant smart manager in the sidebar. Click on the button called **bulk operations** to access these features.
+
+<p align="center">
+  <img src="assets/manualAssets/bulk.png" alt="sort3" style="width:100%; max-width:800px;">
+</p>
+
+The operations which can be performed in bulk are:
+* Bulk Delete
+* Bulk Add Tag
+* Bulk Remove Tag
+
+Furthermore these operations may be applied to different file types as can be seen below
+
+<p align="center">
+  <img src="assets/manualAssets/bulk_2.png" alt="sort3" style="width:100%; max-width:800px;">
+</p>
+
+You may choose to apply these operations to all files that match the selected filter of you can select them individually using the checkboxes.
+
+## Duplicates
+SFM allows you to easily find and remove duplicate files from your system. SFM does not simply check filenames for duplicates but hashes the files to ensure that the content are duplicates. To access this feature use the sidebar to navigate to the relevant smart manager. From there use the **Find Duplicates** to be shown the following screen.
+
+<p align="center">
+  <img src="assets/manualAssets/duplicates.png" alt="sort3" style="width:100%; max-width:800px;">
+</p>
+
+From here you can see all duplicate files with the paths from where they are located. You can choose to delete specific duplicates or all duplicates.
+
+## Statistics Dashboards
+Once atleast a single manager has been created the dashboard page will show you some interesting statistics regarding your managers as can be seen below.
+
+<p align="center">
+  <img src="assets/manualAssets/dashboard.png" alt="sort3" style="width:100%; max-width:800px;">
+</p>
 
 ## Glossary
 In this section we describe some terms that we use in the user manual.
@@ -113,4 +195,13 @@ A graph or mindmap based view of a smart directory showing files and folders as 
 
 ### Fuzzy Search
 A type of search where exact results and close results are returned when searching for something. For example: Searching for the term "Banking Details" may also retunr "Banking", "Bank Details" or even "Membership Details" etc... Note that "closest" results will always be returned first.
+
+### Semantic Sort
+A sorting procedure which sorts files by how files logically relates to each other. This works by looking at file metadata, keywords included in the files and user defined tags and performing K-means clustering on a vector representation of this information. Tl;dr files relating to similar topics will be grouped together.
+
+## Tags
+A short string attached to a file or set of files which allows the user to indicate that the files contain some relation that should be kept in mind during clustering. Also allows you to retrieve a subset of files from a manager which all contain a certain tag.
+
+## Lock / Unlock
+A locked file is prevented from being moved during the sorting process. While a locked folder can be moved the relative structure of all content inside the directory may not be moved. Unlocking a folder will also remove locks from all content inside the folder which has been unlocked. Note that our program automatically checks for hidden folders like _.git_ to automatically lock coding projects to prevent them from being broken by sorting.
 
