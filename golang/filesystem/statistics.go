@@ -35,14 +35,17 @@ type fileInfo struct {
 }
 
 func StatHandler(w http.ResponseWriter, r *http.Request) {
-	// mu.Lock()
-	// defer mu.Unlock()
 
 	log.Println("StatHandler: Starting statistics collection")
+	mu.Lock() // grab the lock
+	composites := make([]*Folder, len(Composites))
+	copy(composites, Composites)
+	mu.Unlock() // release immediately
 
 	var managers []ManagerStatistics
-	composites := GetComposites()
-	if composites == nil {
+	// mu.Lock()
+	// defer mu.Unlock()
+	if len(composites) == 0 {
 		json.NewEncoder(w).Encode(struct{}{})
 		return
 	}
