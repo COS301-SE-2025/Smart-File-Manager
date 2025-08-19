@@ -164,6 +164,7 @@ func BulkAddTagHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, fmt.Sprintf("Failed to add tags: %v", err), http.StatusInternalServerError)
 				return
 			}
+
 			children := GoSidecreateDirectoryJSONStructure(folder)
 
 			root := DirectoryTreeJson{
@@ -178,6 +179,7 @@ func BulkAddTagHandler(w http.ResponseWriter, r *http.Request) {
 			if err := json.NewEncoder(w).Encode(root); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			}
+			saveCompositeDetails(folder)
 			return
 		}
 	}
@@ -223,6 +225,7 @@ func BulkRemoveTagHandler(w http.ResponseWriter, r *http.Request) {
 			if err := json.NewEncoder(w).Encode(root); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			}
+			saveCompositeDetails(folder)
 			return
 		}
 	}
@@ -419,28 +422,30 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoadTypes(item *Folder, name string) {
+	localMap := make(map[string]object)
 
-	for _, file := range item.Files {
-
-		_, exists := ObjectMap[name]
-		if !exists {
-			ObjectMap[name] = make(map[string]object)
+	var traverse func(f *Folder)
+	traverse = func(f *Folder) {
+		for _, file := range f.Files {
+			ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(file.Name), "."))
+			if ext == "" {
+				ext = "unknown"
+			}
+			localMap[file.Path] = object{
+				fileType:     ext,
+				umbrellaType: GetCategory(file.Path),
+			}
 		}
-
-		ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(file.Name), "."))
-		if ext == "" {
-			ext = "unknown"
-		}
-
-		ObjectMap[name][file.Path] = object{
-			fileType:     ext,
-			umbrellaType: GetCategory(file.Path),
+		for _, sf := range f.Subfolders {
+			traverse(sf)
 		}
 	}
 
-	for _, subfolder := range item.Subfolders {
-		LoadTypes(subfolder, name)
-	}
+	traverse(item)
+
+	mu.Lock()
+	ObjectMap[name] = localMap
+	mu.Unlock()
 }
 
 func GetCategory(filename string) string {

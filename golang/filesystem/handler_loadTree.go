@@ -152,7 +152,6 @@ func tagsToStrings(tags []*pb.Tag) []string {
 	var tagStrings []string
 
 	for _, tag := range tags {
-		fmt.Println("TAG FOUND: " + tag.Name)
 		tagStrings = append(tagStrings, tag.Name)
 	}
 	return tagStrings
@@ -163,7 +162,6 @@ func stringsToTags(stringTags []string) []*pb.Tag {
 	var tags []*pb.Tag
 
 	for _, tag := range stringTags {
-		fmt.Println("TAG FOUND: " + tag)
 		curr := &pb.Tag{
 			Name: tag,
 		}
@@ -374,6 +372,7 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 	for _, c := range Composites {
 		if c.Name == name {
 
+			populateKeywordsFromStoredJsonFile(c)
 			children := GoSidecreateDirectoryJSONStructure(c)
 
 			root := DirectoryTreeJson{
@@ -389,7 +388,6 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 			}
 
 			//reads json stored keywords and adds to the current composite
-			populateKeywordsFromStoredJsonFile(c)
 
 			//starts extracting keywords to cover new files and changes in files
 			GoExtractKeywords(c)

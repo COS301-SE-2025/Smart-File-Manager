@@ -41,33 +41,28 @@ func StatHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("StatHandler: Starting statistics collection")
 
 	var managers []ManagerStatistics
-	// log.Println("StatHandler: Retrieving composites")
 	composites := GetComposites()
-	// log.Printf("StatHandler: Found %d managers to process", len(composites))
 	if composites == nil {
 		json.NewEncoder(w).Encode(struct{}{})
 		return
 	}
-	for i, folder := range composites {
-		log.Printf("StatHandler: Processing manager %d/%d: %s", i+1, len(composites), folder.Name)
+	for _, folder := range composites {
 
 		manager := ManagerStatistics{
 			ManagerName: folder.Name,
 		}
 
 		// Collect all file information for this manager
-		log.Printf("StatHandler: Collecting files for manager: %s", folder.Name)
 		allFiles := collectManagerFiles(folder)
-		log.Printf("StatHandler: Found %d files in manager: %s", len(allFiles), folder.Name)
 
 		// Calculate statistics
 		manager.Files = len(allFiles)
 		manager.Folders = countFolders(folder)
 		manager.Size = calculateTotalSize(allFiles)
+		// log.Printf("\n")
 		manager.UmbrellaCounts = calculateUmbrellaCounts(folder, folder.Name)
 
 		// Get file rankings
-		log.Printf("StatHandler: Calculating file rankings for manager: %s", folder.Name)
 		manager.Recent = getNewestFiles(allFiles, 5)
 		manager.Oldest = getOldestFiles(allFiles, 5)
 		manager.Largest = getLargestFiles(allFiles, 5)
@@ -85,14 +80,7 @@ func StatHandler(w http.ResponseWriter, r *http.Request) {
 func collectManagerFiles(folder *Folder) []fileInfo {
 	var files []fileInfo
 
-	log.Printf("LoadTypes: Starting for folder %s", folder.Name)
-	// Load types for this folder - this might be slow
-	// LoadTypes(folder, folder.Name)
-	log.Printf("LoadTypes: Completed for folder %s", folder.Name)
-
-	log.Printf("collectFilesRecursive: Starting for folder %s", folder.Name)
 	collectFilesRecursive(folder, &files)
-	log.Printf("collectFilesRecursive: Completed for folder %s, found %d files", folder.Name, len(files))
 
 	return files
 }
@@ -108,7 +96,6 @@ func collectFilesRecursive(folder *Folder, files *[]fileInfo) {
 
 		info, err := os.Stat(file.Path)
 		if err != nil {
-			log.Printf("Error getting file info for '%s': %v", file.Path, err)
 			continue
 		}
 

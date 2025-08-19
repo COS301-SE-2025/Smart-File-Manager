@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
+
+	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
 )
 
 // uses load tree struct directoryTreeJson
@@ -126,6 +130,7 @@ func populateKeywordsFromStoredJsonFile(comp *Folder) {
 		fmt.Println("error in unmarshaling of json")
 		return
 	}
+
 	mergeDirectoryTreeToComposite(comp, &structure)
 
 }
@@ -137,7 +142,7 @@ func mergeDirectoryTreeToComposite(comp *Folder, directory *DirectoryTreeJson) {
 		if !node.IsFolder {
 			path := node.Path
 
-			var compositeFile *File = comp.GetFile(path)
+			compositeFile := comp.GetFile(path)
 			if compositeFile != nil {
 				compositeFile.Keywords = node.Keywords
 				compositeFile.Tags = node.Tags
@@ -176,4 +181,133 @@ func deleteCompositeDetailsFile(compName string) error {
 		return err
 	}
 	return nil
+}
+
+func printDirTreeKwTagsLock(root *DirectoryTreeJson, leftPad int) {
+	if root == nil {
+		fmt.Println("(nil tree)")
+		return
+	}
+	prefix := strings.Repeat(" ", leftPad)
+	fmt.Printf("%s[ROOT] %s\n", prefix, safeName(root.Name))
+	printFileNodeChildren(root.Children, prefix)
+}
+
+func printFileNodeChildren(nodes []FileNode, prefix string) {
+	if len(nodes) == 0 {
+		fmt.Printf("%s└── (empty)\n", prefix)
+		return
+	}
+
+	// Directories first, then files; stable, case-insensitive by name.
+	dirs := make([]FileNode, 0, len(nodes))
+	files := make([]FileNode, 0, len(nodes))
+	for _, n := range nodes {
+		if n.IsFolder {
+			dirs = append(dirs, n)
+		} else {
+			files = append(files, n)
+		}
+	}
+
+	sort.Slice(dirs, func(i, j int) bool {
+		ni := strings.ToLower(strings.TrimSpace(dirs[i].Name))
+		nj := strings.ToLower(strings.TrimSpace(dirs[j].Name))
+		return ni < nj
+	})
+	sort.Slice(files, func(i, j int) bool {
+		ni := strings.ToLower(strings.TrimSpace(files[i].Name))
+		nj := strings.ToLower(strings.TrimSpace(files[j].Name))
+		return ni < nj
+	})
+
+	// Merge into single ordered list for correct tree branches.
+	total := len(dirs) + len(files)
+	entries := make([]FileNode, 0, total)
+	entries = append(entries, dirs...)
+	entries = append(entries, files...)
+
+	for i, n := range entries {
+		isLast := i == total-1
+		branch := "├── "
+		nextPrefix := prefix + "│   "
+		if isLast {
+			branch = "└── "
+			nextPrefix = prefix + "    "
+		}
+
+		fmt.Printf("%s%s%s\n", prefix, branch, nodeLabel(n))
+		if n.IsFolder {
+			printFileNodeChildren(n.Children, nextPrefix)
+		}
+	}
+}
+
+func nodeLabel(n FileNode) string {
+	b := strings.Builder{}
+	b.Grow(128)
+
+	if n.IsFolder {
+		b.WriteString("[DIR] ")
+	} else {
+		b.WriteString("[FILE] ")
+	}
+	b.WriteString(safeName(n.Name))
+
+	if len(n.Tags) > 0 {
+		tags := joinNonEmpty(n.Tags)
+		if tags != "" {
+			b.WriteString(" [tags: ")
+			b.WriteString(tags)
+			b.WriteString("]")
+		}
+	}
+
+	if kws := keywordNames(n.Keywords); kws != "" {
+		b.WriteString(" [kw: ")
+		b.WriteString(kws)
+		b.WriteString("]")
+	}
+
+	if n.Locked {
+		b.WriteString(" [locked]")
+	}
+
+	return b.String()
+}
+
+func safeName(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return "<unnamed>"
+	}
+	return s
+}
+
+func joinNonEmpty(ss []string) string {
+	out := make([]string, 0, len(ss))
+	for _, s := range ss {
+		s = strings.TrimSpace(s)
+		if s != "" {
+			out = append(out, s)
+		}
+	}
+	return strings.Join(out, ", ")
+}
+
+func keywordNames(kws []*pb.Keyword) string {
+	if len(kws) == 0 {
+		return ""
+	}
+	out := make([]string, 0, len(kws))
+	for _, k := range kws {
+		if k == nil {
+			continue
+		}
+		w := strings.TrimSpace(k.Keyword)
+		if w != "" {
+			out = append(out, w)
+		}
+	}
+	return strings.Join(out, ", ")
 }

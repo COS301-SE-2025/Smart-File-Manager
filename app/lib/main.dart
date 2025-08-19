@@ -53,7 +53,7 @@ class _MyAppState extends State<MyApp> with WindowListener, TrayListener {
   Future<void> _initTray() async {
     trayManager.addListener(this);
     await trayManager.setIcon('assets/logo.ico'); // Set tray icon
-    await trayManager.setToolTip("Smart File Manger"); // Tooltip
+    // await trayManager.setToolTip("Smart File Manger"); // Tooltip
     await trayManager.setContextMenu(
       Menu(
         items: [
