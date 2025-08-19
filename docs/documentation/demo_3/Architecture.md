@@ -14,7 +14,7 @@
 
 - [Architectural Quality Requirements](#architectural-quality-requirements)
 - [Architectural Strategies](#architectural-strategies)
-- [Architectural Design and Pattern](#architectural-design-and-pattern)
+- [Architectural Design and Pattern](#architectural-design-and-patterns)
 - [Architectural Constraints](#architectural-constraints)
 
 ---
@@ -105,7 +105,11 @@ The following quality requirements are prioritized from highest to lowest priori
 
 ---
 
-## Architectural Design and Pattern
+## Architectural Design and Patterns
+
+### Architectural Diagram
+
+![Application Architecture](assets/applicationArchitectureV3.png)
 
 SFM makes use of various architectural patterns selected to support our quality requirements. Our choices and justifications for them follows.
 
@@ -157,15 +161,7 @@ In order to allow our different codebases to communicate we leverage the standar
 * **Modifiability:**
    - N/A 
 
-### System Components
 
-- File explorer functionality
-- File/folder sorting by tags and metadata
-- Structure graph visualization
-- Advanced search capabilities
-- File and folder management operations
-
-![Application Architecture](assets/applicationArchitectureV3.png)
 
 ---
 
