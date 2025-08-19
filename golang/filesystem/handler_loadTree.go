@@ -76,27 +76,30 @@ func grpcFunc(c *Folder, requestType string) error {
 
 	fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
 
-	mergeProtoToFolder(resp.Root, c)
+	switch requestType {
+	case "KEYWORDS":
+		mergeKeywordsInPlaceFromProto(resp.Root, c)
+	default: // "METADATA", "CLUSTERING"
+		mergeProtoToFolder(resp.Root, c)
+	}
 
 	return nil
 }
 
 func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 	if dir == nil || existing == nil {
-
 		fmt.Println("mergeProtoToFolder called with nil")
 		return
 	}
+	existing.Files = existing.Files[:0]
+	existing.Subfolders = existing.Subfolders[:0]
 
 	for _, file := range dir.Files {
-		compFile := existing.GetFile(file.OriginalPath)
-
 		existing.Files = append(existing.Files, &File{
 			Name:     file.Name,
 			Path:     file.OriginalPath,
 			Tags:     tagsToStrings(file.Tags),
 			Metadata: metadataConverter(file.Metadata),
-			Keywords: AppendUniqueKeywords(compFile.Keywords, file.Keywords),
 			Locked:   file.IsLocked,
 			NewPath:  file.NewPath,
 		})
@@ -122,8 +125,8 @@ func mergeProtoToFolderHelper(dir *pb.Directory, existing *Folder) {
 	existing.Name = dir.Name
 	existing.Path = dir.Path
 
-	existing.Files = nil
-	existing.Subfolders = nil
+	existing.Files = existing.Files[:0]
+	existing.Subfolders = existing.Subfolders[:0]
 
 	for _, file := range dir.Files {
 		existing.Files = append(existing.Files, &File{
@@ -146,6 +149,55 @@ func mergeProtoToFolderHelper(dir *pb.Directory, existing *Folder) {
 		mergeProtoToFolderHelper(sub, child)
 		existing.Subfolders = append(existing.Subfolders, child)
 	}
+}
+
+func mergeKeywordsInPlaceFromProto(dir *pb.Directory, existing *Folder) {
+	if dir == nil || existing == nil {
+		return
+	}
+
+	// Index existing files by Path once.
+	files := make(map[string]*File, 1024)
+	var index func(*Folder)
+	index = func(f *Folder) {
+		if f == nil {
+			return
+		}
+		for _, fl := range f.Files {
+			if fl != nil && fl.Path != "" {
+				files[fl.Path] = fl
+			}
+		}
+		for _, sf := range f.Subfolders {
+			index(sf)
+		}
+	}
+	index(existing)
+
+	// Walk response and append keywords to matched files.
+	var walk func(*pb.Directory)
+	walk = func(d *pb.Directory) {
+		if d == nil {
+			return
+		}
+		for _, pf := range d.Files {
+			if pf == nil {
+				continue
+			}
+			key := strings.TrimSpace(pf.GetOriginalPath())
+			if key == "" {
+				key = strings.TrimSpace(pf.GetNewPath())
+			}
+			if exf, ok := files[key]; ok {
+				exf.Keywords = AppendUniqueKeywords(exf.Keywords, pf.Keywords)
+				// Only keywords are updated for this request type.
+			}
+		}
+		for _, sd := range d.Directories {
+			walk(sd)
+		}
+	}
+	walk(dir)
 }
 
 func tagsToStrings(tags []*pb.Tag) []string {
@@ -373,6 +425,7 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 		if c.Name == name {
 
 			populateKeywordsFromStoredJsonFile(c)
+
 			children := GoSidecreateDirectoryJSONStructure(c)
 
 			root := DirectoryTreeJson{
@@ -389,7 +442,7 @@ func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
 
 			//reads json stored keywords and adds to the current composite
 
-			//starts extracting keywords to cover new files and changes in files
+			// starts extracting keywords to cover new files and changes in files
 			GoExtractKeywords(c)
 
 			go pythonExtractKeywords(c)
