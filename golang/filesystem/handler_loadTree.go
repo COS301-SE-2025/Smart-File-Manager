@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -20,17 +22,21 @@ import (
 type DirectoryTreeJson struct {
 	Name     string     `json:"name"`
 	IsFolder bool       `json:"isFolder"`
+	RootPath string     `json:"rootPath"`
 	Children []FileNode `json:"children"`
 }
 
 // file or folder
 type FileNode struct {
-	Name     string     `json:"name"`
-	Path     string     `json:"path,omitempty"`
-	IsFolder bool       `json:"isFolder"`
-	Tags     []string   `json:"tags,omitempty"`
-	Metadata *Metadata  `json:"metadata,omitempty"`
-	Children []FileNode `json:"children,omitempty"`
+	Name     string        `json:"name"`
+	Path     string        `json:"path,omitempty"`
+	IsFolder bool          `json:"isFolder"`
+	Tags     []string      `json:"tags,omitempty"`
+	Metadata *Metadata     `json:"metadata,omitempty"`
+	Children []FileNode    `json:"children,omitempty"`
+	Keywords []*pb.Keyword `json:"keywords,omitempty"`
+	Locked   bool          `json:"locked"`
+	NewPath  string        `json:"newPath,omitempty"` // for moving files
 }
 
 type Metadata struct {
@@ -40,51 +46,9 @@ type Metadata struct {
 	LastModified string `json:"lastModified"`
 }
 
-func printFolderDetails(folder *Folder, indent int) {
-	if folder == nil {
-		return
-	}
-
-	prefix := strings.Repeat("  ", indent)
-
-	fmt.Printf("%sFolder: %s\n", prefix, folder.Name)
-	fmt.Printf("%sPath: %s\n", prefix, folder.Path)
-	fmt.Printf("%sNewPath: %s\n", prefix, folder.newPath)
-	fmt.Printf("%sCreationDate: %s\n", prefix, folder.CreationDate.Format(time.RFC3339))
-	fmt.Printf("%sLocked: %v\n", prefix, folder.Locked)
-	if len(folder.Tags) > 0 {
-		fmt.Printf("%sTags: %v\n", prefix, folder.Tags)
-	} else {
-		fmt.Println("NO TGS")
-	}
-	fmt.Println()
-
-	for _, file := range folder.Files {
-		fmt.Printf("%s  File: %s\n", prefix, file.Name)
-		fmt.Printf("%s  Path: %s\n", prefix, file.Path)
-		fmt.Printf("%s  NewPath: %s\n", prefix, file.newPath)
-		if len(file.Tags) > 0 {
-			fmt.Printf("%s  Tags: %v\n", prefix, file.Tags)
-		}
-		if len(file.Metadata) > 0 {
-			fmt.Printf("%s  Metadata:\n", prefix)
-			for _, md := range file.Metadata {
-				fmt.Printf("%s    %s: %s\n", prefix, md.Key, md.Value)
-			}
-		}
-		fmt.Println()
-	}
-
-	for _, sub := range folder.Subfolders {
-		printFolderDetails(sub, indent+1)
-	}
-}
-
 func grpcFunc(c *Folder, requestType string) error {
-	fmt.Println("+++++pretty print start+++++")
-	printFolderDetails(c, 0)
-	fmt.Println("+++++pretty print end+++++")
-	if requestType != "METADATA" && requestType != "CLUSTERING" {
+
+	if requestType != "METADATA" && requestType != "CLUSTERING" && requestType != "KEYWORDS" {
 		return fmt.Errorf("invalid requestType: %s", requestType)
 	}
 
@@ -96,7 +60,7 @@ func grpcFunc(c *Folder, requestType string) error {
 
 	client := pb.NewDirectoryServiceClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 	defer cancel()
 
 	req := &pb.DirectoryRequest{
@@ -105,35 +69,30 @@ func grpcFunc(c *Folder, requestType string) error {
 	}
 
 	resp, err := client.SendDirectoryStructure(ctx, req)
+
 	if err != nil {
 		log.Fatalf("SendDirectoryStructure RPC failed: %v", err)
 	}
 
-	// fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
-	// printDirectory(resp.Root, 0)
-	fmt.Println("========start of proto response======")
-	fmt.Println("res code: " + strconv.FormatInt(int64(resp.ResponseCode), 10))
-	fmt.Println("res message: " + resp.ResponseMsg)
-	// printDirectoryWithMetadata(resp.Root, 0)
-	fmt.Println("========end of proto response======")
+	fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
 
-	// convertProtoToFolder(resp.Root)
-	mergeProtoToFolder(resp.Root, c)
+	switch requestType {
+	case "KEYWORDS":
+		mergeKeywordsInPlaceFromProto(resp.Root, c)
+	default: // "METADATA", "CLUSTERING"
+		mergeProtoToFolder(resp.Root, c)
+	}
 
 	return nil
 }
 
 func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 	if dir == nil || existing == nil {
-
 		fmt.Println("mergeProtoToFolder called with nil")
 		return
 	}
-	existing.Name = dir.Name
-	existing.Path = dir.Path
-
-	existing.Files = nil
-	existing.Subfolders = nil
+	existing.Files = existing.Files[:0]
+	existing.Subfolders = existing.Subfolders[:0]
 
 	for _, file := range dir.Files {
 		existing.Files = append(existing.Files, &File{
@@ -141,24 +100,110 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 			Path:     file.OriginalPath,
 			Tags:     tagsToStrings(file.Tags),
 			Metadata: metadataConverter(file.Metadata),
+			Locked:   file.IsLocked,
+			NewPath:  file.NewPath,
 		})
 	}
 
 	for _, sub := range dir.Directories {
 		child := &Folder{
-			Name: sub.Name,
-			Path: sub.Path,
+			Name:   sub.Name,
+			Path:   sub.Path,
+			Locked: sub.IsLocked,
 		}
-		mergeProtoToFolder(sub, child)
+		mergeProtoToFolderHelper(sub, child)
 		existing.Subfolders = append(existing.Subfolders, child)
 	}
+}
+
+func mergeProtoToFolderHelper(dir *pb.Directory, existing *Folder) {
+	if dir == nil || existing == nil {
+
+		fmt.Println("mergeProtoToFolderHelper called with nil")
+		return
+	}
+	existing.Name = dir.Name
+	existing.Path = dir.Path
+
+	existing.Files = existing.Files[:0]
+	existing.Subfolders = existing.Subfolders[:0]
+
+	for _, file := range dir.Files {
+		existing.Files = append(existing.Files, &File{
+			Name:     file.Name,
+			Path:     file.OriginalPath,
+			Tags:     tagsToStrings(file.Tags),
+			Metadata: metadataConverter(file.Metadata),
+			Locked:   file.IsLocked,
+			NewPath:  file.NewPath,
+			Keywords: file.Keywords,
+		})
+	}
+
+	for _, sub := range dir.Directories {
+		child := &Folder{
+			Name:   sub.Name,
+			Path:   sub.Path,
+			Locked: sub.IsLocked,
+		}
+		mergeProtoToFolderHelper(sub, child)
+		existing.Subfolders = append(existing.Subfolders, child)
+	}
+}
+
+func mergeKeywordsInPlaceFromProto(dir *pb.Directory, existing *Folder) {
+	if dir == nil || existing == nil {
+		return
+	}
+
+	// Index existing files by Path once.
+	files := make(map[string]*File, 1024)
+	var index func(*Folder)
+	index = func(f *Folder) {
+		if f == nil {
+			return
+		}
+		for _, fl := range f.Files {
+			if fl != nil && fl.Path != "" {
+				files[fl.Path] = fl
+			}
+		}
+		for _, sf := range f.Subfolders {
+			index(sf)
+		}
+	}
+	index(existing)
+
+	// Walk response and append keywords to matched files.
+	var walk func(*pb.Directory)
+	walk = func(d *pb.Directory) {
+		if d == nil {
+			return
+		}
+		for _, pf := range d.Files {
+			if pf == nil {
+				continue
+			}
+			key := strings.TrimSpace(pf.GetOriginalPath())
+			if key == "" {
+				key = strings.TrimSpace(pf.GetNewPath())
+			}
+			if exf, ok := files[key]; ok {
+				exf.Keywords = AppendUniqueKeywords(exf.Keywords, pf.Keywords)
+				// Only keywords are updated for this request type.
+			}
+		}
+		for _, sd := range d.Directories {
+			walk(sd)
+		}
+	}
+	walk(dir)
 }
 
 func tagsToStrings(tags []*pb.Tag) []string {
 	var tagStrings []string
 
 	for _, tag := range tags {
-		fmt.Println("TAG FOUND: " + tag.Name)
 		tagStrings = append(tagStrings, tag.Name)
 	}
 	return tagStrings
@@ -169,7 +214,6 @@ func stringsToTags(stringTags []string) []*pb.Tag {
 	var tags []*pb.Tag
 
 	for _, tag := range stringTags {
-		fmt.Println("TAG FOUND: " + tag)
 		curr := &pb.Tag{
 			Name: tag,
 		}
@@ -190,6 +234,8 @@ func convertFolderToProto(f Folder) *pb.Directory {
 			Name:         file.Name,
 			OriginalPath: file.Path,
 			Tags:         stringsToTags(file.Tags),
+			IsLocked:     file.Locked,
+			NewPath:      file.NewPath,
 		})
 		// case *fs.Folder:
 		// 	protoDir.Directories = append(protoDir.Directories, convertFolderToProto(v))
@@ -200,44 +246,6 @@ func convertFolderToProto(f Folder) *pb.Directory {
 
 	}
 	return protoDir
-}
-
-// takes in grpc's response and converts it back to composite
-func convertProtoToFolder(dir *pb.Directory) *Folder {
-	if dir == nil {
-		fmt.Println("===di empty ====")
-		// return an empty Folder (or you could return nil here—but then
-		// callers need to nil‐check too)
-		return &Folder{
-			Name:       "",
-			Path:       "",
-			Files:      nil,
-			Subfolders: nil,
-		}
-	}
-
-	compositeResult := &Folder{
-		Name: dir.Name, // make sure ItemName is exported
-		Path: dir.Path,
-	}
-
-	for _, file := range dir.Files {
-		compositeResult.Files = append(compositeResult.Files, &File{
-			Name:     file.Name,
-			Path:     file.OriginalPath,
-			Tags:     tagsToStrings(file.Tags),
-			Metadata: metadataConverter(file.Metadata),
-		})
-		// case *fs.Folder:
-		// 	protoDir.Directories = append(protoDir.Directories, convertFolderToProto(v))
-
-	}
-	for _, subFolder := range dir.Directories {
-		fmt.Println(subFolder.Name)
-		compositeResult.Subfolders = append(compositeResult.Subfolders, convertProtoToFolder(subFolder))
-
-	}
-	return compositeResult
 }
 
 // pb.metadataentry[] to the filesystem metadataEntry[]
@@ -278,90 +286,230 @@ func extractMetadata(metaDataArr []*MetadataEntry) *Metadata {
 	return md
 }
 
-func printDirectoryWithMetadata(dir *pb.Directory, num int) {
+// func printDirectoryWithMetadata(dir *pb.Directory, num int) {
 
-	space := strings.Repeat("  ", num)
-	fmt.Println(space + "Directory: " + dir.Name)
-	fmt.Println(space + "Path: " + dir.Path)
+// 	space := strings.Repeat("  ", num)
+// 	fmt.Println(space + "Directory: " + dir.Name)
+// 	fmt.Println(space + "Path: " + dir.Path)
 
-	for _, file := range dir.Files {
-		fmt.Println(space + "File name: " + file.Name)
-		fmt.Println(space + "File original path: " + file.OriginalPath)
-		fmt.Println(space + "=====METADATA=========")
-		metaData := file.Metadata
+// 	for _, file := range dir.Files {
+// 		fmt.Println(space + "File name: " + file.Name)
+// 		fmt.Println("keywords: ")
 
-		for _, singleData := range metaData {
-			fmt.Println(space + singleData.Key + "  :  " + singleData.Value)
-		}
-		fmt.Println("----")
+// 		fmt.Println("----")
+// 	}
+
+// 	for _, dir := range dir.Directories {
+// 		newNum := num + 1
+// 		printDirectoryWithMetadata(dir, newNum)
+// 	}
+
+// }
+func printDirectoryWithMetadata(dir *pb.Directory, leftPad int) {
+	if dir == nil {
+		fmt.Println("(nil directory)")
+		return
 	}
-
-	// for _, dir := range dir.Directories {
-	// 	newNum := num + 1
-	// 	printDirectoryWithMetadata(dir, newNum)
-	// }
-
+	prefix := strings.Repeat(" ", leftPad)
+	fmt.Printf("%s%s\n", prefix, dirLabel(dir))
+	printDirChildren(dir, prefix)
 }
 
-// actual api endpoint function
-func loadTreeDataHandler(w http.ResponseWriter, r *http.Request) {
+func printDirChildren(d *pb.Directory, prefix string) {
+	if d == nil {
+		return
+	}
+
+	// Copy and sort for stable output: directories first, then files.
+	subdirs := append([]*pb.Directory(nil), d.Directories...)
+	files := append([]*pb.File(nil), d.Files...)
+
+	sort.Slice(subdirs, func(i, j int) bool {
+		ni := subdirs[i].Name
+		if ni == "" {
+			ni = subdirs[i].Path
+		}
+		nj := subdirs[j].Name
+		if nj == "" {
+			nj = subdirs[j].Path
+		}
+		return strings.ToLower(ni) < strings.ToLower(nj)
+	})
+
+	sort.Slice(files, func(i, j int) bool {
+		return strings.ToLower(files[i].Name) < strings.ToLower(files[j].Name)
+	})
+
+	if len(subdirs) == 0 && len(files) == 0 {
+		fmt.Printf("%s└── (empty)\n", prefix)
+		return
+	}
+
+	// Print directories
+	for i, sd := range subdirs {
+		isLast := i == len(subdirs)-1 && len(files) == 0
+		branch := "├── "
+		nextPrefix := prefix + "│   "
+		if isLast {
+			branch = "└── "
+			nextPrefix = prefix + "    "
+		}
+		fmt.Printf("%s%s%s\n", prefix, branch, dirLabel(sd))
+		printDirChildren(sd, nextPrefix)
+	}
+
+	// Print files
+	for j, f := range files {
+		isLast := j == len(files)-1
+		branch := "├── "
+		if isLast {
+			branch = "└── "
+		}
+		fmt.Printf("%s%s%s\n", prefix, branch, fileLabel(f))
+		fmt.Printf("%s%s%s%s\n", prefix, branch, fileLabel(f), "'s keyw:")
+		for _, kw := range f.Keywords {
+			fmt.Printf("%s%s kw is: %s\n", prefix, branch, kw.Keyword)
+		}
+
+	}
+}
+
+func dirLabel(d *pb.Directory) string {
+	name := d.Name
+	if strings.TrimSpace(name) == "" {
+		name = "<unnamed>"
+	}
+
+	b := strings.Builder{}
+	b.Grow(64)
+	b.WriteString("[DIR] ")
+	b.WriteString(name)
+
+	if d.Path != "" && d.Path != name {
+		b.WriteString(" - ")
+		b.WriteString(d.Path)
+	}
+
+	b.WriteString(" [dirs=")
+	b.WriteString(fmt.Sprintf("%d", len(d.Directories)))
+	b.WriteString(" files=")
+	b.WriteString(fmt.Sprintf("%d", len(d.Files)))
+	b.WriteString("]")
+
+	if d.IsLocked {
+		b.WriteString(" [locked]")
+	}
+
+	return b.String()
+}
+
+func fileLabel(f *pb.File) string {
+	name := f.Name
+	if strings.TrimSpace(name) == "" {
+		name = "<unnamed>"
+	}
+	// Keep this simple and safe (no assumptions about File fields beyond Name).
+	return "[FILE] " + name
+}
+
+// endpoint called using no grpc:
+func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GOVERSION OF loadTree called")
 	w.Header().Set("Content-Type", "application/json")
 
 	name := r.URL.Query().Get("name")
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		if c.Name == name {
-			// build the nested []FileNode
-			err := grpcFunc(c, "METADATA")
-			if err != nil {
-				log.Fatalf("grpcFunc failed: %v", err)
-				http.Error(w, "internal server error, GRPC CALLED WRONG", http.StatusInternalServerError)
-			}
-			children := createDirectoryJSONStructure(c)
+
+			populateKeywordsFromStoredJsonFile(c)
+
+			children := GoSidecreateDirectoryJSONStructure(c)
 
 			root := DirectoryTreeJson{
 				Name:     c.Name,
 				IsFolder: true,
+				RootPath: c.Path,
 				Children: children,
 			}
+			// PrettyPrintFolder(c, "")
 
 			if err := json.NewEncoder(w).Encode(root); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			}
+
+			//reads json stored keywords and adds to the current composite
+
+			// starts extracting keywords to cover new files and changes in files
+			GoExtractKeywords(c)
+
+			go pythonExtractKeywords(c)
 
 			return
 		}
 	}
 
 	http.Error(w, "No smart manager with that name", http.StatusBadRequest)
+
 }
 
 // helper recursive function
-func createDirectoryJSONStructure(folder *Folder) []FileNode {
+func GoSidecreateDirectoryJSONStructure(folder *Folder) []FileNode {
 	var nodes []FileNode
 
 	for _, file := range folder.Files {
 
-		md := extractMetadata(file.Metadata)
+		fi, err := os.Stat(file.Path)
+
+		md := &Metadata{}
+
+		if err != nil {
+			fmt.Println(err)
+			md = nil
+		} else {
+			layout := "2006-01-02 15:04"
+			md.Size = strconv.FormatInt(fi.Size(), 10)
+
+			md.DateCreated = fi.ModTime().Format(layout)
+			md.LastModified = fi.ModTime().Format(layout)
+
+			md.MimeType = ""
+			lastDotIndex := strings.LastIndex(file.Name, ".")
+			if lastDotIndex != -1 {
+				// Slice the string from the last period's index to the end
+				md.MimeType = file.Name[lastDotIndex:]
+			} else {
+				md.MimeType = "mystery"
+			}
+
+			mdEntries := []*MetadataEntry{
+				{Key: "Size", Value: strconv.FormatInt(fi.Size(), 10)},
+				{Key: "DateCreated", Value: fi.ModTime().Format(layout)},
+				{Key: "LastModified", Value: fi.ModTime().Format(layout)},
+			}
+			file.Metadata = mdEntries
+			// file.Tags =
+
+		}
+
 		tags := file.Tags
-		// if len(tags) == 0 {
-		// 	tags = []string{"none"}
-		// }
 
 		nodes = append(nodes, FileNode{
 			Name:     file.Name,
 			Path:     file.Path,
+			NewPath:  file.NewPath,
 			IsFolder: false,
 			Tags:     tags,
 			Metadata: md,
+			Locked:   file.Locked,
 		})
 	}
 
 	for _, sub := range folder.Subfolders {
 		// recurse first
-		childNodes := createDirectoryJSONStructure(sub)
+		childNodes := GoSidecreateDirectoryJSONStructure(sub)
 
 		nodes = append(nodes, FileNode{
 			Name:     sub.Name,
@@ -370,8 +518,50 @@ func createDirectoryJSONStructure(folder *Folder) []FileNode {
 			Tags:     sub.Tags,
 			Metadata: &Metadata{},
 			Children: childNodes,
+			Locked:   sub.Locked,
 		})
 	}
 
 	return nodes
 }
+
+// func createDirectoryJSONStructure(folder *Folder) []FileNode {
+// 	var nodes []FileNode
+
+// 	for _, file := range folder.Files {
+
+// 		md := extractMetadata(file.Metadata)
+// 		tags := file.Tags
+// 		// if len(tags) == 0 {
+// 		// 	tags = []string{"none"}
+// 		// }
+
+// 		nodes = append(nodes, FileNode{
+// 			Name:     file.Name,
+// 			Path:     file.Path,
+// 			IsFolder: false,
+// 			Tags:     tags,
+// 			Metadata: md,
+// 			Locked:   file.Locked,
+// 			NewPath:  file.NewPath, // include NewPath for moving files
+// 		})
+// 	}
+
+// 	for _, sub := range folder.Subfolders {
+// 		// recurse first
+// 		childNodes := createDirectoryJSONStructure(sub)
+
+// 		nodes = append(nodes, FileNode{
+// 			Name:     sub.Name,
+// 			Path:     sub.Path,
+// 			IsFolder: true,
+// 			Tags:     sub.Tags,
+// 			Metadata: &Metadata{},
+// 			Children: childNodes,
+// 			Locked:   sub.Locked,
+// 			NewPath:  sub.NewPath,
+// 		})
+// 	}
+
+// 	return nodes
+// }

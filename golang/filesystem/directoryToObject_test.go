@@ -2,17 +2,26 @@ package filesystem
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
 func TestConvertToObject(t *testing.T) {
-	// Define path to test root folder (adjust relative path as needed)
 	rootPath := "../../testRootFolder"
+	subdirPath := filepath.Join(rootPath, "subdir")
+	hiddenPath := filepath.Join(subdirPath, ".hiddenFolder")
 
-	// Ensure test directory exists
-	if info, err := os.Stat(rootPath); err != nil || !info.IsDir() {
-		t.Fatalf("Test directory %s does not exist or is not a directory", rootPath)
+	// Ensure testRootFolder/subdir exists
+	if info, err := os.Stat(subdirPath); err != nil || !info.IsDir() {
+		t.Fatalf("Expected subdir at %s, got error: %v", subdirPath, err)
 	}
+
+	// Create .hiddenFolder inside subdir for testing
+	err := os.MkdirAll(hiddenPath, 0755)
+	if err != nil && !os.IsExist(err) {
+		t.Fatalf("Failed to create hidden folder for test: %v", err)
+	}
+	defer os.RemoveAll(hiddenPath) // Cleanup after test
 
 	// Convert directory into Folder tree
 	root, err := ConvertToObject("TestRoot", rootPath)
@@ -25,25 +34,22 @@ func TestConvertToObject(t *testing.T) {
 		t.Error("Expected at least one file or subfolder in root, got none")
 	}
 
-	// Map of expected items
+	// Check top-level expected items
 	expected := map[string]struct{}{
 		"a.txt":  {},
 		"subdir": {},
 	}
-
-	// Check root files
 	for _, f := range root.Files {
 		if _, ok := expected[f.Name]; ok {
 			delete(expected, f.Name)
 		}
 	}
 
-	// Find 'subdir' folder and inspect its contents
 	for _, sf := range root.Subfolders {
 		if sf.Name == "subdir" {
-			// mark found
 			delete(expected, "subdir")
-			// look for nested items
+
+			// Check nested files
 			nestedExpected := map[string]struct{}{
 				"empty.txt":     {},
 				"metadata.webp": {},
@@ -53,16 +59,17 @@ func TestConvertToObject(t *testing.T) {
 					delete(nestedExpected, nf.Name)
 				}
 			}
-			// report missing in subdir
 			for name := range nestedExpected {
 				t.Errorf("Expected to find %s in subdir, but did not", name)
 			}
 		}
 	}
 
-	// Report missing in root
+	// Report missing top-level files/folders
 	for name := range expected {
 		t.Errorf("Expected to find %s in root, but did not", name)
 	}
+
+	// Optionally visualize
 	root.Display(0)
 }

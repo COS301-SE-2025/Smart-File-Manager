@@ -1,7 +1,5 @@
 import sys
-import unittest
-from unittest.mock import patch, MagicMock
-from types import SimpleNamespace
+from unittest.mock import patch
 import pytest
 import os
 import tempfile
@@ -23,7 +21,7 @@ def test_get_path():
     from src.directory_builder import DirectoryCreator
     creator = DirectoryCreator("mock_dir", [])
     path = creator.get_path("my_file.txt")
-    expected = os.path.join(os.path.dirname(__file__), "mock_dir", "my_file.txt")
+    expected = os.path.join("mock_dir", "my_file.txt")
     assert path == expected
 
 

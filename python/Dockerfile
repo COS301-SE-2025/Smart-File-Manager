@@ -28,13 +28,14 @@ RUN pip install --no-cache-dir \
     pytest \
     python-magic \
     mutagen \
-    pypdf \
+    pyMuPDF \
     python-docx \
     Pillow \
     pymediainfo \
     yake \
     scikit-learn \
     sentence-transformers \
+    nltk \
     grpcio \
     grpcio-tools
 

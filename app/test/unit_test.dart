@@ -20,6 +20,7 @@ void main() {
         'tags': ['important', 'work'],
         'metadata': {'size': '1024', 'mimeType': 'text/plain'},
         'children': null,
+        'locked': false,
       };
 
       final node = FileTreeNode.fromJson(json);
@@ -31,6 +32,7 @@ void main() {
       expect(node.metadata?['size'], equals('1024'));
       expect(node.metadata?['mimeType'], equals('text/plain'));
       expect(node.children, isNull);
+      expect(node.locked, isFalse);
     });
 
     test('should create folder FileTreeNode with children', () {
@@ -45,20 +47,24 @@ void main() {
             'isFolder': false,
             'tags': [],
             'metadata': {},
+            'locked': false,
           },
         ],
         'tags': [],
         'metadata': {},
+        'locked': false,
       };
 
       final node = FileTreeNode.fromJson(json);
 
       expect(node.name, equals('Documents'));
       expect(node.isFolder, isTrue);
+      expect(node.locked, isFalse);
       expect(node.children, isNotNull);
       expect(node.children!.length, equals(1));
       expect(node.children!.first.name, equals('file1.txt'));
       expect(node.children!.first.isFolder, isFalse);
+      expect(node.children!.first.locked, isFalse);
     });
 
     test('should convert FileTreeNode to JSON correctly', () {
@@ -68,6 +74,7 @@ void main() {
         isFolder: false,
         tags: ['code', 'dart'],
         metadata: {'size': '2048', 'mimeType': 'text/x-dart'},
+        locked: false,
       );
 
       final json = node.toJson();
@@ -77,6 +84,7 @@ void main() {
       expect(json['isFolder'], isFalse);
       expect(json['tags'], equals(['code', 'dart']));
       expect(json['metadata']['size'], equals('2048'));
+      expect(json['locked'], isFalse);
     });
 
     test('should handle empty or null values gracefully', () {
@@ -93,12 +101,32 @@ void main() {
     });
 
     test('toString should return correct format', () {
-      final node = FileTreeNode(name: 'test_folder', isFolder: true);
+      final node = FileTreeNode(
+        name: 'test_folder',
+        isFolder: true,
+        locked: true,
+      );
 
       final result = node.toString();
 
-      expect(result, equals('FileTreeNode(name: test_folder, isFolder: true)'));
-    });
+      expect(
+              result,
+              equals(
+                '- FileTreeNode(\n'
+                '  name: test_folder\n'
+                '  path: null\n'
+                '  rootPath: null\n'
+                '  isFolder: true\n'
+                '  locked: true\n'
+                '  tags: null\n'
+                '  metadata: null\n'
+                '  newPath: null\n'
+                '  children: []\n'
+                ')\n'
+                '',
+              ),
+            );
+          });
   });
 
   group('SmartManagerInfo Tests', () {
@@ -338,16 +366,22 @@ void main() {
         return -1;
       }
 
-      final leafNode = FileTreeNode(name: 'leaf.txt', isFolder: false);
+      final leafNode = FileTreeNode(
+        name: 'leaf.txt',
+        isFolder: false,
+        locked: false,
+      );
       final childNode = FileTreeNode(
         name: 'child',
         isFolder: true,
         children: [leafNode],
+        locked: false,
       );
       final rootNode = FileTreeNode(
         name: 'root',
         isFolder: true,
         children: [childNode],
+        locked: false,
       );
 
       expect(findNodeDepthFromRoot(rootNode, rootNode, 0), equals(0));
@@ -439,14 +473,17 @@ class TestHelpers {
               isFolder: false,
               tags: ['important'],
               metadata: {'size': '1024', 'mimeType': 'text/plain'},
+              locked: false,
             ),
             FileTreeNode(
               name: 'file2.pdf',
               isFolder: false,
               tags: ['work', 'document'],
               metadata: {'size': '2048', 'mimeType': 'application/pdf'},
+              locked: false,
             ),
           ],
+          locked: false,
         ),
         FileTreeNode(
           name: 'pictures',
@@ -457,10 +494,13 @@ class TestHelpers {
               isFolder: false,
               tags: ['vacation'],
               metadata: {'size': '5120', 'mimeType': 'image/jpeg'},
+              locked: false,
             ),
           ],
+          locked: false,
         ),
       ],
+      locked: false,
     );
   }
 

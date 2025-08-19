@@ -1,3 +1,4 @@
+import 'package:app/models/file_tree_node.dart';
 import 'package:flutter/material.dart';
 import 'package:app/custom_widgets/create_manager.dart';
 import 'package:app/constants.dart';
@@ -15,12 +16,14 @@ class NavigationItem {
 class ManagerNavigationItem extends NavigationItem {
   final String directory;
   final bool isLoading;
+  final FileTreeNode? treeData;
 
   ManagerNavigationItem({
     required super.icon,
     required super.label,
     required this.directory,
     this.isLoading = false,
+    this.treeData,
   });
 }
 
@@ -28,7 +31,12 @@ class MainNavigation extends StatefulWidget {
   final List<NavigationItem> items;
   final int selectedIndex;
   final Function(int) onTap;
-  final Function(String)? onManagerTap;
+  final Function() updateStats;
+  final Function(String, FileTreeNode?)? onManagerTap;
+  final Function(String, FileTreeNode)? onManagerTreeDataUpdate;
+  final Function(List<String>)? onManagerNamesUpdate;
+  final Function(String)? onManagerAdded;
+  final Function(String)? onManagerDelete;
   final String? selectedManager;
 
   const MainNavigation({
@@ -36,17 +44,32 @@ class MainNavigation extends StatefulWidget {
     required this.items,
     required this.selectedIndex,
     required this.onTap,
+    required this.updateStats,
     this.onManagerTap,
+    this.onManagerTreeDataUpdate,
+    this.onManagerNamesUpdate,
+    this.onManagerAdded,
+    this.onManagerDelete,
     this.selectedManager,
   });
 
   @override
-  State<MainNavigation> createState() => _MainNavigationState();
+  State<MainNavigation> createState() => MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class MainNavigationState extends State<MainNavigation> {
   //has a list of managers that are created
   final List<ManagerNavigationItem> _managers = [];
+  bool _isInitialized = false;
+  bool _disposed = false;
+  bool _isInitialLoading = true;
+  int _loadingManagersCount = 0;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   //if manager exist, ignore otherwise proceed
   bool _managerNameExists(String name) {
@@ -73,6 +96,271 @@ class _MainNavigationState extends State<MainNavigation> {
             ],
           ),
     );
+  }
+
+  void _handleDeleteManager(String managerName) async {
+    try {
+      final success = await Api.deleteSmartManager(managerName);
+
+      if (success) {
+        setState(() {
+          _managers.removeWhere((m) => m.label == managerName);
+        });
+
+        // Notify parent about the deletion
+        widget.onManagerDelete?.call(managerName);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Smart Manager "$managerName" deleted successfully'),
+            backgroundColor: kYellowText,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete Smart Manager "$managerName"'),
+            backgroundColor: Colors.redAccent,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting Smart Manager "$managerName": $e'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  void removeManagerFromNavigation(String managerName) {
+    if (mounted) {
+      setState(() {
+        _managers.removeWhere((m) => m.label == managerName);
+      });
+    }
+  }
+
+  Future<void> loadTreeDataForManager(String managerName) async {
+    final index = _managers.indexWhere((m) => m.label == managerName);
+    if (index == -1) return;
+
+    // If already loaded or loading, return
+    if (_managers[index].treeData != null || _managers[index].isLoading) {
+      return;
+    }
+
+    // Check if widget is still mounted before updating state
+    if (!_disposed && mounted) {
+      setState(() {
+        _managers[index] = ManagerNavigationItem(
+          icon: _managers[index].icon,
+          label: _managers[index].label,
+          directory: _managers[index].directory,
+          isLoading: true,
+          treeData: _managers[index].treeData,
+        );
+      });
+    }
+
+    try {
+      final treeData = await Api.loadTreeData(managerName);
+
+      if (!_disposed && mounted) {
+        setState(() {
+          _managers[index] = ManagerNavigationItem(
+            icon: Icons.folder,
+            label: managerName,
+            directory: _managers[index].directory,
+            isLoading: false,
+            treeData: treeData,
+          );
+        });
+
+        // Notify parent
+        widget.onManagerTreeDataUpdate?.call(managerName, treeData);
+      }
+    } catch (e) {
+      print('Error loading tree data for $managerName: $e');
+
+      if (!_disposed && mounted) {
+        setState(() {
+          _managers[index] = ManagerNavigationItem(
+            icon: Icons.folder,
+            label: managerName,
+            directory: _managers[index].directory,
+            isLoading: false,
+            treeData: null,
+          );
+        });
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeApp();
+    });
+  }
+
+  void _initializeApp() {
+    if (_isInitialLoading) {
+      _showBootupScreen();
+    }
+    _loadExistingManagers();
+  }
+
+  void _showBootupScreen() {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return PopScope(
+          canPop: false,
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            color: kScaffoldColor,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('images/logo.png', width: 120, height: 120),
+                  const SizedBox(height: 40),
+                  Text(
+                    'SMART FILE MANAGER',
+                    style: TextStyle(
+                      color: kprimaryColor,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 60),
+                  CircularProgressIndicator(color: kYellowText, strokeWidth: 3),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _hideBootupScreen() {
+    if (!_disposed && mounted && _isInitialLoading) {
+      Navigator.of(context).pop();
+      setState(() {
+        _isInitialLoading = false;
+      });
+      widget.updateStats.call();
+    }
+  }
+
+  void _loadExistingManagers() async {
+    if (_isInitialized) return;
+
+    try {
+      final startupResponse = await Api.startUp();
+
+      if (!_disposed && mounted) {
+        setState(() {
+          _managers.clear();
+          for (String managerName in startupResponse.managerNames) {
+            _managers.add(
+              ManagerNavigationItem(
+                icon: Icons.folder,
+                label: managerName,
+                directory: '',
+                isLoading: true,
+              ),
+            );
+          }
+          _isInitialized = true;
+          _loadingManagersCount = startupResponse.managerNames.length;
+        });
+
+        // Notify parent with manager names
+        widget.onManagerNamesUpdate?.call(startupResponse.managerNames);
+
+        // If no managers, hide bootup screen immediately
+        if (startupResponse.managerNames.isEmpty) {
+          _hideBootupScreen();
+        } else {
+          // Load tree data for each manager in background
+          for (String managerName in startupResponse.managerNames) {
+            _loadTreeDataInBackground(managerName);
+          }
+        }
+      }
+    } catch (e) {
+      print('Error loading existing managers: $e');
+      if (!_disposed && mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+        _hideBootupScreen();
+      }
+    }
+  }
+
+  void _loadTreeDataInBackground(String managerName) async {
+    try {
+      final treeData = await Api.loadTreeData(managerName);
+
+      if (!_disposed && mounted) {
+        setState(() {
+          final index = _managers.indexWhere((m) => m.label == managerName);
+          if (index != -1) {
+            _managers[index] = ManagerNavigationItem(
+              icon: Icons.folder,
+              label: managerName,
+              directory: _managers[index].directory,
+              isLoading: false,
+              treeData: treeData,
+            );
+          }
+          _loadingManagersCount--;
+        });
+
+        widget.onManagerTreeDataUpdate?.call(managerName, treeData);
+
+        // Hide bootup screen when all managers are loaded
+        if (_loadingManagersCount <= 0) {
+          _hideBootupScreen();
+        }
+      }
+    } catch (e) {
+      print('Error loading tree data for $managerName: $e');
+
+      if (!_disposed && mounted) {
+        setState(() {
+          final index = _managers.indexWhere(
+            (m) => m.label == managerName && m.isLoading,
+          );
+          if (index != -1) {
+            _managers[index] = ManagerNavigationItem(
+              icon: Icons.folder,
+              label: managerName,
+              directory: _managers[index].directory,
+              isLoading: false,
+              treeData: null,
+            );
+          }
+          _loadingManagersCount--;
+        });
+
+        // Hide bootup screen even if loading failed
+        if (_loadingManagersCount <= 0) {
+          _hideBootupScreen();
+        }
+      }
+    }
   }
 
   @override
@@ -127,7 +415,16 @@ class _MainNavigationState extends State<MainNavigation> {
                     onTap:
                         item.isLoading
                             ? null
-                            : () => widget.onManagerTap?.call(item.label),
+                            : () {
+                              // Load tree data if not available
+                              if (item.treeData == null) {
+                                loadTreeDataForManager(item.label);
+                              }
+                              widget.onManagerTap?.call(
+                                item.label,
+                                item.treeData,
+                              );
+                            },
                   );
                 }),
               ],
@@ -162,7 +459,7 @@ class _MainNavigationState extends State<MainNavigation> {
                     );
 
                     if (success) {
-                      // Update manager to remove loading state
+                      // Update manager to remove loading state and load treedata
                       setState(() {
                         final index = _managers.indexWhere(
                           (m) => m.label == result.name,
@@ -176,6 +473,12 @@ class _MainNavigationState extends State<MainNavigation> {
                           );
                         }
                       });
+
+                      //load data
+                      loadTreeDataForManager(result.name);
+
+                      // Notify parent that a new manager was added
+                      widget.onManagerAdded?.call(result.name);
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

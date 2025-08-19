@@ -15,7 +15,7 @@ func sortTreeHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, c := range composites {
+	for _, c := range Composites {
 		if c.Name == name {
 			// build the nested []FileNode
 			err := grpcFunc(c, "CLUSTERING")
@@ -23,11 +23,15 @@ func sortTreeHandler(w http.ResponseWriter, r *http.Request) {
 				log.Fatalf("grpcFunc failed: %v", err)
 				http.Error(w, "internal server error, GRPC CALLED WRONG", http.StatusInternalServerError)
 			}
-			children := createDirectoryJSONStructure(c)
+
+			// PrettyPrintFolder(c, "")
+
+			children := GoSidecreateDirectoryJSONStructure(c)
 
 			root := DirectoryTreeJson{
 				Name:     c.Name,
 				IsFolder: true,
+				RootPath: c.Path,
 				Children: children,
 			}
 

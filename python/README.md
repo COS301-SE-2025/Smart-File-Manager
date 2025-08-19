@@ -35,6 +35,8 @@ Once again ensure pytest is added to PATH
 * pandas: ```pip install pandas```
 * sklearn: ```pip install scikit-learn```
 * sentence_transformers: ```pip sentence_transformers```
+* Word lemmatizer: ```pip install nltk```
+* Profiling: ```pip install pyinstrument```
   
 
 

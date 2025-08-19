@@ -34,7 +34,7 @@ func TestRemoveFile(t *testing.T) {
 	r.AddFile(f)
 	// remove existing
 	removed := r.RemoveFile("/a.txt")
-	if !removed {
+	if removed != nil {
 		t.Errorf("RemoveFile returned false for existing file")
 	}
 	// ensure it's gone
@@ -42,7 +42,7 @@ func TestRemoveFile(t *testing.T) {
 		t.Errorf("file still found after removal")
 	}
 	// remove non-existing
-	if r.RemoveFile("/nonexistent.txt") {
+	if r.RemoveFile("/nonexistent.txt") == nil {
 		t.Errorf("RemoveFile returned true for non-existing file")
 	}
 }
@@ -67,14 +67,14 @@ func TestRemoveSubfolder(t *testing.T) {
 	r := newFolder("root", "/")
 	sub := newFolder("x", "/x")
 	r.AddSubfolder(sub)
-	if !r.RemoveSubfolder("/x") {
+	if r.RemoveSubfolder("/x") != nil {
 		t.Errorf("RemoveSubfolder failed on existing folder")
 	}
 	if r.GetSubfolder("/x") != nil {
 		t.Errorf("subfolder still found after removal")
 	}
 	// non existing
-	if r.RemoveSubfolder("/y") {
+	if r.RemoveSubfolder("/y") == nil {
 		t.Errorf("RemoveSubfolder returned true for non-existing folder")
 	}
 }
@@ -124,5 +124,144 @@ func TestRemoveTag(t *testing.T) {
 	success = r.RemoveTag("cleanup")
 	if !success || len(r.Tags) != 0 {
 		t.Errorf("expected no folder tags remaining, got %v", r.Tags)
+	}
+}
+
+// ---------------------- Lock/Unlock Tests ----------------------
+
+// TestLockFileByPath tests locking a single file by its path
+func TestLockFileByPath(t *testing.T) {
+	r := newFolder("root", "/root")
+	f1 := newFile("file1.txt", "/root/file1.txt")
+	r.AddFile(f1)
+
+	// Lock the file by path
+	r.LockByPath("/root/file1.txt")
+	if !f1.Locked {
+		t.Errorf("expected file 'file1.txt' to be locked, but it is not")
+	}
+}
+
+// TestUnlockFileByPath tests unlocking a single file by its path
+func TestUnlockFileByPath(t *testing.T) {
+	r := newFolder("root", "/root")
+	f1 := newFile("file1.txt", "/root/file1.txt")
+	r.AddFile(f1)
+
+	// Lock and then unlock the file
+	r.LockByPath("/root/file1.txt")
+	r.UnlockByPath("/root/file1.txt")
+	if f1.Locked {
+		t.Errorf("expected file 'file1.txt' to be unlocked, but it is still locked")
+	}
+}
+
+// TestLockFolderByPath tests locking a folder by its path
+func TestLockFolderByPath(t *testing.T) {
+	r := newFolder("root", "/root")
+	sub := newFolder("sub", "/root/sub")
+	r.AddSubfolder(sub)
+
+	// Lock the folder by path
+	r.LockByPath("/root")
+	if !r.Locked {
+		t.Errorf("expected folder '/root' to be locked, but it is not")
+	}
+	if !sub.Locked {
+		t.Errorf("expected subfolder '/root/sub' to be locked, but it is not")
+	}
+}
+
+// TestUnlockFolderByPath tests unlocking a folder by its path
+func TestUnlockFolderByPath(t *testing.T) {
+	r := newFolder("root", "/root")
+	sub := newFolder("sub", "/root/sub")
+	r.AddSubfolder(sub)
+
+	// Lock and then unlock the folder
+	r.LockByPath("/root")
+	r.UnlockByPath("/root")
+	if r.Locked {
+		t.Errorf("expected folder '/root' to be unlocked, but it is still locked")
+	}
+	if sub.Locked {
+		t.Errorf("expected subfolder '/root/sub' to be unlocked, but it is still locked")
+	}
+}
+
+// TestLockFolderWithNestedFilesAndFolders tests locking a folder with nested files and subfolders
+func TestLockFolderWithNestedFilesAndFolders(t *testing.T) {
+	r := newFolder("root", "/root")
+	sub := newFolder("sub", "/root/sub")
+	f1 := newFile("file1.txt", "/root/sub/file1.txt")
+	sub.AddFile(f1)
+	r.AddSubfolder(sub)
+
+	// Lock the root folder
+	r.LockByPath("/root")
+	if !r.Locked {
+		t.Errorf("expected folder '/root' to be locked, but it is not")
+	}
+	if !sub.Locked {
+		t.Errorf("expected subfolder '/root/sub' to be locked, but it is not")
+	}
+	if !f1.Locked {
+		t.Errorf("expected file '/root/sub/file1.txt' to be locked, but it is not")
+	}
+}
+
+// TestUnlockFolderWithNestedFilesAndFolders tests unlocking a folder with nested files and subfolders
+func TestUnlockFolderWithNestedFilesAndFolders(t *testing.T) {
+	r := newFolder("root", "/root")
+	sub := newFolder("sub", "/root/sub")
+	f1 := newFile("file1.txt", "/root/sub/file1.txt")
+	sub.AddFile(f1)
+	r.AddSubfolder(sub)
+
+	// Lock and then unlock the root folder
+	r.LockByPath("/root")
+	r.UnlockByPath("/root")
+	if r.Locked {
+		t.Errorf("expected folder '/root' to be unlocked, but it is still locked")
+	}
+	if sub.Locked {
+		t.Errorf("expected subfolder '/root/sub' to be unlocked, but it is still locked")
+	}
+	if f1.Locked {
+		t.Errorf("expected file '/root/sub/file1.txt' to be unlocked, but it is still locked")
+	}
+}
+func TestDirectFileLock(t *testing.T) {
+	r := newFolder("root", "/root")
+	f := newFile("f.txt", "/root/f.txt")
+	r.AddFile(f)
+
+	f.Lock()
+	if !f.Locked {
+		t.Errorf("expected file to be locked, but it's not")
+	}
+}
+func TestLockNonExistentPath(t *testing.T) {
+	r := newFolder("root", "/root")
+	r.LockByPath("/does/not/exist")
+	// Assert that nothing is locked
+	if r.Locked {
+		t.Errorf("root should not be locked for nonexistent path")
+	}
+}
+func TestDeepUnlock(t *testing.T) {
+	r := newFolder("root", "/root")
+	sub := newFolder("sub", "/root/sub")
+	deep := newFolder("deep", "/root/sub/deep")
+	f := newFile("file.txt", "/root/sub/deep/file.txt")
+	deep.AddFile(f)
+	sub.AddSubfolder(deep)
+	r.AddSubfolder(sub)
+
+	r.LockByPath("/root")
+	r.UnlockByPath("/root")
+
+	if r.Locked || sub.Locked || deep.Locked || f.Locked {
+		t.Errorf("expected all items to be unlocked after unlocking root")
 	}
 }

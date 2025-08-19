@@ -56,17 +56,21 @@ jobs:
 
       - name: Install Python dependencies
         run: |
+          # Install CPU only PyTorch
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+
           pip install \
             pytest \
             python-magic \
             mutagen \
-            pypdf \
+            pyMuPDF \
             python-docx \
             Pillow \
             pymediainfo \
             yake \
             scikit-learn \
             sentence-transformers \
+            nltk \
             grpcio \
             grpcio-tools
 
@@ -108,6 +112,7 @@ jobs:
         working-directory: ./app
         run: flutter test --reporter=expanded
 
+      # Important linting note: We fix most linting errors ourselves before merging to main. The linting errors remaining are ignored as they are unsafe to fix automatically
       - name: Run Python linter
         run: |
           pip install flake8
@@ -115,9 +120,10 @@ jobs:
           flake8 python/src || echo "flake8 finished with errors, but continuing build."
 
       - name: Run Go linter
+        working-directory: ./golang
         run: |
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-          golangci-lint run ./golang/... || true
+          golangci-lint run ./filesystem/... || true
 
       - name: Run Flutter analyzer
         working-directory: ./app

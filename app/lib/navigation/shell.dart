@@ -6,7 +6,12 @@ import '../pages/advanced_search_page.dart';
 import 'main_navigation.dart';
 import '../pages/manager_page.dart';
 import 'package:app/constants.dart';
+import 'package:app/api.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:app/models/file_tree_node.dart';
+
+GlobalKey<DashboardPageState> globalKey = GlobalKey();
+GlobalKey<MainNavigationState> mainNavigationKey = GlobalKey();
 
 class Shell extends StatefulWidget {
   const Shell({super.key});
@@ -18,15 +23,36 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   int _selectedIndex = 0; //index selected form the main menu (0 to 3)
   String? _selectedManager; //name of the Manager selected
+  List<String> _managerNames = []; //list of manager names from startup
+  String _selectedManagerForSearch = "";
+
+  final Map<String, FileTreeNode> _managerTreeData = {};
+  final Map<String, bool> _pendingSorts = {}; // Track active sort operations
+  final Map<String, FileTreeNode> _sortResults =
+      {}; // Store sort results for approval
+
   final Uri _url = Uri.parse(
     'https://cos301-se-2025.github.io/Smart-File-Manager/',
   );
 
-  //pages are stored in a Widget List to send the correct widget(content) given the selected Index
-  final List<Widget> _pages = [
-    const DashboardPage(),
-    const SmartManagersPage(),
-    const AdvancedSearchPage(),
+  //pages are created dynamically to pass manager names to AdvancedSearchPage
+  List<Widget> get _pages => [
+    DashboardPage(managerNames: _managerNames, key: globalKey),
+    SmartManagersPage(
+      key: const ValueKey('smart_managers_page'),
+      managerTreeData: _managerTreeData,
+      managerNames: _managerNames,
+      pendingSorts: _pendingSorts,
+      sortResults: _sortResults,
+      onManagerSort: _onManagerSort,
+      onSortApprove: _onSortApprove,
+      onSortDecline: _onSortDecline,
+      onManagerDelete: _onManagerDelete,
+    ),
+    AdvancedSearchPage(
+      managerNames: _managerNames,
+      selectedManager: _selectedManagerForSearch,
+    ),
     const SettingsPage(),
   ];
 
@@ -46,6 +72,125 @@ class _ShellState extends State<Shell> {
     });
   }
 
+  //update stats
+  void _updateStats() {
+    if (_managerNames.isNotEmpty) {
+      globalKey.currentState?.loadStatsData();
+    }
+  }
+
+  //when manager is deleted updated values here:
+  void _onManagerDelete(String managerName) {
+    setState(() {
+      // Create a new list to ensure Flutter detects the change
+      _managerNames =
+          _managerNames.where((name) => name != managerName).toList();
+      _managerTreeData.remove(managerName);
+      _pendingSorts.remove(managerName);
+      _sortResults.remove(managerName);
+
+      // If the deleted manager was selected, deselect it
+      if (_selectedManager == managerName) {
+        _selectedManager = null;
+        _selectedIndex = 0; // Go to dashboard
+      }
+
+      // If the deleted manager was selected for search, clear it
+      if (_selectedManagerForSearch == managerName) {
+        _selectedManagerForSearch = "";
+      }
+    });
+
+    // Remove the manager from the navigation sidebar
+    mainNavigationKey.currentState?.removeManagerFromNavigation(managerName);
+
+    // Update stats to reflect the deletion
+    _updateStats();
+  }
+
+  //when manager is sorted(move directory is called, update treedata for manager)
+  void _onManagerSort(String managerName, FileTreeNode managerData) async {
+    // Start background sorting
+    setState(() {
+      _pendingSorts[managerName] = true;
+      _sortResults.remove(managerName); // Clear any previous results
+    });
+
+    try {
+      final sortedData = await Api.sortManager(managerName);
+
+      setState(() {
+        _pendingSorts[managerName] = false;
+        _sortResults[managerName] = sortedData;
+      });
+
+      // Show notification if user is not on SmartManagersPage
+      if (_selectedIndex != 1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Sort completed for "$managerName" - View results to approve',
+            ),
+            backgroundColor: kYellowText,
+            duration: Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'View',
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 1;
+                  _selectedManager = null;
+                });
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _pendingSorts[managerName] = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Sort failed for "$managerName": $e'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  void _onSortApprove(String managerName, FileTreeNode sortedData) async {
+    FileTreeNode response = await Api.loadTreeData(managerName);
+    print(response);
+    setState(() {
+      _managerTreeData[managerName] = response;
+      _sortResults.remove(managerName);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Sort applied for "$managerName"'),
+        backgroundColor: kYellowText,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _onSortDecline(String managerName) {
+    setState(() {
+      _sortResults.remove(managerName);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Sort declined for "$managerName"'),
+        backgroundColor: Colors.grey,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
   Future<void> _launchUrl() async {
     if (!await launchUrl(_url, mode: LaunchMode.externalApplication)) {
       throw Exception('Could not launch $_url');
@@ -53,11 +198,51 @@ class _ShellState extends State<Shell> {
   }
 
   //select the manager by passed in name and deselect main navigation if selected
-  void _onManagerTap(String managerName) {
+  void _onManagerTap(String managerName, FileTreeNode? treeData) {
     setState(() {
       _selectedManager = managerName;
       _selectedIndex = -1;
     });
+  }
+
+  void _onManagerTreeDataUpdate(String managerName, FileTreeNode treeData) {
+    setState(() {
+      _managerTreeData[managerName] = treeData;
+    });
+  }
+
+  void _onManagerNamesUpdate(List<String> managerNames) {
+    setState(() {
+      _managerNames = managerNames;
+    });
+  }
+
+  void _updateManagerTreeData(String managerName, FileTreeNode treeData) {
+    setState(() {
+      _managerTreeData[managerName] = treeData;
+    });
+  }
+
+  void _goToAdvancedSearch(String managerName) {
+    setState(() {
+      _selectedManager = null;
+      _selectedIndex = 2;
+      _selectedManagerForSearch = managerName;
+    });
+  }
+
+  void _onManagerAdded(String managerName) {
+    setState(() {
+      if (!_managerNames.contains(managerName)) {
+        // Create a new list to ensure Flutter detects the change
+        _managerNames = [..._managerNames, managerName];
+      }
+    });
+
+    // Force dashboard to update if it's the active page
+    if (_selectedIndex == 0) {
+      _updateStats();
+    }
   }
 
   //find the active page and return its widget
@@ -66,6 +251,9 @@ class _ShellState extends State<Shell> {
       return ManagerPage(
         key: ValueKey(_selectedManager),
         name: _selectedManager!,
+        treeData: _managerTreeData[_selectedManager!],
+        onTreeDataUpdate: _updateManagerTreeData,
+        onGoToAdvancedSearch: _goToAdvancedSearch,
       );
     } else if (_selectedIndex >= 0 && _selectedIndex < _pages.length) {
       return _pages[_selectedIndex];
@@ -80,6 +268,7 @@ class _ShellState extends State<Shell> {
       backgroundColor: kScaffoldColor,
       //Main Appbar with app title and login button
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         leading: Padding(
           padding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
           child: Image.asset("images/logo.png"),
@@ -112,11 +301,17 @@ class _ShellState extends State<Shell> {
         children: [
           //Main Navigation Widget with parmeters used to navigate
           MainNavigation(
+            key: mainNavigationKey,
             items: _navigationItems,
             selectedIndex: _selectedIndex,
             selectedManager: _selectedManager,
             onTap: _onNavigationTap,
+            updateStats: _updateStats,
             onManagerTap: _onManagerTap,
+            onManagerTreeDataUpdate: _onManagerTreeDataUpdate,
+            onManagerNamesUpdate: _onManagerNamesUpdate,
+            onManagerAdded: _onManagerAdded,
+            onManagerDelete: _onManagerDelete,
           ),
           //Page that needs to be rendered depending on navigation index
           Expanded(child: _getCurrentPage()),

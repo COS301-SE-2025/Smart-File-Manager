@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:app/models/file_tree_node.dart';
 import 'package:app/custom_widgets/file_item_widget.dart';
 import 'package:app/custom_widgets/breadcrumb_widget.dart';
+import 'package:app/custom_widgets/tag_dialog.dart';
+import 'package:app/api.dart';
 import 'package:open_file/open_file.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'dart:io';
 
 class FolderViewPage extends StatefulWidget {
@@ -10,12 +13,18 @@ class FolderViewPage extends StatefulWidget {
   final List<String> currentPath;
   final Function(FileTreeNode) onFileSelected;
   final Function(List<String>) onNavigate;
+  final String? managerName;
+  final VoidCallback? onTagChanged;
+  final bool isPreviewMode;
 
   const FolderViewPage({
     required this.treeData,
     required this.currentPath,
     required this.onFileSelected,
     required this.onNavigate,
+    this.managerName,
+    this.onTagChanged,
+    this.isPreviewMode = false,
     super.key,
   });
 
@@ -35,7 +44,7 @@ class _FolderViewPageState extends State<FolderViewPage> {
   @override
   void didUpdateWidget(FolderViewPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentPath != widget.currentPath) {
+    if (oldWidget.currentPath != widget.currentPath || oldWidget.treeData != widget.treeData) {
       _updateCurrentItems();
     }
   }
@@ -96,10 +105,19 @@ class _FolderViewPageState extends State<FolderViewPage> {
             ),
             itemCount: _currentItems.length,
             itemBuilder: (context, index) {
-              return FileItemWidget(
-                item: _currentItems[index],
-                onTap: _handleItemTap,
-                onDoubleTap: _handleNodeDoubleTap,
+              return GestureDetector(
+                onSecondaryTapDown: widget.isPreviewMode 
+                    ? null 
+                    : (details) => _handleItemRightTap(
+                        widget.managerName ?? "",
+                        _currentItems[index],
+                        details.globalPosition,
+                      ),
+                child: FileItemWidget(
+                  item: _currentItems[index],
+                  onTap: _handleItemTap,
+                  onDoubleTap: _handleNodeDoubleTap,
+                ),
               );
             },
           );
@@ -170,5 +188,113 @@ class _FolderViewPageState extends State<FolderViewPage> {
         );
       }
     }
+  }
+
+  void _handleItemRightTap(
+    String managerName,
+    FileTreeNode node,
+    Offset globalPosition,
+  ) {
+    if (node.isFolder) {
+      final entries = <ContextMenuEntry>[
+        MenuItem(
+          label: 'Lock',
+          icon: Icons.lock,
+          onSelected: () async {
+            bool response = await Api.locking(managerName, node.path ?? '');
+            if (response == true) {
+              _lockNode(node);
+            }
+          },
+        ),
+        MenuItem(
+          label: 'Unlock',
+          icon: Icons.lock_open,
+          onSelected: () async {
+            bool response = await Api.unlocking(managerName, node.path ?? '');
+            if (response == true) {
+              _unlockNode(node);
+            }
+          },
+        ),
+      ];
+
+      final menu = ContextMenu(
+        entries: entries,
+        position: globalPosition,
+        padding: const EdgeInsets.all(8.0),
+      );
+
+      showContextMenu(context, contextMenu: menu);
+    } else {
+      final entries = <ContextMenuEntry>[
+        MenuItem(
+          label: 'Details',
+          icon: Icons.info_outline,
+          onSelected: () => widget.onFileSelected(node),
+        ),
+        MenuItem(
+          label: 'Add Tag',
+          icon: Icons.label,
+          onSelected: () => _showAddTagDialog(node),
+        ),
+        MenuItem(
+          label: 'Lock',
+          icon: Icons.lock,
+          onSelected: () async {
+            bool response = await Api.locking(managerName, node.path ?? '');
+            if (response == true) {
+              _lockNode(node);
+            }
+          },
+        ),
+        MenuItem(
+          label: 'Unlock',
+          icon: Icons.lock_open,
+          onSelected: () async {
+            bool response = await Api.unlocking(managerName, node.path ?? '');
+            if (response == true) {
+              _unlockNode(node);
+            }
+          },
+        ),
+      ];
+
+      final menu = ContextMenu(
+        entries: entries,
+        position: globalPosition,
+        padding: const EdgeInsets.all(8.0),
+      );
+
+      showContextMenu(context, contextMenu: menu);
+    }
+  }
+
+  void _showAddTagDialog(FileTreeNode node) async {
+    final addedTag = await showDialog<String>(
+      context: context,
+      builder:
+          (context) => TagDialog(node: node, managerName: widget.managerName),
+    );
+
+    if (addedTag != null && mounted) {
+      setState(() {
+        node.tags?.add(addedTag);
+      });
+      // Notify parent that tags have changed
+      widget.onTagChanged?.call();
+    }
+  }
+
+  void _lockNode(FileTreeNode node) {
+    setState(() {
+      widget.treeData.lockItem(node.path ?? '');
+    });
+  }
+
+  void _unlockNode(FileTreeNode node) {
+    setState(() {
+      widget.treeData.unlockItem(node.path ?? '');
+    });
   }
 }

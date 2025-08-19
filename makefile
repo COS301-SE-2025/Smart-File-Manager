@@ -38,7 +38,11 @@ go_grpc_client:
 	go run grpc/client/grpcClient.go
 
 go_test:
-	cd golang/filesystem && go test -v
+	@echo "Running filesystem tests..."
+	cd golang/filesystem && go test -tags=test -v
+	@echo "Running filesystem/tests..."
+	cd golang/filesystem/tests && go test -tags=test -v
+
 
 go_api:
 	cd golang && \
@@ -49,6 +53,12 @@ python:
 
 python_test:
 	pytest -v -s --color=yes --tb=short python/testing/
+
+python_test_pyinstrument:
+	pyinstrument -r html -o profiling/profile_report.html -m pytest -v -s --color=yes --tb=short python/testing/
+
+python_test_clustering_request_pyinstrument:
+	pyinstrument --renderer html -o profile.html -m pytest -v -s --color=yes --tb=short python/testing/test_clustering_request.py
 
 proto_gen:
 	python3 -m grpc_tools.protoc \
@@ -74,3 +84,8 @@ python_client:
 python_master_temp:
 	pytest -v -s --color=yes --tb=short python/testing/test_clustering_request.py
 
+python_locked_temp:
+	pytest -v -s --color=yes --tb=short python/testing/test_locked_request.py
+
+python_fn_temp:
+	pytest -v -s --color=yes --tb=short python/testing/test_folder_name_creator.py

@@ -18,3 +18,18 @@ venv/
 message_structure.pb.go
 message_structure_grpc.pb.go
 
+app/windows/flutter/generated_plugins.cmake
+app/windows/flutter/generated_plugin_registrant.cc
+app/macos/Flutter/GeneratedPluginRegistrant.swift
+app/linux/flutter/generated_plugins.cmake
+app/linux/flutter/generated_plugin_registrant.cc
+app/pubspec.lock
+
+# Coverage
+.coverage
+profiling/
+
+# swap files
+*.swp
+
+/golang/storage/*
