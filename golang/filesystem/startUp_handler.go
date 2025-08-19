@@ -128,6 +128,12 @@ func saveManagerRecords(recs []ManagerRecord) error {
 
 func AddManager(name, path string) error {
 	composite, err := ConvertToObject(name, path)
+
+	saveCompositeDetails(composite)
+
+	// fmt.Println("+++++++++++++")
+	// PrettyPrintFolder(composite, "")
+	// fmt.Println("+++++++++++++")
 	if err != nil {
 		return err
 	}
