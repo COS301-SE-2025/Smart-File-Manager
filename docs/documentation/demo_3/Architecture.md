@@ -165,7 +165,7 @@ In order to allow our different codebases to communicate we leverage the standar
 - Advanced search capabilities
 - File and folder management operations
 
-![Application Architecture](assets/applicationArchitectureV2.png)
+![Application Architecture](assets/applicationArchitectureV3.png)
 
 ---
 

@@ -16,7 +16,7 @@
 - [Functional Requirements](#functional-requirements)
 - [Service Contract](#service-contract)
 - [Domain Model](#domain-model)
-- [Architectural Requirements](#architectural-requirements)
+- [Architectural Requirements](#architectural-requirements-please-see-architecturemd-linked-below)
   - [Quality Requirements](#quality-requirements)
   - [Architectural Patterns](#architectural-patterns)
   - [Design Patterns](#design-patterns)
@@ -385,9 +385,9 @@ As explained in our architecture below, our project has two "servers" for which 
 
 ![Domain-Model](assets/DomainModel.jpg)
 
-## Architectural Requirements
+## Architectural Requirements (Please see Architecture.md linked below)
 
-**IMPORTANT:** This sections only provides a brief overview of our architecture. Kindly consult [here](Architecture.md) for the detailed documentation on architecture.
+**IMPORTANT:** This sections only provides a brief overview of our architecture. Kindly consult [here](Architecture.md) for the detailed documentation on architecture prepared for marking.
 
 
 ### Quality Requirements
@@ -418,14 +418,8 @@ As explained in our architecture below, our project has two "servers" for which 
 ### Architectural Patterns
 #### Application Architecture
 
-![Application architecture](assets/applicationArchitecture.png)
-Hybrid between Monolithic and Master-Slave  
-Monolithic structure such that the entire application is deployed as a single unit, which is ideal as our application will be deployed entirely on the user's local machine.
-The clustering request uses gRPC to communicate from Go to Python. A master slave pattern is applied in our python codebase. A master monitors incoming requests from gRPC and scales the service via python threads (slaves) that perform the AI requirements such as clustering and other tasks such as metadata extraction.
-
-#### Hybrid Approach Benefits
-
-Combining both Go and Python allows us to leverage the strenghts of each for the best product possible. Go is coveted for its safety and strong concurrency while Python is the de facto standard for any AI related tasks. Combining these allows us to provide an implementation that is both accurate while remaining highly efficient.
+![Application architecture](assets/applicationArchitectureV3.png)
+Hybrid between Monolithic, Master-Slave and Client-Server.  
 
 ### Design Patterns
 
