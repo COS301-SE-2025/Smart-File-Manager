@@ -165,7 +165,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                           ),
                         ),
                         Text(
-                          _isAdvancedSearchReady
+                          _isAdvancedSearchReady && widget.selectedManager != ""
                               ? "Advanced Search Active"
                               : "Advanced Search Starting Up",
                           style: TextStyle(
