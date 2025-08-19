@@ -45,26 +45,26 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 
 **As a:** New user.  
 **I want to:** Register for an account using either the web portal or after downloading the app.  
-**So that I:** I can log in an sync all my preferences across multiple devices.
+**So that I:** I can log in and sync all my preferences across multiple devices.
 
 #### Acceptance criteria:
 
 **Given** I am a new user.  
-**When** I navigate to either the web portal registraton page or choose register on the application.  
+**When** I navigate to either the web portal registration page or choose register on the application.  
 **Then** My account is created and I should be notified that it took place successfully.  
-**Covers:** UC15
+**Covers:** UC19
 
-### 2. User Story: Download the Application
+### 2. User Story: Download and Install the Application
 
 **As a:** New or registered user.  
-**I want to:** Download the SFM app on to my device.  
-**So that I:** Can install the application.
+**I want to:** Download and install the SFM app on to my device.  
+**So that I:** Can use the application to manage my files.
 
 #### Acceptance criteria:
 
-**Given** I have access to the SFM portal.  
-**When** I click the correct download button for my platform (Windows /macOS / linux).  
-**Then** The application files are downloaded to my system.  
+**Given** I have access to the SFM portal and my system meets requirements.  
+**When** I click the correct download button for my platform (Windows /macOS / linux) and run the installer.  
+**Then** The application is successfully installed and ready for configuration.  
 **Covers:** UC1
 
 ### 3. User Story: Log into the application
@@ -89,8 +89,8 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 #### Acceptance criteria:
 
 **Given** I have installed the application.  
-**When** I click on create new smart manager.  
-**Then** I am prompted for the root directory and a smart manager is created which sorts all the content by its semantic meaning.  
+**When** I click on create new smart manager and select a root directory.  
+**Then** A smart manager is created and the system updates its scan targets to monitor this directory.  
 **Covers:** UC8
 
 ### 5. User Story: Configure sorting preferences
@@ -102,8 +102,8 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 #### Acceptance criteria:
 
 **Given** I have installed the application.  
-**When** I open the settings and configure rules for sorting and sorting timers.  
-**Then** My settings are saved and applied for future sorting.  
+**When** I open the settings and configure rules for sorting (metadata, keywords, tags) and sorting timers.  
+**Then** My configuration is saved and applied for future sorting.  
 **Covers:** UC3
 
 ### 6. User Story: Tag files manually
@@ -115,24 +115,11 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 #### Acceptance criteria:
 
 **Given** The application is installed and a smart manager created.  
-**When** I open the settings and configure rules for sorting and sorting timers.  
-**Then** My settings are saved and applied for future sorting.  
+**When** I select files and assign custom tags to them.  
+**Then** Tags are stored and associated with the files for use in sorting.  
 **Covers:** UC4
 
-### 7. User Story: Auto-sort files
-
-**As a:** Smart Folder.  
-**I want to:** Automatically sort folders and files at a regular interval.  
-**So that I:** Keep directories organized without human intervention.
-
-#### Acceptance criteria:
-
-**Given** Files exist in a monitored directory and user preferences are set.  
-**When** The timer for sorting expires.  
-**Then** Files are moved to a more appropriate directory by the AI sorter.  
-**Covers:** UC5
-
-### 8. User Story: Graph File organization visualization
+### 7. User Story: Graph File organization visualization
 
 **As a:** User.  
 **I want to:** See how my files are organized via an intuitive mind-map / graph view.  
@@ -142,14 +129,14 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 
 **Given** I have created a smart manager which contains content.  
 **When** I click on graph view.  
-**Then** I see an interactive graph of my files and folders.  
+**Then** I see an interactive graph-based UI of my files and folders.  
 **Covers:** UC7
 
-### 9. User Story: Traditional File organization visualization
+### 8. User Story: Traditional File organization visualization
 
 **As a:** User.  
 **I want to:** See how my files are organized via traditional folder viewer.  
-**So that I:** May traverse and interact with files in a well-know manner.
+**So that I:** May traverse and interact with files in a well-known manner.
 
 #### Acceptance criteria:
 
@@ -158,7 +145,7 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 **Then** I can traverse through the folder structure by clicking on folders.  
 **Covers:** UC7
 
-### 10. User Story: Trigger Manual Sort
+### 9. User Story: Trigger Manual Sort
 
 **As a:** User.  
 **I want to:** Manually initiate a file sorting process.  
@@ -167,11 +154,11 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 #### Acceptance criteria:
 
 **Given** The application is installed and settings configured.  
-**When** I click on Sort Now on a smart mananger.  
-**Then** The system initiates a reorganization of the smart manager.  
+**When** I click on Sort Now on a smart manager.  
+**Then** The sorting process begins and files are moved/sorted appropriately.  
 **Covers:** UC9
 
-### 11. User Story: Lock files and folders
+### 10. User Story: Lock files and folders
 
 **As a:** User.  
 **I want to:** Lock specific files and folders.  
@@ -181,10 +168,10 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 
 **Given** I have a smart manager with content.  
 **When** I select a file or folder and click the lock button.  
-**Then** The item is excluded from future organization operations.  
+**Then** The item is excluded from future organization operations and locked items are skipped during sorting.  
 **Covers:** UC10
 
-### 12. User Story: View File metadata
+### 11. User Story: View File metadata
 
 **As a:** User.  
 **I want to:** See metadata associated with a file.  
@@ -192,38 +179,38 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 
 #### Acceptance criteria:
 
-**Given** I have a smart manager with content.  
+**Given** I have a smart manager with content and files are indexed by the system.  
 **When** I select a file by clicking on it.  
-**Then** A side-menu pops up showing me the metadata associated with that file.  
-**Covers:** UC10
+**Then** A side-menu pops up showing me the detailed metadata associated with that file.  
+**Covers:** UC6
 
-### 13. User Story: Search files, tags or metadata
+### 12. User Story: Search files, tags or metadata
 
 **As a:** User.  
-**I want to:** Search for files using names, tags or metadata.  
+**I want to:** Search for files using names, tags or keywords.  
 **So that I:** Can quickly find relevant content.
 
 #### Acceptance criteria:
 
 **Given** My files are sorted in a smart manager.  
 **When** I enter a search query in the search bar.  
-**Then** A list of files matching the criteria is returned.  
+**Then** Search results matching the criteria are displayed.  
 **Covers:** UC11
 
-### 14. User Story: Rollback sorting changes
+### 13. User Story: Apply or Discard sorting changes
 
 **As a:** User.  
-**I want to:** Undo the last sorting operation.  
-**So that I:** Restore my organization to what is was before the last sort.
+**I want to:** Review sorting changes and decide whether to apply them or discard them.  
+**So that I:** Have control over whether changes are made to my file system.
 
 #### Acceptance criteria:
 
-**Given** I have performed a smart organization.  
-**When** I Click on the rollback button for a smart manager.  
-**Then** All files are returned to their exact previous location.  
-**Covers:** UC11
+**Given** I have performed a smart organization and sorting has occurred.  
+**When** I review the proposed changes and click apply or discard.  
+**Then** Either changes are applied to the file system or files return to their prior state.  
+**Covers:** UC12
 
-### 15. User Story: Add a new file or folder.
+### 14. User Story: Add a new file or folder
 
 **As a:** User.  
 **I want to:** Create a new file or folder at some location in my smart manager.  
@@ -236,10 +223,10 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 **Then** The new item is added to the smart manager but not yet sorted.  
 **Covers:** UC8
 
-### 16. User Story: Stay logged in.
+### 15. User Story: Stay logged in
 
 **As a:** User.  
-**I want to:** Remained logged in after restarting the app.  
+**I want to:** Remain logged in after restarting the app.  
 **So that I:** Don't have to log in every time I open the app.
 
 #### Acceptance criteria:
@@ -249,17 +236,70 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 **Then** I am automatically still logged in.  
 **Covers:** UC2
 
-### 17. User Story: Customize smart sort behaviour.
+### 16. User Story: Filter files by type
 
-**As an:** Advanced User.  
-**I want to:** Set the influence of tags, metadata and other criteria on the sorting AI.  
-**So that I:** Have fine control over the system.
+**As a:** User.  
+**I want to:** View files filtered by their type (e.g., images, documents, music).  
+**So that I:** Can quickly access specific types of content.
 
 #### Acceptance criteria:
 
-**Given** Advanced customization options are set.  
-**When** I adjust my customization options.  
-**Then** The changes influence future sorting.
+**Given** Files exist and are indexed by the system.  
+**When** I select a file type filter or request files of a specific type.  
+**Then** Files of the requested type are returned and displayed.  
+**Covers:** UC13
+
+### 17. User Story: Bulk tag operations
+
+**As a:** User.  
+**I want to:** Add or remove tags from multiple files at once.  
+**So that I:** Can efficiently manage tags across many files.
+
+#### Acceptance criteria:
+
+**Given** I have selected multiple files.  
+**When** I choose to add or remove tags in bulk.  
+**Then** The specified tags are added to or removed from all selected files.  
+**Covers:** UC14, UC15
+
+### 18. User Story: Find duplicate files
+
+**As a:** User.  
+**I want to:** Identify duplicate files across my monitored directories.  
+**So that I:** Can manage storage space and remove redundant files.
+
+#### Acceptance criteria:
+
+**Given** Files exist in monitored directories.  
+**When** I request duplicate file detection.  
+**Then** Duplicate file groups are identified and displayed.  
+**Covers:** UC16
+
+### 19. User Story: Bulk delete files
+
+**As a:** User.  
+**I want to:** Delete multiple files in a single operation.  
+**So that I:** Can efficiently clean up unwanted files.
+
+#### Acceptance criteria:
+
+**Given** Files exist and are indexed by the system.  
+**When** I select multiple files and choose delete.  
+**Then** All selected files are deleted from the system.  
+**Covers:** UC17
+
+### 20. User Story: View manager statistics
+
+**As a:** User.  
+**I want to:** See statistics about my file managers (file counts, sizes, tags, etc.).  
+**So that I:** Can understand and monitor my file organization.
+
+#### Acceptance criteria:
+
+**Given** I have smart managers configured.  
+**When** I request manager statistics.  
+**Then** Statistics including file counts, sizes, and tags are displayed across all managers.  
+**Covers:** UC18
 
 ## Use cases / Use Case Diagram
 
@@ -267,7 +307,7 @@ SFM is not just another tool, it's your new digital housekeeper, your AI file fi
 | ------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------- | ------------------------ |
 | UC1: Install Application              | User  | The user installs the SFM application on their device.                                               | System requirements met.                   | Application is ready for configuration.                    | ![UC1](assets/UC1.png)   |
 | UC2: Login                            | User  | The user logs in to save preferences across devices (optional).                                      | User is registered.                        | Preferences are saved.                                     | ![UC2](assets/UC2.png)   |
-| UC3: Configure Sorting Preferences    | User  | The user sets preferences for how sorting should occur (rules: metadata, keywords, tags).            | Application is installed.                  | Configuration is saved.                                    | ![UC3](assets/UC3.png)   |
+| UC3: Configure Sorting Preferences    | User  | The user sets preferences for how sorting should occur (rules: locks, tags).            | Application is installed.                  | Configuration is saved.                                    | ![UC3](assets/UC3.png)   |
 | UC4: Tag Files Manually               | User  | The user assigns custom tags to files.                                                               | Application is installed.                  | Tags are stored and used for sorting.                      | ![UC4](assets/UC4.png)   |
 | UC5: Sort Files                       | User  | The user manually initiates sorting of files into directories based on metadata, keywords, and tags. | Files exist in monitored directories.      | Files are moved/sorted appropriately.                      | ![UC5](assets/UC5.png)   |
 | UC6: View File Metadata               | User  | The user views detailed metadata of any file managed by SFM.                                         | File exists and is indexed by the system.  | Metadata displayed.                                        | ![UC6](assets/UC6.png)   |
