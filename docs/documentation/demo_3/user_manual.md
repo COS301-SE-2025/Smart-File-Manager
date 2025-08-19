@@ -1,232 +1,80 @@
-# Smart File Manager - User Manual
+<p align="center">
+  <img src="assets/spark_logo_dark_background.png" alt="Company Logo" width="300" height=100%/>
+</p>
 
-Version 2.0.0
+# User Manual  
 
-## Table of Contents
+**Version:** 1.0.0.0  
+**Prepared By:** Spark Industries  
+**Prepared For:** All our Users 
 
-1. [Introduction](#introduction)
-2. [Getting Started](#getting-started)
-3. [Dashboard Overview](#dashboard-overview)
-4. [Smart Managers](#smart-managers)
-5. [Managing Your Files](#managing-your-files)
-6. [Advanced Search](#advanced-search)
-7. [Settings](#settings)
-8. [Tips and Best Practices](#tips-and-best-practices)
-9. [Troubleshooting](#troubleshooting)
-
----
+## Content
+* [Introduction](#introduction)
+* [Startup Page](#start-up-page)
+* [Creating A Smart Manager](#creating-a-smart-manager)
+* [Glossary](#glossary)
 
 ## Introduction
+This document aims to server as a detailed manual of how to use smart file manager. It goes into detail on how to use the various features by simulating the flow of how the average user would likely interact with the system. It is broken up into sections corresponding to different features. If any term is unclear please consult the glossary linked [here](#glossary). We recommend reading this document sequentially for the best overview of how to use the system effectively.
 
-Welcome to Smart File Manager (SFM), an file organization system that helps you keep your files organized automatically. Think of it as having a personal assistant that knows exactly where to put your files and how to find them when you need them.
+**Note:** Please ensure that SFM has been installed on your system. Detailed instructions for doing so may be found [here](technical_installation.md)
 
-### What is Smart File Manager?
+## Start Up Page
+When starting SFM for the first time you will be shown the following page
 
-Smart File Manager uses "Smart Managers" - organizing systems that automatically sort and categorize your files based on rules you set. Instead of manually organizing thousands of files, you create Smart Managers that do the work for you.
+<p align="center">
+  <img src="assets/manualAssets/dashboard_empty.png" alt="Dashboard" style="width:100%; max-width:800px;">
+</p>
 
-### Key Features
+Currently there are no managers created so the dashboard page shows no statistics. From the sidebar we can see the various pages available to the user. These include:
 
-- **Automatic file organization** with Smart Managers
-- **Visual file relationships** with graph view
-- **Powerful search capabilities** across all your files
-- **Real-time statistics** and organization tracking
-- **Flexible tagging system** for better file discovery
+1. Dashboard (currently selected)
+2. Smart Managers 
+3. Advanced Search
+4. Settings
 
----
+We'll now show each page as it appears without any smart managers created (note: dashboard already shown)
 
-## Getting Started
+### Smart Manager
+<p align="center">
+  <img src="assets/manualAssets/smart_manager_empty.png" alt="SmartManager" style="width:100%; max-width:800px;">
+</p>
 
-### Main Navigation
 
-![Navigation Menu](assets/wireframeAssets/wireframe_main_navigation.png)
+### Advanced Search 
+<p align="center">
+  <img src="assets/manualAssets/advanced_search_empty.png" alt="AdvancedSearch" style="width:100%; max-width:800px;">
+</p>
 
-The left sidebar is your main navigation hub. Here's what each section does:
 
-- **Dashboard** - Your home base with file statistics and quick access
-- **Smart Managers** - View and edit your Smart Manager preferences
-- **Advanced Search** - Find files using powerful search filters
-- **Settings** - Customize your Smart File Manager experience
-- **Indivdual Smart Managers** - Treverse, folder structure, open files, add tags and use graph view!
+### Settings 
+<p align="center">
+  <img src="assets/manualAssets/setting_empty.png" alt="Settings" style="width:100%; max-width:800px;">
+</p>
 
----
+## Creating a Smart Manager
+To create a new smart manager to manage a subset of files follow these steps.
 
-## Dashboard Overview
+Click on the **+Create Smart Manager** button in the bottom-left corner of any page. The following pop-up will appear.
+<p align="center">
+  <img src="assets/manualAssets/create_smart_1.png" alt="Create_Manager_popup" style="width:100%; max-width:800px;">
+</p>
 
-![Dashboard Screenshot](assets/wireframeAssets/wireframe_dashboard.png)
+Enter the name of the manager and select the root of the new manager by using the **browse** button. Click **create** to confirm and make a new manager
+<p align="center">
+  <img src="assets/manualAssets/create_smart_2.png" alt="Create_Manager_popup_2" style="width:100%; max-width:800px;">
+</p>
 
-Your dashboard gives you a overview of your file organization:
+After creating a manager the following screen will appear.
+<p align="center">
+  <img src="assets/manualAssets/create_smart_3.png" alt="Create_Manager_done" style="width:100%; max-width:800px;">
+</p>
 
-### Statistics at a Glance
+All of the your created managers will appear on the sidebar. Clicking on the manager in the sidebar will provide you with the page shown above. From here all files inside a manager may be viewed. The other features on this page will be explained in the sections to follow.
 
-- **Total Files**: See how many files Smart File Manager is tracking
-- **Storage Used**: Monitor your storage consumption (2.34 GB shown)
-- **Organization Level**: Track how well-organized your files are (72% organized)
-- **Smart Managers**: Count of active organizing systems (3 managers)
+## Glossary
+In this section we describe some terms that we use in the user manual.
 
-### Quick Access Section
+### Smart Manager
+A smart manager is the principle object of smart file manager. It can be thinked of as a repo which manages all files it has been set to track. When creating a smart manager you may select the root. All content contained in this root will be tracked by the smart manager and any operations that you wish to perform will act on the files inside this manager.
 
-This area shows your most frequently accessed files. Click any file to open it instantly!
-
----
-
-## Smart Managers
-
-![Smart Managers Page](assets/wireframeAssets/wireframe_smart_managers.png)
-
-Smart Managers are the heart of your file organization system. Think of each Smart Manager as a specialized filing assistant.
-
-### Understanding Smart Managers
-
-Each Smart Manager:
-
-- **Organizes a specific user defined folder structure**
-- **Shows its organization status**
-- **Manages files across multiple directories**
-- **Has the ability to sort its folder structure**
-
-### Creating a New Smart Manager
-
-1. Click the **"Create"** button in the bottom side of the navigation bar
-2. Choose the name and folder this manager will manage
-3. Set your organization preferences (can be found on the managers page):
-   - **Max files per directory**: How many files before creating a new folder (default: 200)
-   - **Max directory depth**: How many folder levels deep to organize (default: 20)
-
-### Managing Existing Smart Managers
-
-For each Smart Manager, you can:
-
-- **Sort**: Reorganize files within the manager
-- **Rename**: Change the manager's name
-- **Delete**: Remove the manager (files remain, but organization stops)
-- **Save**: Apply any changes you've made
-
----
-
-## Managing Your Files
-
-### Folder View
-
-![Documents Manager Folder View](assets/wireframeAssets/wireframe_manager_page.png)
-
-The traditional folder view shows your files in a familiar format:
-
-#### File Information Panel
-
-When you select a file (like "notes.docx" in the example), you'll see:
-
-- **File type and size** (Word Document, 2.8 MB)
-- **Creation and modification dates**
-- **Tags** for easy categorization
-
-#### Available Actions
-
-- **Open File**: Launch the file in its default application
-- **Add Tags**: Categorize files with custom labels
-- **Delete Tags**: Categorize files with custom labels
-- **Lock File**: Prevent accidental changes or deletion
-- **Delete File**: Remove the file permanently
-
-#### Search and Filter Tools
-
-- **Search within manager**: Find specific files quickly
-- **Sort by**: Organize by name, date, size, or type
-- **Filter**: Show only certain file types
-
-### Graph View
-
-![Documents Manager Graph View](assets/wireframeAssets/wireframe_manager_page2.png)
-
-The force directed graph view shows how your files relate to each other:
-
-#### Understanding the Graph
-
-- **Central yellow node**: Main folder or primary file
-- **Connected colored nodes**: Related files and subfolders
-- **Lines between nodes**: Show relationships and connections
-- **Node colors**: Different colors represent different file depths
-
-#### When to Use Graph View
-
-- **Exploring project relationships**: See how files in a project connect
-- **Finding related documents**: Discover files you might have forgotten
-- **Understanding file structure**: Visualize complex folder hierarchies
-
----
-
-## Advanced Search
-
-![Advanced Search Interface](assets/wireframeAssets/wireframe_advanced_search.png)
-
-When you need to find specific files across your entire system, Advanced Search is your best friend.
-
-### Search Filters
-
-**File Type**: Choose from documents, images, videos, or any specific format
-**Location**: Search in specific folders or across all locations
-**Date Modified**: Find files changed within specific time periods
-**Size**: Locate files within certain size ranges
-**Tags**: Search by the tags you've assigned
-**Author/Owner**: Find files created by specific people
-
-### Using Advanced Search Effectively
-
-1. **Start broad, then narrow**: Begin with general criteria, then add specific filters
-2. **Use multiple filters**: Combine file type + date range + location for precise results
-
-### Search Results
-
-Results show as file cards with:
-
-- File icons and names
-- Modification dates
-- Quick preview information
-
----
-
-## Settings
-
-![Settings Page](assets/wireframeAssets/wireframe_settings.png)
-
-Customize Smart File Manager to work exactly how you prefer:
-
-### Settings Categories
-
-**General**: Basic application preferences and default behaviors
-**Appearance**: Customize colors, themes, and visual preferences
-**Notifications**: Control when and how the system alerts you
-**Account**: Manage your user profile and account settings
-
-### Recommended Settings for New Users
-
-1. **Start with default settings** - they work well for most users
-2. **Adjust notifications** - decide how often you want organization updates
-3. **Customize appearance** - choose themes that work with your workflow
-
----
-
-## Tips and Best Practices
-
-### Getting the Most from Smart Managers
-
-**Start Small**: Create your first Smart Manager for your most chaotic folder
-**Use Descriptive Names**: Name managers clearly (e.g., "Work Documents" not "Manager1")
-**Regular Maintenance**: Check organization levels weekly and adjust as needed
-
-### Effective File Organization
-
-**Tag Consistently**: Use the same tag names across similar files
-**Review Regularly**: Check your dashboard weekly to monitor organization levels
-**Don't Over-Organize**: Let Smart Managers do the work - avoid creating too many manual folders
-
-### Search Like a Pro
-
-**Learn Your Filters**: Experiment with different filter combinations
-**Use Graph View**: When looking for related files, switch to graph view
-**Save Time**: Use Quick Access for files you open daily
-
----
-
-### Getting Help
-
-- View The Help Section on our webiste for any further assistance: https://cos301-se-2025.github.io/Smart-File-Manager/
