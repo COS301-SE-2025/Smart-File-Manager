@@ -160,10 +160,11 @@ class _ShellState extends State<Shell> {
     }
   }
 
-  void _onSortApprove(String managerName, FileTreeNode sortedData) {
+  void _onSortApprove(String managerName, FileTreeNode sortedData) async {
+    FileTreeNode response = await Api.loadTreeData(managerName);
+    print(response);
     setState(() {
-      sortedData.replaceOldPath();
-      _managerTreeData[managerName] = sortedData;
+      _managerTreeData[managerName] = response;
       _sortResults.remove(managerName);
     });
 

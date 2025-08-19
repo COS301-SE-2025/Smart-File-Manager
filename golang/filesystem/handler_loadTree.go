@@ -449,6 +449,7 @@ func GoSidecreateDirectoryJSONStructure(folder *Folder) []FileNode {
 		nodes = append(nodes, FileNode{
 			Name:     file.Name,
 			Path:     file.Path,
+			NewPath:  file.NewPath,
 			IsFolder: false,
 			Tags:     tags,
 			Metadata: md,
