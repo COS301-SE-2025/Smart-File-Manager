@@ -103,12 +103,10 @@ func PrettyPrintFolder(f *Folder, indent string) {
 	// print files
 	for _, file := range f.Files {
 		fmt.Printf("%s  📄 %s\n", indent, file.Name)
-		for _, kw := range file.Keywords {
-			fmt.Printf("%s  KEYWORDS: %s\n", indent, kw.Keyword)
-		}
 		for _, tag := range file.Tags {
 			fmt.Printf("%s  TAG: %s\n", indent, tag)
 		}
+		// fmt.Printf("%s  locked: %s\n", indent, file.Locked)
 
 		fmt.Println("----")
 	}
