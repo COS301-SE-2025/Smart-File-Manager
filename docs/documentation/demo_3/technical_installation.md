@@ -6,12 +6,13 @@
 
 **Version:** 1.0.0.0  
 **Prepared By:** Spark Industries  
-**Prepared For:** Personal Development team use  
+**Prepared For:** Southern Cross Solutions and Users of SFM 
 
 ## Content
 * [Introduction](#introduction)
 * [Installer](#installer)
 * [Building from Scratch](#building-the-project-from-scratch)
+* [Creating your own installer](#creating-your-own-installer)
 
 ## Introduction
 The following document serves as the technical installation document for SparkIndustries. It provides detailed instructions for how to download and install the program using the following approaches:
@@ -138,3 +139,13 @@ flutter run
 ```  
 
 The application should now be running and working as intended.
+
+## Creating your own installer
+
+This section details how to create your own installer, or rather the process we use to create our installer. 
+
+**Note:** We do NOT recommend this approach to installing our program whatsoever! It has merely been added for completeness sake. 
+
+The install instructions is what we used for creating our Windows installer and may or may not work for other operating systems. Should some user wish to create a different installer for this application we hope that this information may provide some reference point for how this process should be approached.
+
+The document detailing this process may be found [here](installer_guide.md)
