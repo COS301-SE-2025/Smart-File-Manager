@@ -164,17 +164,19 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
                             ),
                           ),
                         ),
-                        Text(
-                          _isAdvancedSearchReady && widget.selectedManager != ""
-                              ? "Advanced Search Active"
-                              : "Advanced Search Starting Up",
-                          style: TextStyle(
-                            color:
-                                _isAdvancedSearchReady
-                                    ? Colors.green
-                                    : Colors.amber,
-                          ),
-                        ),
+                        managername != ""
+                            ? Text(
+                              _isAdvancedSearchReady && managername != ""
+                                  ? "Advanced Search Active"
+                                  : "Advanced Search Starting Up",
+                              style: TextStyle(
+                                color:
+                                    _isAdvancedSearchReady && managername != ""
+                                        ? Colors.green
+                                        : Colors.amber,
+                              ),
+                            )
+                            : Text(""),
                       ],
                     ),
                   ),

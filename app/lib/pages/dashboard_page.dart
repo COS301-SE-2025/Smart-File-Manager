@@ -31,7 +31,7 @@ class DashboardPageState extends State<DashboardPage> {
   @override
   void didUpdateWidget(DashboardPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // Refresh data when manager list changes
     if (widget.managerNames != oldWidget.managerNames) {
       _onPageload();
@@ -90,13 +90,14 @@ class DashboardPageState extends State<DashboardPage> {
     double totalsize = 0;
     for (StatsModel manager in _managerStats!.managers!) {
       totalsize = totalsize + manager.size!;
+      print(totalsize);
     }
     if (totalsize < _gigInBytes) {
       _gig = false;
       return (totalsize / 1e+6).roundToDouble();
     } else {
       _gig = true;
-      return (totalsize / 8e+9).roundToDouble();
+      return totalsize / _gigInBytes;
     }
   }
 
@@ -456,7 +457,8 @@ class DashboardPageState extends State<DashboardPage> {
                               : itemWidth,
                       child: OverviewWidget(
                         title: 'Total Storage',
-                        value: '${_sumTotalSize()} ${_gig ? 'Gb' : 'Mb'}',
+                        value:
+                            '${_sumTotalSize().toStringAsFixed(1)} ${_gig ? 'Gb' : 'Mb'}',
                         icon: Icons.storage_rounded,
                       ),
                     ),
