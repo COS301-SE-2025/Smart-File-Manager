@@ -411,13 +411,14 @@ class _GraphViewPageState extends State<GraphViewPage> {
 
             return GestureDetector(
               onDoubleTap: () => _handleNodeDoubleTap(data),
-              onSecondaryTapUp: widget.isPreviewMode 
-                  ? null
-                  : (details) => _handleNodeRightTap(
-                      widget.managerName ?? "",
-                      data,
-                      details.globalPosition,
-                    ),
+              onSecondaryTapUp:
+                  widget.isPreviewMode
+                      ? null
+                      : (details) => _handleNodeRightTap(
+                        widget.managerName ?? "",
+                        data,
+                        details.globalPosition,
+                      ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -480,7 +481,7 @@ class _GraphViewPageState extends State<GraphViewPage> {
                   // Label below node
                   const SizedBox(height: 4),
                   Container(
-                    constraints: const BoxConstraints(maxWidth: 80),
+                    constraints: const BoxConstraints(maxWidth: 100),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 6,
                       vertical: 2,
