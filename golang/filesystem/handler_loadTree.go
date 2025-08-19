@@ -97,6 +97,7 @@ func mergeProtoToFolder(dir *pb.Directory, existing *Folder) {
 			Path:     file.OriginalPath,
 			Tags:     tagsToStrings(file.Tags),
 			Metadata: metadataConverter(file.Metadata),
+			Keywords: file.Keywords,
 			Locked:   file.IsLocked,
 			NewPath:  file.NewPath,
 		})
@@ -316,6 +317,11 @@ func printDirChildren(d *pb.Directory, prefix string) {
 			branch = "└── "
 		}
 		fmt.Printf("%s%s%s\n", prefix, branch, fileLabel(f))
+		fmt.Printf("%s%s%s%s\n", prefix, branch, fileLabel(f), "'s keyw:")
+		for _, kw := range f.Keywords {
+			fmt.Printf("%s%s kw is: %s\n", prefix, branch, kw.Keyword)
+		}
+
 	}
 }
 

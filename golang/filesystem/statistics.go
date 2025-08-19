@@ -64,7 +64,7 @@ func StatHandler(w http.ResponseWriter, r *http.Request) {
 		manager.Files = len(allFiles)
 		manager.Folders = countFolders(folder)
 		manager.Size = calculateTotalSize(allFiles)
-		manager.UmbrellaCounts = calculateUmbrellaCounts(allFiles)
+		manager.UmbrellaCounts = calculateUmbrellaCounts(folder, folder.Name)
 
 		// Get file rankings
 		log.Printf("StatHandler: Calculating file rankings for manager: %s", folder.Name)
@@ -87,7 +87,7 @@ func collectManagerFiles(folder *Folder) []fileInfo {
 
 	log.Printf("LoadTypes: Starting for folder %s", folder.Name)
 	// Load types for this folder - this might be slow
-	LoadTypes(folder, folder.Name)
+	// LoadTypes(folder, folder.Name)
 	log.Printf("LoadTypes: Completed for folder %s", folder.Name)
 
 	log.Printf("collectFilesRecursive: Starting for folder %s", folder.Name)
@@ -149,31 +149,30 @@ func calculateTotalSize(files []fileInfo) int64 {
 	return total
 }
 
-func calculateUmbrellaCounts(files []fileInfo) []int {
+func calculateUmbrellaCounts(folder *Folder, managerName string) []int {
 	// [Documents, Images, Music, Presentations, Videos, Spreadsheets, Archives, Unknown]
 	counts := make([]int, 8)
-
-	for _, file := range files {
-		switch file.umbrella {
-		case "Documents":
-			counts[0]++
-		case "Images":
-			counts[1]++
-		case "Music":
-			counts[2]++
-		case "Presentations":
-			counts[3]++
-		case "Videos":
-			counts[4]++
-		case "Spreadsheets":
-			counts[5]++
-		case "Archives":
-			counts[6]++
-		default:
-			counts[7]++
-		}
+	umbrellaOrder := []string{
+		"Documents", "Images", "Music", "Presentations", "Videos", "Spreadsheets", "Archives", "Unknown",
 	}
 
+	// Ensure types are loaded
+	LoadTypes(folder, managerName)
+
+	umbrellaMap := ObjectMap[managerName]
+	for _, obj := range umbrellaMap {
+		found := false
+		for i, umbrella := range umbrellaOrder {
+			if obj.umbrellaType == umbrella {
+				counts[i]++
+				found = true
+				break
+			}
+		}
+		if !found {
+			counts[7]++ // Unknown
+		}
+	}
 	return counts
 }
 

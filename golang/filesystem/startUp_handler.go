@@ -37,7 +37,6 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	recs, err := loadManagerRecords()
 
-
 	if err != nil {
 		errMsg := "Internal error: " + err.Error()
 		http.Error(w, errMsg, http.StatusBadRequest)
@@ -50,13 +49,11 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("cleanupOrphanCompositeJSONs warning: %v\n", err)
 	}
 
-
 	var (
 		managerNames []string
 		mu           sync.Mutex
 		wg           sync.WaitGroup
 	)
-
 
 	for _, r := range recs {
 		wg.Add(1)
@@ -70,7 +67,6 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-
 			mu.Lock()
 			Composites = append(Composites, composite)
 
@@ -81,9 +77,7 @@ func startUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	wg.Wait()
 
-  
 	w.WriteHeader(http.StatusOK)
-
 
 	res := startUpResponse{
 		ResponseMessage: "Request successful!, Composites: " + strconv.Itoa(len(managerNames)),
@@ -144,8 +138,6 @@ func AddManager(name, path string) error {
 	for _, f := range Composites {
 		recs = append(recs, ManagerRecord{Name: f.Name, Path: f.Path})
 	}
-	//starts to get keywords
-	go GoExtractKeywords(composite)
 
 	return saveManagerRecords(recs)
 }

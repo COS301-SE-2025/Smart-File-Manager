@@ -26,6 +26,12 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 			CreateDirectoryStructure(item)
 			// Move the content into new manager folder
 			moveContent(item)
+			//update composite in memory
+			newObj, err := ConvertToObject(item.Name, item.Path)
+			if err != nil {
+				log.Printf("Error converting to object: %v", err)
+			}
+			*item = *newObj
 			w.Write([]byte("true"))
 			return
 		}
@@ -55,7 +61,9 @@ func moveContent(item *Folder) {
 
 	}
 
-	// Path to managers storage file
+
+	managersFilePath := filepath.Join(getPath(), "golang", managersFilePath)
+
 	data, err := os.ReadFile(managersFilePath)
 	var recs []ManagerRecord
 
@@ -97,21 +105,46 @@ func moveContentRecursive(item *Folder) {
 
 	for _, file := range item.Files {
 		sourcePath := file.Path
+		targetPath := filepath.Join(root, file.NewPath)
 
-		// Clean the new path to avoid triple manager names
-		cleanedNewPath := cleanManagerPrefix(file.NewPath, item.Name)
-		targetPath := filepath.Join(root, cleanedNewPath)
+		// Create target directory if it doesn't exist
+		targetDir := filepath.Dir(targetPath)
+		os.MkdirAll(targetDir, os.ModePerm)
 
-		// Also update the composite
-		file.NewPath = cleanedNewPath
+		// Handle duplicate files by generating unique names
+		finalTargetPath := generateUniqueFilePath(targetPath)
 
-		os.MkdirAll(filepath.Dir(targetPath), os.ModePerm)
-		if err := os.Rename(sourcePath, targetPath); err != nil {
-			log.Printf("Error moving file %s: %v", sourcePath, err)
+		if err := os.Rename(sourcePath, finalTargetPath); err != nil {
+			log.Printf("Error moving file %s to %s: %v", sourcePath, finalTargetPath, err)
 		}
 	}
+
 	for _, subfolder := range item.Subfolders {
 		moveContentRecursive(subfolder)
+	}
+}
+
+func generateUniqueFilePath(targetPath string) string {
+	// If file doesn't exist, return original path
+	if _, err := os.Stat(targetPath); os.IsNotExist(err) {
+		return targetPath
+	}
+
+	// File exists, generate unique name
+	dir := filepath.Dir(targetPath)
+	filename := filepath.Base(targetPath)
+	ext := filepath.Ext(filename)
+	nameWithoutExt := strings.TrimSuffix(filename, ext)
+
+	counter := 1
+	for {
+		newFilename := fmt.Sprintf("%s_(%d)%s", nameWithoutExt, counter, ext)
+		newPath := filepath.Join(dir, newFilename)
+
+		if _, err := os.Stat(newPath); os.IsNotExist(err) {
+			return newPath
+		}
+		counter++
 	}
 }
 
