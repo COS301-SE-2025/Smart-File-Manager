@@ -20,6 +20,40 @@ class FileItemWidget extends StatefulWidget {
 class _FileItemWidgetState extends State<FileItemWidget> {
   bool _isHovered = false;
 
+  // File categories with extensions
+  static final Map<String, List<String>> _categories = {
+    "Documents": ["pdf", "doc", "docx", "rtf", "txt", "odt", "md", "csv"],
+    "Images": [
+      "jpg",
+      "jpeg",
+      "png",
+      "gif",
+      "bmp",
+      "tiff",
+      "tif",
+      "webp",
+      "svg",
+    ],
+    "Music": ["mp3", "wav", "flac", "aac", "m4a", "ogg", "wma"],
+    "Presentations": ["ppt", "pptx", "odp", "key"],
+    "Videos": ["mp4", "mkv", "avi", "mov", "wmv", "webm"],
+    "Spreadsheets": ["xls", "xlsx", "ods", "tsv", "xlsm"],
+    "Archives": ["zip", "rar", "7z", "tar", "gz", "iso"],
+    "Other": [],
+  };
+
+  // Icons & colors per category
+  static final Map<String, IconData> _categoryIcons = {
+    "Documents": Icons.description,
+    "Images": Icons.image,
+    "Music": Icons.music_note,
+    "Presentations": Icons.slideshow,
+    "Videos": Icons.movie,
+    "Spreadsheets": Icons.table_chart,
+    "Archives": Icons.archive,
+    "Other": Icons.insert_drive_file,
+  };
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -86,7 +120,6 @@ class _FileItemWidgetState extends State<FileItemWidget> {
                       ),
                     ),
                   ),
-
                   Positioned(
                     top: 6,
                     left: 6,
@@ -112,6 +145,24 @@ class _FileItemWidgetState extends State<FileItemWidget> {
     );
   }
 
+  String _getFileExtension() {
+    final name = widget.item.name.toLowerCase();
+    if (!name.contains('.')) return "";
+    return name.split('.').last;
+  }
+
+  String _getCategory() {
+    if (widget.item.isFolder) return "Folder";
+
+    final ext = _getFileExtension();
+    for (var entry in _categories.entries) {
+      if (entry.value.contains(ext)) {
+        return entry.key;
+      }
+    }
+    return "Other";
+  }
+
   Color _getFileColor() {
     if (widget.item.isFolder) return const Color(0xffFFB400);
     return const Color(0xff2563EB);
@@ -119,6 +170,6 @@ class _FileItemWidgetState extends State<FileItemWidget> {
 
   IconData _getFileIcon() {
     if (widget.item.isFolder) return Icons.folder;
-    return Icons.description;
+    return _categoryIcons[_getCategory()] ?? Icons.insert_drive_file;
   }
 }
