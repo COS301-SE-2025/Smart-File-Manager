@@ -106,6 +106,9 @@ func PrettyPrintFolder(f *Folder, indent string) {
 		for _, kw := range file.Keywords {
 			fmt.Printf("%s  KEYWORDS: %s\n", indent, kw.Keyword)
 		}
+		for _, tag := range file.Tags {
+			fmt.Printf("%s  TAG: %s\n", indent, tag)
+		}
 
 		fmt.Println("----")
 	}

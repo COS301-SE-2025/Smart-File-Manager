@@ -54,6 +54,7 @@ func addTagHandler(w http.ResponseWriter, r *http.Request) {
 		if item != nil {
 			c.AddTagToFile(convertedPath, tag)
 			c.Display(0)
+			saveCompositeDetails(c)
 			w.Write([]byte("true"))
 			return
 		}
@@ -77,6 +78,7 @@ func removeTagHandler(w http.ResponseWriter, r *http.Request) {
 		if file := c.GetFile(convertedPath); file != nil {
 			if file.RemoveTag(tag) {
 				// fmt.Printf("Removed tag '%s' from file: %s\n", tag, convertedPath)
+				saveCompositeDetails(c)
 				w.Write([]byte("true"))
 				return
 			}
@@ -109,7 +111,7 @@ func lockHandler(w http.ResponseWriter, r *http.Request) {
 	for _, c := range Composites {
 		if c.Name == name {
 			c.LockByPath(path)
-			fmt.Println("LOCKED FILE")
+			saveCompositeDetails(c)
 			w.Write([]byte("true"))
 			return
 		}
@@ -132,6 +134,7 @@ func unlockHandler(w http.ResponseWriter, r *http.Request) {
 	for _, c := range Composites {
 		if c.Name == name {
 			c.UnlockByPath(path)
+			saveCompositeDetails(c)
 			w.Write([]byte("true"))
 			return
 		}

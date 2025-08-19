@@ -164,6 +164,7 @@ func BulkAddTagHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, fmt.Sprintf("Failed to add tags: %v", err), http.StatusInternalServerError)
 				return
 			}
+
 			children := GoSidecreateDirectoryJSONStructure(folder)
 
 			root := DirectoryTreeJson{
@@ -178,6 +179,7 @@ func BulkAddTagHandler(w http.ResponseWriter, r *http.Request) {
 			if err := json.NewEncoder(w).Encode(root); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			}
+			saveCompositeDetails(folder)
 			return
 		}
 	}
@@ -223,6 +225,7 @@ func BulkRemoveTagHandler(w http.ResponseWriter, r *http.Request) {
 			if err := json.NewEncoder(w).Encode(root); err != nil {
 				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			}
+			saveCompositeDetails(folder)
 			return
 		}
 	}

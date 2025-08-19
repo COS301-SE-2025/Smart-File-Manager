@@ -18,7 +18,7 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, item := range Composites {
+	for i, item := range Composites {
 		fmt.Printf("Checking manager: %s\n", item.Name)
 		if item.Name == compositeName {
 			fmt.Printf("found manager: %s\n", item.Name)
@@ -27,11 +27,47 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 			// Move the content into new manager folder
 			moveContent(item)
 			//update composite in memory
-			newObj, err := ConvertToObject(item.Name, item.Path)
-			if err != nil {
-				log.Printf("Error converting to object: %v", err)
+			name := item.Name
+			path := item.Path
+
+			Composites = append(Composites[:i], Composites[i+1:]...)
+			// Remove from type storage
+			delete(ObjectMap, item.Path)
+
+			data, err := os.ReadFile(managersFilePath)
+			var recs []ManagerRecord
+
+			if err == nil {
+				// File exists — update entry
+				if err := json.Unmarshal(data, &recs); err != nil {
+					fmt.Println("error in unmarshaling of json")
+					panic(err)
+				}
+				// Remove the record with the matching name
+				for j := range recs {
+					if recs[j].Name == name {
+						recs = append(recs[:j], recs[j+1:]...)
+						break
+					}
+				}
+			} else if os.IsNotExist(err) {
+				// Nothing to do if file doesn't exist
+			} else {
+				panic(err)
 			}
-			*item = *newObj
+
+			out, err := json.MarshalIndent(recs, "", "  ")
+			if err != nil {
+				panic(err)
+			}
+			if err := os.WriteFile(managersFilePath, out, 0644); err != nil {
+				panic(err)
+			}
+
+			err = AddManager(name, path)
+			if err != nil {
+				log.Printf("Error adding manager: %v", err)
+			}
 			w.Write([]byte("true"))
 			return
 		}
@@ -60,7 +96,6 @@ func moveContent(item *Folder) {
 		os.RemoveAll(originalPath)
 
 	}
-
 
 	managersFilePath := filepath.Join(getPath(), "golang", managersFilePath)
 
