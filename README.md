@@ -36,7 +36,7 @@ Smart File Manager (SFM) is a digital housekeeper that uses metadata, natural la
 
 - [Demo 2 Video](https://drive.google.com/file/d/1r3b0Cgn8EPdx442N7hdfmTc4ODt7TX4g/view?usp=drive_link)
 
-- [Demo 3 Video]()
+- [Demo 3 Video](https://drive.google.com/file/d/1k8QrDCzxmoQ0MvWkq4EAaTX5V6fvfJ1O/view?usp=sharing)
 
 ## 📑 Documentation
 
@@ -202,3 +202,4 @@ We follow a structured GitFlow branching model to ensure efficient development a
 [![Last Commit](https://img.shields.io/github/last-commit/COS301-SE-2025/Smart-File-Manager?style=flat-square)](https://github.com/COS301-SE-2025/Smart-File-Manager/commits/main)
 [![Repository Size](https://img.shields.io/github/repo-size/COS301-SE-2025/Smart-File-Manager?style=flat-square)](https://github.com/COS301-SE-2025/Smart-File-Manager)
 [![CI/CD](https://github.com/COS301-SE-2025/Smart-File-Manager/actions/workflows/actions.yml/badge.svg)](https://github.com/COS301-SE-2025/Smart-File-Manager/actions/workflows/actions.yml)
+
