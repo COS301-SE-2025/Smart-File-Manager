@@ -3,6 +3,8 @@ from sentence_transformers import SentenceTransformer
 import grpc
 import message_structure_pb2_grpc
 
+import os
+
 import master
 
 # Class for handling requests to gRPC python server
@@ -28,5 +30,8 @@ class RequestHandler(message_structure_pb2_grpc.DirectoryServiceServicer):
             port = server.add_insecure_port("[::]:0")
 
         server.start()
-        print(f"Server started, listening on {port}")
+        print(f"export PYTHON_SERVER={port}")
+        with open("server.env", "w") as f:
+            f.write(f"export PYTHON_SERVER={port}\n")
+
         server.wait_for_termination()
