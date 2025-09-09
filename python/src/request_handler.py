@@ -21,10 +21,12 @@ class RequestHandler(message_structure_pb2_grpc.DirectoryServiceServicer):
         return response
 
     def serve(self):
-        port = "50051"
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         message_structure_pb2_grpc.add_DirectoryServiceServicer_to_server(self, server)
-        server.add_insecure_port("[::]:" + port)
+        port = server.add_insecure_port("[::]:50051")
+        if port == 0:
+            port = server.add_insecure_port("[::]:0")
+
         server.start()
-        print("Server started, listening on " + port)
+        print(f"Server started, listening on {port}")
         server.wait_for_termination()
