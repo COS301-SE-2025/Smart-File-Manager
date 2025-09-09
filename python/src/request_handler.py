@@ -3,8 +3,6 @@ from sentence_transformers import SentenceTransformer
 import grpc
 import message_structure_pb2_grpc
 
-import os
-
 import master
 
 # Class for handling requests to gRPC python server
