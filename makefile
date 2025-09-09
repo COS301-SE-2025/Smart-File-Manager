@@ -50,7 +50,6 @@ go_api:
 
 python:
 	python3 python/src/main.py
-	
 
 python_test:
 	pytest -v -s --color=yes --tb=short python/testing/
