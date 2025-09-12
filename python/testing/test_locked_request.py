@@ -164,3 +164,4 @@ def test_send_real_dir(grpc_test_server, createDirectoryRequest):
     # Check if response is well formed
     assert response.response_code == 200
     assert response.response_msg != "No file could be opened"
+

@@ -118,3 +118,9 @@ def test_send_real_dir(grpc_test_server, createDirectoryRequest):
     # Check if response is well formed
     assert response.response_code == 200
     assert response.response_msg != "No file could be opened"
+
+def test_invalid_credential_req(grpc_test_server):
+    req = DirectoryRequest(root=None, requestType = "CLUSTERING", serverSecret = "wrongSecret")
+    response = grpc_test_server.SendDirectoryStructure(req)
+    assert response.response_code == 401
+    assert response.response_msg == "Unauthorized: Incorrect server secret"
