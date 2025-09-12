@@ -69,7 +69,7 @@ def createDirectoryRequest():
         files = files1,
     )    
 
-    req = DirectoryRequest(root=root_dir, requestType="KEYWORDS")
+    req = DirectoryRequest(root=root_dir, requestType="KEYWORDS", serverSecret=os.environ["SFM_SERVER_SECRET"])
     yield req
 
 

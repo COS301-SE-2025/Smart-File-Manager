@@ -99,7 +99,7 @@ def createDirectoryRequest():
         directories= [uni_dir, pers_dir]
     )    
 
-    req = DirectoryRequest(root=root_dir, requestType="METADATA")
+    req = DirectoryRequest(root=root_dir, requestType="METADATA", serverSecret=os.environ["SFM_SERVER_SECRET"])
     yield req
 
 
