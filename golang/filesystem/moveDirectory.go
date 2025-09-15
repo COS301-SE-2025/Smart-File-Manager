@@ -337,5 +337,10 @@ func cleanManagerPrefix(path, managerName string) string {
 		cleaned = append(cleaned, p)
 	}
 
-	return filepath.Join(cleaned...)
+	result := filepath.Join(cleaned...)
+	// Preserve leading slash for absolute paths
+	if filepath.IsAbs(path) && !strings.HasPrefix(result, string(os.PathSeparator)) {
+		result = string(os.PathSeparator) + result
+	}
+	return result
 }
