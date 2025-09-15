@@ -15,6 +15,9 @@ import (
 
 func saveCompositeDetails(c *Folder) {
 
+	if c == nil {
+		return
+	}
 	children := compositeToJsonStorageFormat(c)
 
 	root := DirectoryTreeJson{
@@ -28,6 +31,9 @@ func saveCompositeDetails(c *Folder) {
 }
 
 func compositeToJsonStorageFormat(folder *Folder) []FileNode {
+	if folder == nil {
+		return nil
+	}
 	var nodes []FileNode
 
 	for _, file := range folder.Files {
