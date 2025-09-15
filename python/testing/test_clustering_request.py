@@ -81,7 +81,7 @@ def createDirectoryRequest():
         files = files1
     )    
 
-    req = DirectoryRequest(root=root_dir, requestType="CLUSTERING", serverSecret=os.environ["SFM_SERVER_SECRET"])
+    req = DirectoryRequest(root=root_dir, requestType="CLUSTERING", serverSecret=os.environ["SFM_SERVER_SECRET"], prefferedCase = "CAMEL")
     yield req
 
 
