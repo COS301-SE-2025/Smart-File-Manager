@@ -17,7 +17,7 @@ from collections import defaultdict
 
 
 class FolderNameCreator:
-    def __init__(self, model):
+    def __init__(self, model, case_convention : str):
         self.model = model
         self.max_keywords = 200 # for folder name creation
         self.lemmatizer = WordNetLemmatizer()
@@ -34,6 +34,13 @@ class FolderNameCreator:
         self.filename_scores = {}
         self.parent_name_scores = {}
         self.keyword_scores = {}
+
+        supported_cases = ['CAMEL', 'SNAKE', 'PASCAL', 'KEBAB']
+        cleaned_case_convention = case_convention.strip().upper()
+        if cleaned_case_convention in supported_cases:
+            self.case_convention = cleaned_case_convention 
+        else:
+            self.case_convention = 'CAMEL'
 
         self._ensure_nltk_data()
 
@@ -72,16 +79,18 @@ class FolderNameCreator:
         if tags:
             tag_names = [tag.lower().strip() for tag in tags if isinstance(tag, str)]
             most_common_tag, _ = Counter(tag_names).most_common(1)[0]
-            return self._clean_name(most_common_tag)
+            words = self.lemmatize([most_common_tag])
+            return self.format_case(words)
 
         # Else, fallback to most common keyword
         if keywords:
             keyword_names = [kw.lower().strip() for kw in keywords if isinstance(kw, str)]
             most_common_kw, _ = Counter(keyword_names).most_common(1)[0]
-            return self._clean_name(most_common_kw)
+            words = self.lemmatize([most_common_kw])
+            return self.format_case(words) 
 
         # Final fallback
-        return "Group"
+        return self.format_case(["Group"])
 
     def _clean_name(self, name: str) -> str:
         # Remove non-alphanumeric characters and collapse spaces
@@ -188,3 +197,16 @@ class FolderNameCreator:
                 if lemma not in seen or score > seen[lemma]:
                     seen[lemma] = score
         return sorted(seen.items(), key=lambda x: -x[1])
+    
+    def format_case(self, words):
+        if not words:
+            return 'Group'
+
+        if self.case_convention == "CAMEL":
+            return words[0].lower() + "".join(w.capitalize() for w in words[1:])
+        elif self.case_convention == "SNAKE":
+            return "_".join(w.lower() for w in words)
+        elif self.case_convention == "PASCAL":
+            return "".join(w.capitalize() for w in words)
+        elif self.case_convention == "KEBAB":
+            return "-".join(w.lower() for w in words)
