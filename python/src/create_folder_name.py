@@ -1,16 +1,12 @@
 import os
 import re
 import unicodedata
-from pathlib import Path
-from typing import Dict
-from collections import Counter, defaultdict
+from collections import Counter
 
-import numpy as np
 import nltk
 from nltk.corpus import wordnet
 from nltk import pos_tag
 from nltk.stem import WordNetLemmatizer
-from sklearn.metrics.pairwise import cosine_similarity
 
 
 class FolderNameCreator:
@@ -58,8 +54,8 @@ class FolderNameCreator:
 
     def _split_words(self, text: str):
         """Split on camelCase, PascalCase, snake_case, kebab-case, dots, numbers"""
-        text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)  # camelCase → camel Case
-        text = re.sub(r"[^a-zA-Z0-9]+", " ", text)        # keep alphanum only
+        text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)  # camelCase -> camel Case
+        text = re.sub(r"[^a-zA-Z0-9]+", " ", text)        # Discard non alpha numeric 
         return [w for w in text.split() if w]
 
     # ---------- CORE ----------
