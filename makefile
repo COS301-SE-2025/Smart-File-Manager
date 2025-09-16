@@ -52,7 +52,7 @@ python:
 	python3 python/src/main.py
 
 python_test:
-	pytest -v -s --color=yes --tb=short python/testing/
+	pytest -vv -s --color=yes --tb=short python/testing/
 
 python_test_pyinstrument:
 	pyinstrument -r html -o profiling/profile_report.html -m pytest -v -s --color=yes --tb=short python/testing/

@@ -15,11 +15,11 @@ from create_folder_name import FolderNameCreator
 np.random.seed(42)
 
 class KMeansCluster:
-    def __init__(self, numClusters, max_depth, model, parent_folder):
+    def __init__(self, numClusters, max_depth, model, parent_folder, case_convention : str):
         self.base_clusters = numClusters
         self.min_size = 2 # hardcoded for now # even numbers are good
         self.max_depth = max_depth
-        self.folder_namer = FolderNameCreator(model)
+        self.folder_namer = FolderNameCreator(model, case_convention)
         self.parent_folder = parent_folder
 
         self.locked_files = []

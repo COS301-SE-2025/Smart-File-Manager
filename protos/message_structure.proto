@@ -43,7 +43,8 @@ message Directory {
 message DirectoryRequest {
   Directory root = 1;
   string requestType = 2;
-  string serverSecret = 3;
+  string prefferedCase = 3;
+  string serverSecret = 4;
 }
 
 // Python to go
