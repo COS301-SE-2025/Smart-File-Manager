@@ -72,7 +72,7 @@ class KMeansCluster:
             return builder.buildDirectory(rel_path, files, [])
 
         # Find K (number of clusters) using elbow method
-        bias_factor = (1 / (depth + 1)) * 0.4
+        bias_factor = (1 / (depth + 1)) * 0.02
         k = self.get_num_clusters(
             full_vecs,
             k_min=self.min_size,

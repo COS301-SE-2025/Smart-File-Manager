@@ -24,7 +24,7 @@ class FolderNameCreator:
         # Weighting of different vars
         self.weights = {
             "keywords":0.9, # If there are keywords they should really be different to not be together
-            "filename":0.002, # Should only make a small difference compared to keywrods (when they are used)
+            "filename":1.0, # Should only make a small difference compared to keywrods (when they are used)
             "tags":1.5, # Even though they should already be weighted significantly
             "original_parent":0.01,
             # Metadata which can be considered
@@ -60,28 +60,46 @@ class FolderNameCreator:
     
 
     def generateFolderName(self, files):
-        # Try to generate name based on most common tag or keyword
-        tags = []
-        keywords = []
+        # Collect weighted candidates
+        scores = defaultdict(float)
 
         for file in files:
-            tags.extend(file.get("tags", []))
-            keywords.extend([kw for kw, _ in file.get("keywords", [])])
+            # Tags
+            for tag in file.get("tags", []):
+                if isinstance(tag, str):
+                    scores[self._clean_name(tag)] += self.weights["tags"]
+                elif hasattr(tag, "name"):  # gRPC Tag object
+                    scores[self._clean_name(tag.name)] += self.weights["tags"]
 
-        # Use most common tag if available
-        if tags:
-            tag_names = [tag.lower().strip() for tag in tags if isinstance(tag, str)]
-            most_common_tag, _ = Counter(tag_names).most_common(1)[0]
-            return self._clean_name(most_common_tag)
+            # Keywrods
+            for kw, _ in file.get("keywords", []):
+                if isinstance(kw, str):
+                    scores[self._clean_name(kw)] += self.weights["keywords"]
 
-        # Else, fallback to most common keyword
-        if keywords:
-            keyword_names = [kw.lower().strip() for kw in keywords if isinstance(kw, str)]
-            most_common_kw, _ = Counter(keyword_names).most_common(1)[0]
-            return self._clean_name(most_common_kw)
+            # Filename
+            if "filename" in file:
+                base_name = self.remove_all_extensions(file["filename"])
+                clean_fn = self._clean_name(base_name)
+                scores[clean_fn] += self.weights["filename"]
 
-        # Final fallback
-        return "Group"
+        # Nothing found
+        if not scores:
+            return "Group"
+
+        # Pick top X by score
+        sorted_candidates = sorted(scores.items(), key=lambda x: -x[1])
+        top_candidates = [name for name, _ in sorted_candidates[:self.foldername_length]]
+
+        # Encode and pick representative (semantic centroid)
+        embeddings = self.model.encode(top_candidates)
+        centroid = np.mean(embeddings, axis=0, keepdims=True)
+        sims = cosine_similarity(centroid, embeddings).flatten()
+        best_idx = sims.argsort()[-self.foldername_length:][::-1]
+
+        folder_keywords = [top_candidates[i] for i in best_idx]
+
+        # Combine into folder name
+        return "_".join(folder_keywords)
 
     def _clean_name(self, name: str) -> str:
         # Remove non-alphanumeric characters and collapse spaces
