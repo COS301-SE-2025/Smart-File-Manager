@@ -19,7 +19,7 @@ class Master():
         self.slaves = ThreadPoolExecutor(maxSlaves)
         self.scraper = MetaDataScraper()
         self.kw_extractor = KWExtractor()
-        self.full_vec = FullVector(transformer, weights)  
+        self.full_vec = FullVector(transformer,None)  
 
     # Takes gRPC request's root and sends it to be processed by a slave
     def submit_task(self, request : DirectoryRequest):
