@@ -44,6 +44,37 @@ func isPathContained(parentPath, childPath string) bool {
 	return strings.HasPrefix(childAbs, parentAbs)
 }
 
+func checkDirectoryConflicts(newPath string) (bool, string, error) {
+	newPathAbs, err := filepath.Abs(newPath)
+	if err != nil {
+		return false, "", err
+	}
+
+	for _, comp := range Composites {
+		existingPathAbs, err := filepath.Abs(comp.Path)
+		if err != nil {
+			continue
+		}
+
+		// Check if new path is contained in existing manager
+		if isPathContained(comp.Path, newPath) {
+			return true, fmt.Sprintf("Directory is already contained within existing manager '%s' at path '%s'", comp.Name, comp.Path), nil
+		}
+
+		// Check if existing manager is contained in new path
+		if isPathContained(newPath, comp.Path) {
+			return true, fmt.Sprintf("New directory would contain existing manager '%s' at path '%s'", comp.Name, comp.Path), nil
+		}
+
+		// Check for exact path match
+		if existingPathAbs == newPathAbs {
+			return true, fmt.Sprintf("Directory is already managed by '%s'", comp.Name), nil
+		}
+	}
+
+	return false, "", nil
+}
+
 func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Println("addDirectory called")
 	managerName := r.URL.Query().Get("name")
