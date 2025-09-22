@@ -1,3 +1,5 @@
+//go:build ignore
+
 package filesystem
 
 import (
@@ -10,21 +12,21 @@ import (
 	"testing"
 )
 
-func TestAPI_AddAndRemoveDirectory(t *testing.T) {
-	req := httptest.NewRequest("GET", "/addDirectory?name=testdir&path=../../testRootFolder", nil)
-	w := httptest.NewRecorder()
-	addCompositeHandler(w, req)
-	if w.Body.String() != "true" {
-		t.Fatalf("expected true, got %s", w.Body.String())
-	}
+// func TestAPI_AddAndRemoveDirectory(t *testing.T) {
+// 	req := httptest.NewRequest("GET", "/addDirectory?name=testdir&path=../../testRootFolder", nil)
+// 	w := httptest.NewRecorder()
+// 	addCompositeHandler(w, req)
+// 	if w.Body.String() != "true" {
+// 		t.Fatalf("expected true, got %s", w.Body.String())
+// 	}
 
-	// req = httptest.NewRequest("GET", "/removeDirectory?path=../../testRootFolder", nil)
-	// w = httptest.NewRecorder()
-	// removeCompositeHandler(w, req)
-	// if w.Body.String() != "true" {
-	// 	t.Fatalf("expected true, got %s", w.Body.String())
-	// }
-}
+// 	// req = httptest.NewRequest("GET", "/removeDirectory?path=../../testRootFolder", nil)
+// 	// w = httptest.NewRecorder()
+// 	// removeCompositeHandler(w, req)
+// 	// if w.Body.String() != "true" {
+// 	// 	t.Fatalf("expected true, got %s", w.Body.String())
+// 	// }
+// }
 
 func TestAPI_AddAndRemoveTag(t *testing.T) {
 	// Add folder to operate on

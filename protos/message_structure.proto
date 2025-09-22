@@ -43,6 +43,7 @@ message Directory {
 message DirectoryRequest {
   Directory root = 1;
   string requestType = 2;
+
   string preferredCase = 3;
   string serverSecret = 4;
 }

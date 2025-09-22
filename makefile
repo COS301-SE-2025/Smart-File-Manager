@@ -43,6 +43,11 @@ go_test:
 	@echo "Running filesystem/tests..."
 	cd golang/filesystem/tests && go test -tags=test -v
 
+go_coverage:
+	cd golang/filesystem && go test -coverprofile=coverage.out -covermode=atomic
+	@echo "Coverage summary:"
+	cd golang/filesystem && go tool cover -html=coverage.out
+	@echo "To view HTML report, run: go tool cover -html=golang/filesystem/coverage.out"
 
 go_api:
 	cd golang && \
@@ -52,7 +57,7 @@ python:
 	python3 python/src/main.py
 
 python_test:
-	pytest -v -s --color=yes --tb=short python/testing/
+	pytest -vv -s --color=yes --tb=short python/testing/
 
 python_test_pyinstrument:
 	pyinstrument -r html -o profiling/profile_report.html -m pytest -v -s --color=yes --tb=short python/testing/

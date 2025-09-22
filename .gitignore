@@ -33,3 +33,6 @@ profiling/
 *.swp
 
 /golang/storage/*
+
+# environment
+*.env
