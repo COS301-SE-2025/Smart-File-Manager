@@ -64,8 +64,9 @@ func grpcFunc(c *Folder, requestType string) error {
 	defer cancel()
 
 	req := &pb.DirectoryRequest{
-		Root:        convertFolderToProto(*c),
-		RequestType: requestType,
+		Root:          convertFolderToProto(*c),
+		RequestType:   requestType,
+		PreferredCase: preferredCase,
 	}
 
 	resp, err := client.SendDirectoryStructure(ctx, req)
