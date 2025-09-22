@@ -76,10 +76,10 @@ func checkDirectoryConflicts(newPath string) (bool, string, error) {
 }
 
 func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
-	// fmt.Println("addDirectory called")
 	managerName := r.URL.Query().Get("name")
 	filePath := r.URL.Query().Get("path")
 
+	// Check if manager name already exists
 	for _, comp := range Composites {
 		if comp.Name == managerName {
 			http.Error(w, "A smart file manager with that name already exists", http.StatusBadRequest)
@@ -88,14 +88,26 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mu.Lock()
-	// Composites = append(Composites, composite)
-	//appendng happens in this:
-	err := AddManager(managerName, filePath)
+	defer mu.Unlock()
+
+	// Check for directory conflicts
+	hasConflict, conflictMessage, err := checkDirectoryConflicts(filePath)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error checking directory conflicts: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	if hasConflict {
+		http.Error(w, conflictMessage, http.StatusBadRequest)
+		return
+	}
+
+	// Proceed with adding the manager
+	err = AddManager(managerName, filePath)
 	if err != nil {
 		w.Write([]byte("false"))
 		return
 	}
-	mu.Unlock()
 
 	w.Write([]byte("true"))
 }
