@@ -82,6 +82,8 @@ func collectBySize(folder *Folder, buckets map[int64][]string) {
 }
 
 func findDuplicateFilesHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 	name := r.URL.Query().Get("name")
 	mu.Lock()
 	defer mu.Unlock()

@@ -56,19 +56,19 @@ func checkDirectoryConflicts(newPath string) (bool, string, error) {
 			continue
 		}
 
-		// Check if new path is contained in existing manager
-		if isPathContained(comp.Path, newPath) {
+		// Exact match
+		if existingPathAbs == newPathAbs {
+			return true, fmt.Sprintf("Directory is already managed by '%s'", comp.Name), nil
+		}
+
+		// New path is inside existing manager
+		if strings.HasPrefix(newPathAbs+string(os.PathSeparator), existingPathAbs+string(os.PathSeparator)) {
 			return true, fmt.Sprintf("Directory is already contained within existing manager '%s' at path '%s'", comp.Name, comp.Path), nil
 		}
 
-		// Check if existing manager is contained in new path
-		if isPathContained(newPath, comp.Path) {
+		// Existing manager is inside new path
+		if strings.HasPrefix(existingPathAbs+string(os.PathSeparator), newPathAbs+string(os.PathSeparator)) {
 			return true, fmt.Sprintf("New directory would contain existing manager '%s' at path '%s'", comp.Name, comp.Path), nil
-		}
-
-		// Check for exact path match
-		if existingPathAbs == newPathAbs {
-			return true, fmt.Sprintf("Directory is already managed by '%s'", comp.Name), nil
 		}
 	}
 
@@ -117,6 +117,10 @@ func addTagHandler(w http.ResponseWriter, r *http.Request) {
 	tag := r.URL.Query().Get("tag")
 
 	convertedPath := ConvertToWSLPath(filePath)
+	if filePath == "" || tag == "" {
+		w.Write([]byte("false"))
+		return
+	}
 
 	mu.Lock()
 	defer mu.Unlock()
