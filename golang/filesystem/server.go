@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -14,6 +16,33 @@ var (
 	Composites []*Folder
 	mu         sync.Mutex
 )
+
+func isPathContained(parentPath, childPath string) bool {
+	parentPath = filepath.Clean(parentPath)
+	childPath = filepath.Clean(childPath)
+
+	// Convert to absolute paths for accurate comparison
+	parentAbs, err := filepath.Abs(parentPath)
+	if err != nil {
+		return false
+	}
+
+	childAbs, err := filepath.Abs(childPath)
+	if err != nil {
+		return false
+	}
+
+	// Ensure paths end with separator for accurate prefix checking
+	if !strings.HasSuffix(parentAbs, string(filepath.Separator)) {
+		parentAbs += string(filepath.Separator)
+	}
+	if !strings.HasSuffix(childAbs, string(filepath.Separator)) {
+		childAbs += string(filepath.Separator)
+	}
+
+	// Check if child path starts with parent path
+	return strings.HasPrefix(childAbs, parentAbs)
+}
 
 func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Println("addDirectory called")
