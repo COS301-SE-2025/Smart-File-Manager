@@ -78,6 +78,21 @@ Smart File Manager (SFM) is a digital housekeeper that uses metadata, natural la
 
 </details>
 
+<details>
+<summary><strong>📋 Demo 4 Documentation</strong></summary>
+
+🔗 [Functional Requirements Document (SRS)](docs/documentation/demo_4/srs.md) <br>
+🔗 [Architectural Specifications](docs/documentation/demo_4/Architecture.md) <br>
+🔗 [Wireframe Documentation](docs/documentation/demo_4/wireframe.md) <br>
+🔗 [Research Document](docs/documentation/demo_4/researchDoc.md) <br>
+🔗 [User Manual](docs/documentation/demo_4/user_manual.md) <br>
+🔗 [Coding Standards](docs/documentation/demo_4/coding_standards.md) <br>
+🔗 [Technical Installation Manual](docs/documentation/demo_4/technical_installation.md) <br>
+🔗 [User Manual](docs/documentation/demo_4/user_manual.md) <br>
+🔗 [Testing Policy](docs/documentation/demo_4/testing_policy.md) <br>
+
+</details>
+
 ## 📊 Project Board
 
 The GitHub Project boards are used to track current tasks allocated to each team member, facilitating effective communication, progress monitoring, and ensuring we meet project deadlines while maintaining accountability and transparency throughout the development process.
