@@ -3,6 +3,7 @@ package filesystem
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -62,10 +63,17 @@ func grpcFunc(c *Folder, requestType string) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 	defer cancel()
+	shh, found := os.LookupEnv("SFM_SERVER_SECRET")
+	if !found {
+		fmt.Println("secret not found")
+		return errors.New("server secret not found error")
+	}
+	fmt.Println(shh)
 
 	req := &pb.DirectoryRequest{
-		Root:        convertFolderToProto(*c),
-		RequestType: requestType,
+		Root:         convertFolderToProto(*c),
+		RequestType:  requestType,
+		ServerSecret: shh,
 	}
 
 	resp, err := client.SendDirectoryStructure(ctx, req)
