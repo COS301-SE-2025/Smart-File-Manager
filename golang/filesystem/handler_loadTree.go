@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"errors"
 
 	"google.golang.org/grpc/credentials/insecure"
 	//grpc imports
@@ -63,10 +64,18 @@ func grpcFunc(c *Folder, requestType string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 	defer cancel()
 
-	req := &pb.DirectoryRequest{
-		Root:        convertFolderToProto(*c),
-		RequestType: requestType,
-	}
+	shh, found := os.LookupEnv("SFM_SERVER_SECRET")
+    if !found {
+        fmt.Println("secret not found")
+        return errors.New("server secret not found error")
+    }
+    fmt.Println(shh)
+
+    req := &pb.DirectoryRequest{
+        Root:         convertFolderToProto(*c),
+        RequestType:  requestType,
+        ServerSecret: shh,
+    }
 
 	resp, err := client.SendDirectoryStructure(ctx, req)
 
