@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"slices"
 	//grpc imports
 )
 
@@ -13,6 +14,13 @@ func sortTreeHandler(w http.ResponseWriter, r *http.Request) {
 
 	name := r.URL.Query().Get("name")
 	caseParam := r.URL.Query().Get("case")
+	if caseParam == "" {
+		caseParam = "CAMEL"
+	}
+	allowedCases := []string{"CAMEL", "SNAKE", "PASCAL", "KEBAB"}
+	if !slices.Contains(allowedCases, caseParam) {
+		http.Error(w, "Invalid case type.", http.StatusBadRequest)
+	}
 	preferredCase = caseParam
 	mu.Lock()
 	defer mu.Unlock()
@@ -20,7 +28,7 @@ func sortTreeHandler(w http.ResponseWriter, r *http.Request) {
 	for _, c := range Composites {
 		if c.Name == name {
 			// build the nested []FileNode
-			err := grpcFunc(c, "CLUSTERING")
+			err := grpcFunc(c, "CLUSTERING", preferredCase)
 			if err != nil {
 				log.Fatalf("grpcFunc failed: %v", err)
 				http.Error(w, "internal server error, GRPC CALLED WRONG", http.StatusInternalServerError)
