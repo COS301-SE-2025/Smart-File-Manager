@@ -22,14 +22,13 @@ func sortTreeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid case type.", http.StatusBadRequest)
 		return
 	}
-	preferredCase = caseParam
 	mu.Lock()
 	defer mu.Unlock()
 
 	for _, c := range Composites {
 		if c.Name == name {
 			// build the nested []FileNode
-			err := grpcFunc(c, "CLUSTERING", preferredCase)
+			err := grpcFunc(c, "CLUSTERING", caseParam)
 			if err != nil {
 				log.Fatalf("grpcFunc failed: %v", err)
 				http.Error(w, "internal server error, GRPC CALLED WRONG", http.StatusInternalServerError)

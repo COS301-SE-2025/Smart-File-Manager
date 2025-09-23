@@ -11,9 +11,8 @@ import (
 
 var (
 	//array of smartfile managers
-	Composites    []*Folder
-	mu            sync.Mutex
-	preferredCase string = "CAMEL"
+	Composites []*Folder
+	mu         sync.Mutex
 )
 
 func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
