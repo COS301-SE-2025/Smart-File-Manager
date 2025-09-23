@@ -316,7 +316,10 @@ func HandleRequests() {
 	http.HandleFunc("/deleteManager", deleteManagerHandler)
 
 	http.HandleFunc("/returnType", ReturnTypeHandler)
+
 	http.HandleFunc("/returnStats", StatHandler)
+
+	http.HandleFunc("/setPreferredCase", SetPreferredCase)
 
 	fmt.Println("Server started on port 51000")
 

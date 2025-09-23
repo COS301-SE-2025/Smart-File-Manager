@@ -47,7 +47,7 @@ type Metadata struct {
 	LastModified string `json:"lastModified"`
 }
 
-func grpcFunc(c *Folder, requestType string) error {
+func grpcFunc(c *Folder, requestType string, preferredCase string) error {
 
 	if requestType != "METADATA" && requestType != "CLUSTERING" && requestType != "KEYWORDS" {
 		return fmt.Errorf("invalid requestType: %s", requestType)
@@ -71,9 +71,11 @@ func grpcFunc(c *Folder, requestType string) error {
 	fmt.Println(shh)
 
 	req := &pb.DirectoryRequest{
-		Root:         convertFolderToProto(*c),
-		RequestType:  requestType,
-		ServerSecret: shh,
+		Root:          convertFolderToProto(*c),
+		RequestType:   requestType,
+		PreferredCase: preferredCase,
+		ServerSecret:  shh,
+
 	}
 
 	resp, err := client.SendDirectoryStructure(ctx, req)

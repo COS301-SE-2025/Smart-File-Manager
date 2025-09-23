@@ -257,7 +257,7 @@ func LevenshteinDistForKeywords(searchText string, fileKeyword string) int {
 }
 
 func pythonExtractKeywords(c *Folder) {
-	err := grpcFunc(c, "KEYWORDS")
+	err := grpcFunc(c, "KEYWORDS", "CAMEL")
 	if err != nil {
 		log.Fatalf("grpcFunc failed: %v", err)
 	}
