@@ -19,12 +19,14 @@ class TestFullVector(unittest.TestCase):
             {
                 "size_bytes": 1000,
                 "keywords": [("keyword1", 0.5), ("keyword2", 1.0)],
+                "filename" : "file1",
                 "created": "2023-01-01T00:00:00",
                 "tags": ["tag1", "tag2"]
             },
             {
                 "size_bytes": 2000,
                 "keywords": [],
+                "filename" : "file2",
                 "created": "2023-02-01T00:00:00",
                 "tags": ["tag3"]
             }
@@ -36,14 +38,14 @@ class TestFullVector(unittest.TestCase):
         for file in files:
             self.assertIn("full_vector", file)
             self.assertIsInstance(file["full_vector"], list)
-            self.assertEqual(len(file["full_vector"]), 8)  # 3 (kw) + 1 (created) + 1 (size) + 3 (tags)
+            self.assertEqual(len(file["full_vector"]), 11)  # 3 (kw) + 1 (created) + 1 (size) + 3 (tags) + 2 (fn)
 
     def test_gather_feature_data(self):
         files = [
-            {"size_bytes": 1000, "keywords": [("key1", 0.5)], "created": "2023-01-01T00:00:00", "tags": ["tag1", "tag2"]},
-            {"size_bytes": 2000, "keywords": [], "created": "2023-02-01T00:00:00", "tags": ["tag3"]}
+                {"size_bytes": 1000, "keywords": [("key1", 0.5)],"filename" : "file1", "created": "2023-01-01T00:00:00", "tags": ["tag1", "tag2"]},
+                {"size_bytes": 2000, "keywords": [],"filename":"file2", "created": "2023-02-01T00:00:00", "tags": ["tag3"]}
         ]
-        features = ["size_bytes", "keywords", "created", "tags"]
+        features = ["size_bytes", "keywords", "created", "tags", "filename"]
 
         fv = FullVector(self.mock_transformer)
         result = fv._gather_feature_data(files, features)
@@ -52,6 +54,7 @@ class TestFullVector(unittest.TestCase):
         self.assertEqual(len(result["keywords"]), 2)
         self.assertEqual(len(result["created"]), 2)
         self.assertEqual(len(result["tags"]), 2)
+        self.assertEqual(len(result["filename"]), 2)
 
     def test_normalize_feature(self):
         values = [1000, 2000]

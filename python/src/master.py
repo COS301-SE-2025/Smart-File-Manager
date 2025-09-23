@@ -16,11 +16,11 @@ import time
 # Takes submitted gRPC requests and assigns them to a slave for processing before returning the response
 class Master():
 
-    def __init__(self, maxSlaves, transformer):
+    def __init__(self, maxSlaves, transformer, weights: dict):
         self.slaves = ThreadPoolExecutor(maxSlaves)
         self.scraper = MetaDataScraper()
         self.kw_extractor = KWExtractor()
-        self.full_vec = FullVector(transformer)  
+        self.full_vec = FullVector(transformer,None)  
 
     # Takes gRPC request's root and sends it to be processed by a slave
     def submit_task(self, request : DirectoryRequest):
