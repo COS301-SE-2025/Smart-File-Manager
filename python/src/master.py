@@ -82,7 +82,7 @@ class Master():
             print("Full vectors appended: " + str(self.full_vector_time_2 - self.start_time)) 
 
             # Recursively cluster and return a directory
-            kmeans = KMeansCluster(int(len(full_vecs) / 3 ), 10, self.full_vec.model, request.root.name, request.prefferedCase)
+            kmeans = KMeansCluster(int(len(full_vecs) / 3 ), 10, self.full_vec.model, request.root.name, request.preferredCase)
             response_directory = kmeans.dirCluster(full_vecs,files)
             self.clustering_time = time.time()
             print("Clustering complete: " + str(self.clustering_time - self.start_time))

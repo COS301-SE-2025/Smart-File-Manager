@@ -80,11 +80,16 @@ class FolderNameCreator:
         if not candidates:
             candidates = ["misc"]
 
+        # Lemmatize kws separately 
         words = self.lemmatize(candidates)
-        return self.format_case(words)
+
+        # Flatten list of lists into one word sequence
+        flat_words = [w for group in words for w in group]
+
+        return self.format_case(flat_words)
 
     def lemmatize(self, raw_keywords):
-        seen = set()
+        """Return list of lists: each keyword -> list of lemma words"""
         results = []
         for kw in raw_keywords:
             tokens = self._split_words(kw)
@@ -95,11 +100,9 @@ class FolderNameCreator:
                 lemma = self.lemmatizer.lemmatize(word, pos=wn_tag)
                 lemmas.append(lemma)
             if lemmas:
-                formatted = self.format_case(lemmas)
-                if formatted not in seen:
-                    seen.add(formatted)
-                    results.append(formatted)
-        return results or ["misc"]
+                results.append(lemmas)
+        return results or [["misc"]]
+
 
     def get_wordnet_pos(self, treebank_tag):
         if treebank_tag.startswith("J"):
