@@ -12,6 +12,8 @@ func sortTreeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	name := r.URL.Query().Get("name")
+	caseParam := r.URL.Query().Get("case")
+	preferredCase = caseParam
 	mu.Lock()
 	defer mu.Unlock()
 
