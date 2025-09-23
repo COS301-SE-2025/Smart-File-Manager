@@ -14,7 +14,8 @@ class RequestHandler(message_structure_pb2_grpc.DirectoryServiceServicer):
     def __init__(self):
         # Early initialize sentence transformer
         transformer = SentenceTransformer('all-MiniLM-L6-v2')
-        self.master = master.Master(10, transformer)
+        # If weights are none then they use a default value
+        self.master = master.Master(10, transformer, None)
 
     def SendDirectoryStructure(self, request, context):
         response = self.master.submit_task(request).result()
