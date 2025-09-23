@@ -63,80 +63,19 @@ class FolderNameCreator:
 
     # ---------- CORE ----------
     def generateFolderName(self, files):
-
-        # Collect weighted candidates
-        scores = defaultdict(float)
+        tags, keywords = [], []
 
         for file in files:
-            # Tags
-            for tag in file.get("tags", []):
-                if isinstance(tag, str):
-                    scores[self._clean_name(tag)] += self.weights["tags"]
-                elif hasattr(tag, "name"):  # gRPC Tag object
-                    scores[self._clean_name(tag.name)] += self.weights["tags"]
+            tags.extend(file.get("tags", []))
+            keywords.extend([kw for kw, _ in file.get("keywords", [])])
 
-            # Keywrods
-            for kw, _ in file.get("keywords", []):
-                if isinstance(kw, str):
-                    scores[self._clean_name(kw)] += self.weights["keywords"]
-
-            # Filename
-            if "filename" in file:
-                base_name = self.remove_all_extensions(file["filename"])
-                clean_fn = self._clean_name(base_name)
-                scores[clean_fn] += self.weights["filename"]
-
-        # Nothing found
-        if not scores:
-            return "Group"
-
-        # Pick top X by score
-        sorted_candidates = sorted(scores.items(), key=lambda x: -x[1])
-        top_candidates = [name for name, _ in sorted_candidates[:self.foldername_length]]
-
-        # Encode and pick representative (semantic centroid)
-        embeddings = self.model.encode(top_candidates)
-        centroid = np.mean(embeddings, axis=0, keepdims=True)
-        sims = cosine_similarity(centroid, embeddings).flatten()
-        best_idx = sims.argsort()[-self.foldername_length:][::-1]
-
-        folder_keywords = [top_candidates[i] for i in best_idx]
-
-        # Combine into folder name
-        return "_".join(folder_keywords)
-
-    def _clean_name(self, name: str) -> str:
-        # Remove non-alphanumeric characters and collapse spaces
-        name = re.sub(r'[^a-zA-Z0-9\s]', '', name)
-        name = re.sub(r'\s+', '_', name).strip('_')
-        name = name.lower()
-
-        # Truncate to avoid absurdly long names
-        return name[:30] if name else "Group"
-
-
-    def assignParentScores(self, absolute_path : str, parent_name_scores : Dict[str,float]) -> None:
-        path = Path(absolute_path)
-        parents = list(path.parents)
-        depth = 1
-
-        for parent in parents:
-            name = parent.name.lower()
-            if name in self.keyword_scores or name in self.filename_scores:
-                continue
-            if name == "":
-                continue
-            if name not in parent_name_scores:
-                parent_name_scores[name] = 0
-            parent_name_scores[name] += self.weights["original_parent"] ** depth
-            depth += 1
-
-
-    def combine_lists(self, keywords : Dict[str, float], filenames : Dict[str,float], parent_names:Dict[str,float]) -> Dict[str,float]:
-        scores = defaultdict(float)
-
-        for kw,score in keywords:
-            scores[kw] += score
+        candidates = []
+        if tags:
+            most_common_tag, _ = Counter(map(self._normalize_text, tags)).most_common(1)[0]
+            candidates = [most_common_tag]
+        elif keywords:
+            most_common_kw, _ = Counter(map(self._normalize_text, keywords)).most_common(1)[0]
+            candidates = [most_common_kw]
 
         if not candidates:
             candidates = ["misc"]
