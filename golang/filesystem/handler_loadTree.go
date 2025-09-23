@@ -47,7 +47,7 @@ type Metadata struct {
 	LastModified string `json:"lastModified"`
 }
 
-func grpcFunc(c *Folder, requestType string) error {
+func grpcFunc(c *Folder, requestType string, preferredCase string) error {
 
 	if requestType != "METADATA" && requestType != "CLUSTERING" && requestType != "KEYWORDS" {
 		return fmt.Errorf("invalid requestType: %s", requestType)
