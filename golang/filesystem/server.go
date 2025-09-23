@@ -276,6 +276,24 @@ func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Manager not found"))
 }
 
+func secretMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		secret := r.Header.Get("apiSecret")
+		apiSecret, found := os.LookupEnv("SFM_API_SECRET")
+		if !found {
+			fmt.Println("api secret not found")
+			http.Error(w, "Server secret not configured", http.StatusInternalServerError)
+			return
+		}
+
+		if secret != apiSecret {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func HandleRequests() {
 
 	// path, _ := os.Getwd()
@@ -284,42 +302,42 @@ func HandleRequests() {
 	// path = filepath.Join(path, "python/testing")
 	// fmt.Println("THE PATH: " + path)
 
-	http.HandleFunc("/addDirectory", addCompositeHandler)
+	http.Handle("/addDirectory", secretMiddleware(http.HandlerFunc(addCompositeHandler)))
 
-	http.HandleFunc("/addTag", addTagHandler)
-	http.HandleFunc("/removeTag", removeTagHandler)
+	http.Handle("/addTag", secretMiddleware(http.HandlerFunc(addTagHandler)))
+	http.Handle("/removeTag", secretMiddleware(http.HandlerFunc(removeTagHandler)))
 
-	http.HandleFunc("/loadTreeData", loadTreeDataHandlerGoOnly)
+	http.Handle("/loadTreeData", secretMiddleware(http.HandlerFunc(loadTreeDataHandlerGoOnly)))
 
-	http.HandleFunc("/sortTree", sortTreeHandler)
-	http.HandleFunc("/startUp", startUpHandler)
+	http.Handle("/sortTree", secretMiddleware(http.HandlerFunc(sortTreeHandler)))
+	http.Handle("/startUp", secretMiddleware(http.HandlerFunc(startUpHandler)))
 
-	http.HandleFunc("/lock", lockHandler)
-	http.HandleFunc("/unlock", unlockHandler)
+	http.Handle("/lock", secretMiddleware(http.HandlerFunc(lockHandler)))
+	http.Handle("/unlock", secretMiddleware(http.HandlerFunc(unlockHandler)))
 
-	http.HandleFunc("/search", SearchHandler)
+	http.Handle("/search", secretMiddleware(http.HandlerFunc(SearchHandler)))
 
-	http.HandleFunc("/keywordSearch", KeywordSearchHadler)
-	http.HandleFunc("/isKeywordSearchReady", IsKeywordSearchReadyHander)
+	http.Handle("/keywordSearch", secretMiddleware(http.HandlerFunc(KeywordSearchHadler)))
+	http.Handle("/isKeywordSearchReady", secretMiddleware(http.HandlerFunc(IsKeywordSearchReadyHander)))
 
-	http.HandleFunc("/moveDirectory", moveDirectoryHandler)
+	http.Handle("/moveDirectory", secretMiddleware(http.HandlerFunc(moveDirectoryHandler)))
 
-	http.HandleFunc("/findDuplicateFiles", findDuplicateFilesHandler)
+	http.Handle("/findDuplicateFiles", secretMiddleware(http.HandlerFunc(findDuplicateFilesHandler)))
 
-	http.HandleFunc("/bulkAddTag", BulkAddTagHandler)
-	http.HandleFunc("/bulkRemoveTag", BulkRemoveTagHandler)
+	http.Handle("/bulkAddTag", secretMiddleware(http.HandlerFunc(BulkAddTagHandler)))
+	http.Handle("/bulkRemoveTag", secretMiddleware(http.HandlerFunc(BulkRemoveTagHandler)))
 
-	http.HandleFunc("/deleteFile", deleteFileHandler)
-	http.HandleFunc("/deleteFolder", deleteFolderHandler)
-	http.HandleFunc("/bulkDeleteFolders", BulkDeleteFolderHandler)
-	http.HandleFunc("/bulkDeleteFiles", BulkDeleteFileHandler)
-	http.HandleFunc("/deleteManager", deleteManagerHandler)
+	http.Handle("/deleteFile", secretMiddleware(http.HandlerFunc(deleteFileHandler)))
+	http.Handle("/deleteFolder", secretMiddleware(http.HandlerFunc(deleteFolderHandler)))
+	http.Handle("/bulkDeleteFolders", secretMiddleware(http.HandlerFunc(BulkDeleteFolderHandler)))
+	http.Handle("/bulkDeleteFiles", secretMiddleware(http.HandlerFunc(BulkDeleteFileHandler)))
+	http.Handle("/deleteManager", secretMiddleware(http.HandlerFunc(deleteManagerHandler)))
 
-	http.HandleFunc("/returnType", ReturnTypeHandler)
+	http.Handle("/returnType", secretMiddleware(http.HandlerFunc(ReturnTypeHandler)))
 
-	http.HandleFunc("/returnStats", StatHandler)
+	http.Handle("/returnStats", secretMiddleware(http.HandlerFunc(StatHandler)))
 
-	http.HandleFunc("/setPreferredCase", SetPreferredCase)
+	http.Handle("/setPreferredCase", secretMiddleware(http.HandlerFunc(SetPreferredCase)))
 
 	fmt.Println("Server started on port 51000")
 
