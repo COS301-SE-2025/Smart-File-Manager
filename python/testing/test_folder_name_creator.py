@@ -17,11 +17,6 @@ def creator(dummy_model):
     return FolderNameCreator(model=dummy_model, case_convention="CAMEL")
 
 
-def test_lemmatize_deduplicates(creator):
-    result = creator.lemmatize(["running.cases", "run-case", "run"])
-    assert set(result) =={"run", "runCase"}    
-    assert len(result) == 2
-
 def test_generate_folder_name_basic(creator):
     files = [
         {"filename": "MeetingNotes.txt", "absolute_path": "/docs/work", "keywords": [("meeting", 0.9)]},

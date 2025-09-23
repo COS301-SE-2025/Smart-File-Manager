@@ -57,7 +57,7 @@ python:
 	python3 python/src/main.py
 
 python_test:
-	pytest -vv -s --color=yes --tb=short python/testing/
+	pytest -vv -s --color=yes --tb=short python/testing/ 
 
 python_test_pyinstrument:
 	pyinstrument -r html -o profiling/profile_report.html -m pytest -v -s --color=yes --tb=short python/testing/
@@ -92,5 +92,5 @@ python_master_temp:
 python_locked_temp:
 	pytest -v -s --color=yes --tb=short python/testing/test_locked_request.py
 
-python_fn_temp:
-	pytest -v -s --color=yes --tb=short python/testing/test_folder_name_creator.py
+python_scalability_test:
+	pytest -v -s --color=yes --tb=short python/non_functional_tests/test_scalability_clustering.py
