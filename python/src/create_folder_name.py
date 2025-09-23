@@ -1,27 +1,22 @@
 import os
 import re
-from pathlib import Path
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-import nltk
+import unicodedata
+from collections import Counter
 
+import nltk
 from nltk.corpus import wordnet
 from nltk import pos_tag
 from nltk.stem import WordNetLemmatizer
 
-#adding these imports could be slow
-from typing import Dict
-from collections import Counter
-
-from collections import defaultdict
-
 
 class FolderNameCreator:
-    def __init__(self, model):
+    def __init__(self, model, case_convention: str):
         self.model = model
-        self.max_keywords = 200 # for folder name creation
+        self.max_keywords = 200
+        self.foldername_length = 2
         self.lemmatizer = WordNetLemmatizer()
-        # Weighting of different vars
+
+        # Weighting
         self.weights = {
             "keywords":0.9, # If there are keywords they should really be different to not be together
             "filename":1.0, # Should only make a small difference compared to keywrods (when they are used)
@@ -30,13 +25,14 @@ class FolderNameCreator:
             # Metadata which can be considered
             "created":0.5
         }
-        self.foldername_length = 2
-        self.filename_scores = {}
-        self.parent_name_scores = {}
-        self.keyword_scores = {}
+
+        supported_cases = ["CAMEL", "SNAKE", "PASCAL", "KEBAB"]
+        cleaned_case_convention = case_convention.strip().upper()
+        self.case_convention = (
+            cleaned_case_convention if cleaned_case_convention in supported_cases else "CAMEL"
+        )
 
         self._ensure_nltk_data()
-
 
     def _ensure_nltk_data(self):
         try:
@@ -50,16 +46,22 @@ class FolderNameCreator:
             nltk.download("wordnet", quiet=True)
             nltk.download("omw-1.4", quiet=True)
 
-    # Remove all types of extensions - .png, .tar.gz, etc.
-    def remove_all_extensions(self,filename : str) -> str:
-        while True:
-            filename, ext = os.path.splitext(filename)
-            if not ext:
-                break
-        return filename
-    
+    # ---------- CLEANING ----------
+    def _normalize_text(self, text: str) -> str:
+        """Normalize unicode, strip accents, and lowercase"""
+        text = unicodedata.normalize("NFKD", text)
+        text = text.encode("ascii", "ignore").decode("utf-8", "ignore")
+        return text.lower().strip()
 
+    def _split_words(self, text: str):
+        """Split on camelCase, PascalCase, snake_case, kebab-case, dots, numbers"""
+        text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)  # camelCase -> camel Case
+        text = re.sub(r"[^a-zA-Z0-9]+", " ", text)        # Discard non alpha numeric 
+        return [w for w in text.split() if w]
+
+    # ---------- CORE ----------
     def generateFolderName(self, files):
+
         # Collect weighted candidates
         scores = defaultdict(float)
 
@@ -134,75 +136,50 @@ class FolderNameCreator:
         for kw,score in keywords:
             scores[kw] += score
 
-        for fn,score in filenames:
-            scores[fn] += score 
+        if not candidates:
+            candidates = ["misc"]
 
-        for pn,score in parent_names:
-            scores[pn] += score
+        words = self.lemmatize(candidates)
+        return self.format_case(words)
 
-        return sorted(scores.items(), key=lambda x: -x[1])
-
-
-    def getRepresentativeKeywords(self, scores : Dict[str, float]):
-        if not scores:
-            return []
-
-        # Top weighted keywrods
-        sorted_keywords = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-        top_keywords = [kw for kw, _ in sorted_keywords[:self.max_keywords]]
-
-        # Encode file names with sentence transformer
-        embeddings = self.model.encode(top_keywords)
-        centroid = np.mean(embeddings, axis=0, keepdims=True)
-
-        # Find most representative name (closest to centroid)
-        sims = cosine_similarity(centroid, embeddings).flatten()
-        best_idx = sims.argsort()[-self.foldername_length:][::-1]
-
-        # folder_keyword = folder_names[best_idx]
-        folder_keyword = [top_keywords[i] for i in best_idx]
-
-        return [(word, scores[word]) for word in folder_keyword]
-
-    
-    # Helper function to map NLTK POS to WordNet POS
-    def get_wordnet_pos(self, treebank_tag):
-        if treebank_tag.startswith('J'):
-            return wordnet.ADJ
-        elif treebank_tag.startswith('V'):
-            return wordnet.VERB
-        elif treebank_tag.startswith('N'):
-            return wordnet.NOUN
-        elif treebank_tag.startswith('R'):
-            return wordnet.ADV
-        else:
-            return wordnet.NOUN  # fallback to noun
-
-
-    def lemmatize(self, folder_keyword):
+    def lemmatize(self, raw_keywords):
         seen = set()
-        normalized_keywords = []
-        for kw in folder_keyword:
-            words = re.split(r'[\s\._\-]+', kw.lower())
-            # Tag parts of speech
-            tagged = pos_tag(words)
+        results = []
+        for kw in raw_keywords:
+            tokens = self._split_words(kw)
+            tagged = pos_tag(tokens)
+            lemmas = []
             for word, tag in tagged:
                 wn_tag = self.get_wordnet_pos(tag)
                 lemma = self.lemmatizer.lemmatize(word, pos=wn_tag)
-                if lemma not in seen:
-                    seen.add(lemma)
-                    normalized_keywords.append(lemma)
-        return normalized_keywords
+                lemmas.append(lemma)
+            if lemmas:
+                formatted = self.format_case(lemmas)
+                if formatted not in seen:
+                    seen.add(formatted)
+                    results.append(formatted)
+        return results or ["misc"]
 
+    def get_wordnet_pos(self, treebank_tag):
+        if treebank_tag.startswith("J"):
+            return wordnet.ADJ
+        elif treebank_tag.startswith("V"):
+            return wordnet.VERB
+        elif treebank_tag.startswith("N"):
+            return wordnet.NOUN
+        elif treebank_tag.startswith("R"):
+            return wordnet.ADV
+        return wordnet.NOUN
 
-    def lemmatize_with_scores(self, folder_keywords_with_scores):
-        seen = {}
-        for kw, score in folder_keywords_with_scores:
-            words = re.split(r'[\s\._\-]+', kw.lower())
-            tagged = pos_tag(words)
-            for word, tag in tagged:
-                wn_tag = self.get_wordnet_pos(tag)
-                lemma = self.lemmatizer.lemmatize(word, pos=wn_tag)
-                if lemma not in seen or score > seen[lemma]:
-                    seen[lemma] = score
-        return sorted(seen.items(), key=lambda x: -x[1])
+    def format_case(self, words):
+        if not words:
+            return "misc"
+
+        if self.case_convention == "CAMEL":
+            return words[0].lower() + "".join(w.capitalize() for w in words[1:])
+        if self.case_convention == "SNAKE":
+            return "_".join(w.lower() for w in words)
+        if self.case_convention == "PASCAL":
+            return "".join(w.capitalize() for w in words)
+        if self.case_convention == "KEBAB":
+            return "-".join(w.lower() for w in words)

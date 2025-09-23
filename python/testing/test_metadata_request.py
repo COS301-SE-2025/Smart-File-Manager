@@ -99,7 +99,7 @@ def createDirectoryRequest():
         directories= [uni_dir, pers_dir]
     )    
 
-    req = DirectoryRequest(root=root_dir, requestType="METADATA")
+    req = DirectoryRequest(root=root_dir, requestType="METADATA", serverSecret=os.environ["SFM_SERVER_SECRET"])
     yield req
 
 
@@ -126,5 +126,12 @@ def test_send_real_dir(grpc_test_server, createDirectoryRequest):
     # Check if response is well formed
     assert response.response_code == 200
     assert response.response_msg != "No file could be opened"
+
+
+def test_invalid_credential_req(grpc_test_server):
+    req = DirectoryRequest(root=None, requestType = "METADATA", serverSecret = "wrongSecret")
+    response = grpc_test_server.SendDirectoryStructure(req)
+    assert response.response_code == 401
+    assert response.response_msg == "Unauthorized: Incorrect server secret"
 
 

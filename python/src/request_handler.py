@@ -1,4 +1,5 @@
 from concurrent import futures
+import threading
 from sentence_transformers import SentenceTransformer
 import grpc
 import message_structure_pb2_grpc
@@ -16,7 +17,6 @@ class RequestHandler(message_structure_pb2_grpc.DirectoryServiceServicer):
         # If weights are none then they use a default value
         self.master = master.Master(10, transformer, None)
 
-
     def SendDirectoryStructure(self, request, context):
         response = self.master.submit_task(request).result()
         return response
@@ -32,5 +32,18 @@ class RequestHandler(message_structure_pb2_grpc.DirectoryServiceServicer):
         print(f"export PYTHON_SERVER={port}")
         with open("server.env", "w") as f:
             f.write(f"export PYTHON_SERVER={port}\n")
+
+        print("Server ready and listening...")
+
+        # Background thread listens for shutdown 
+        def wait_for_stop():
+            while True:
+                cmd = input().strip().upper()
+                if cmd == "STOP":
+                    print("Stopping server...")
+                    server.stop(grace=5)
+                    break
+
+        threading.Thread(target=wait_for_stop, daemon=True).start()
 
         server.wait_for_termination()
