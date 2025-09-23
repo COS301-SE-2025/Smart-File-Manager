@@ -75,6 +75,7 @@ func grpcFunc(c *Folder, requestType string, preferredCase string) error {
 		RequestType:   requestType,
 		PreferredCase: preferredCase,
 		ServerSecret:  shh,
+
 	}
 
 	resp, err := client.SendDirectoryStructure(ctx, req)
