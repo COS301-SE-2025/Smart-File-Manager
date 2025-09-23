@@ -10,6 +10,7 @@ import 'package:app/api.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'dart:io';
 import 'package:app/custom_widgets/tag_dialog.dart';
+import 'package:app/services/settings_service.dart';
 
 class GraphViewPage extends StatefulWidget {
   final FileTreeNode treeData;
@@ -45,19 +46,50 @@ class _GraphViewPageState extends State<GraphViewPage> {
   static const int maxDepth = 3;
   FileTreeNode? currentRootNode;
 
-  static const List<Color> levelColors = [
+  List<Color> levelColors = [
     kprimaryColor,
-    Color(0xFF3498DB),
-    Color(0xFF2ECC71),
-    Color(0xFFE74C3C),
-    Color(0xFF9B59B6),
+    const Color(0xFF3498DB),
+    const Color(0xFF2ECC71),
+    const Color(0xFFE74C3C),
+    const Color(0xFF9B59B6),
   ];
 
   @override
   void initState() {
     super.initState();
+    _loadColorPreset();
     _initializeController();
     _buildFileTreeGraph();
+
+    // Listen to settings changes
+    SettingsService.instance.addListener(_onSettingsChanged);
+  }
+
+  @override
+  void dispose() {
+    SettingsService.instance.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    refreshColors();
+  }
+
+  Future<void> _loadColorPreset() async {
+    final colorPreset = await SettingsService.instance.getColorPreset();
+    setState(() {
+      levelColors = SettingsService.getPresetColors(colorPreset);
+    });
+  }
+
+  // Public method to refresh colors when settings change
+  Future<void> refreshColors() async {
+    await _loadColorPreset();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        controller.needUpdate();
+      }
+    });
   }
 
   @override
@@ -65,7 +97,7 @@ class _GraphViewPageState extends State<GraphViewPage> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentPath != widget.currentPath ||
         oldWidget.treeData != widget.treeData) {
-      _buildFileTreeGraph();
+      _loadColorPreset().then((_) => _buildFileTreeGraph());
     }
   }
 
