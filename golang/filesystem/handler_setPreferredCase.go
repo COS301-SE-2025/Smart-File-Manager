@@ -8,22 +8,26 @@ import (
 )
 
 func SetPreferredCase(w http.ResponseWriter, r *http.Request) {
-	preferredCase := r.URL.Query().Get("preferredCase")
+	// v, found := os.LookupEnv("SFM_SERVER_SECRET")
+	// if !found {
+	// 	fmt.Println("not ofund")
+	// }
+	// fmt.Println(v)
+	// fmt.Println("v^")
+	// preferredCase := r.URL.Query().Get("preferredCase")
 
-	err := storePreferredCase(preferredCase)
-	if err == nil {
-		jsonResponse := []byte(`{"responseMessage": "Saved preferredCase successfully"}`)
-		w.Write(jsonResponse)
-		return
-	}
-	http.Error(w, ("Failed to write to file: " + err.Error()), http.StatusInternalServerError)
+	// err := storePreferredCase(preferredCase)
+	// if err == nil {
+	// 	jsonResponse := []byte(`{"responseMessage": "Saved preferredCase successfully"}`)
+	// 	w.Write(jsonResponse)
+	// 	return
+	// }
+	// http.Error(w, ("Failed to write to file: " + err.Error()), http.StatusInternalServerError)
 
 }
 
 func storePreferredCase(preferredCase string) error {
 	filePath := filepath.Join("storage", "preferredCase.txt")
-
-	
 
 	//create file
 	file, err := os.Create(filePath)
