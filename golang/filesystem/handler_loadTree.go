@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"errors"
 
 	"google.golang.org/grpc/credentials/insecure"
 	//grpc imports

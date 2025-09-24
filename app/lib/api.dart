@@ -50,9 +50,17 @@ class Api {
   }
 
   //Call To Sort Tree structure
-  static Future<FileTreeNode> sortManager(String name) async {
+  static Future<FileTreeNode> sortManager(
+    String name, {
+    String? caseType,
+  }) async {
     try {
-      final response = await http.get(Uri.parse("$uri/sortTree?name=$name"));
+      String url = "$uri/sortTree?name=$name";
+      if (caseType != null && caseType.isNotEmpty) {
+        url += "&case=$caseType";
+      }
+
+      final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         return FileTreeNode.fromJson(
@@ -96,7 +104,6 @@ class Api {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print(response.body);
         return true;
       } else {
         throw Exception(
@@ -225,8 +232,6 @@ class Api {
       );
 
       if (response.statusCode == 200) {
-        print("Normal Search Used");
-
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
@@ -253,7 +258,6 @@ class Api {
       );
 
       if (response.statusCode == 200) {
-        print("Advanced Search Used");
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
@@ -413,7 +417,6 @@ class Api {
               .map((item) => FileModel.fromJson(item as Map<String, dynamic>))
               .toList();
         } catch (e) {
-          print('Error parsing JSON: $e');
           return <FileModel>[];
         }
       } else {
@@ -434,8 +437,6 @@ class Api {
       final response = await http.get(Uri.parse("$uri/returnStats"));
 
       if (response.statusCode == 200) {
-        print(jsonDecode(response.body) as List<dynamic>);
-
         return ManagersStatsResponse.fromJson(
           jsonDecode(response.body) as List<dynamic>,
         );
@@ -456,7 +457,6 @@ class Api {
         Uri.parse("$uri/moveDirectory?name=$managerName"),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print(response.body);
         if (response.body == "true") {
           return true;
         } else {

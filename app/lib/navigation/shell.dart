@@ -9,6 +9,7 @@ import 'package:app/constants.dart';
 import 'package:app/api.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:app/models/file_tree_node.dart';
+import 'package:app/services/settings_service.dart';
 
 GlobalKey<DashboardPageState> globalKey = GlobalKey();
 GlobalKey<MainNavigationState> mainNavigationKey = GlobalKey();
@@ -117,7 +118,10 @@ class _ShellState extends State<Shell> {
     });
 
     try {
-      final sortedData = await Api.sortManager(managerName);
+      // Get the user's preferred case setting
+      final userPreferredCase = await SettingsService.instance.getNamingConvention();
+
+      final sortedData = await Api.sortManager(managerName, caseType: userPreferredCase);
 
       setState(() {
         _pendingSorts[managerName] = false;
