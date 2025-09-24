@@ -102,7 +102,9 @@ def createDirectoryRequest():
         files = files1
     )    
 
+
     req = DirectoryRequest(root=root_dir, requestType="CLUSTERING", serverSecret=os.environ["SFM_SERVER_SECRET"], preferredCase = "KEBAB")
+
     yield req
 
 
