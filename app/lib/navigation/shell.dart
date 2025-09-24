@@ -285,15 +285,6 @@ class _ShellState extends State<Shell> {
               icon: Icon(Icons.help_outline_rounded, color: kprimaryColor),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
-            child: FilledButton.icon(
-              onPressed: () {},
-              label: const Text("Login"),
-              style: FilledButton.styleFrom(backgroundColor: kScaffoldColor),
-              icon: const Icon(Icons.account_circle),
-            ),
-          ),
         ],
         shape: Border(bottom: BorderSide(color: Color(0xff3D3D3D), width: 1)),
       ),

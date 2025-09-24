@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"errors"
 
 	"google.golang.org/grpc/credentials/insecure"
 	//grpc imports
@@ -69,6 +70,7 @@ func grpcFunc(c *Folder, requestType string, preferredCase string) error {
 		return errors.New("server secret not found error")
 	}
 	fmt.Println(shh)
+
 
 	req := &pb.DirectoryRequest{
 		Root:          convertFolderToProto(*c),
