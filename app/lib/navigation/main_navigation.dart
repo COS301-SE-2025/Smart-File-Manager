@@ -490,7 +490,7 @@ class MainNavigationState extends State<MainNavigation> {
                         ),
                       );
                     } else {
-                      // Remove manager API call failed
+                      // Remove manager API call failed - directory already in use
                       setState(() {
                         _managers.removeWhere((m) => m.label == result.name);
                       });
@@ -498,10 +498,10 @@ class MainNavigationState extends State<MainNavigation> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            'Failed to create Smart Manager "${result.name}"',
+                            'Cannot create Smart Manager "${result.name}": Directory is already contained in another Smart Manager',
                           ),
                           backgroundColor: Colors.redAccent,
-                          duration: Duration(seconds: 2),
+                          duration: Duration(seconds: 3),
                         ),
                       );
                     }
