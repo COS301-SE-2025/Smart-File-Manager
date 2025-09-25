@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/file_tree_node.dart';
+import '../services/settings_service.dart';
 
 class FileItemWidget extends StatefulWidget {
   final FileTreeNode item;
@@ -19,6 +20,7 @@ class FileItemWidget extends StatefulWidget {
 
 class _FileItemWidgetState extends State<FileItemWidget> {
   bool _isHovered = false;
+  Color _folderColor = const Color(0xffFFB400); // Default folder color
 
   // File categories with extensions
   static final Map<String, List<String>> _categories = {
@@ -53,6 +55,32 @@ class _FileItemWidgetState extends State<FileItemWidget> {
     "Archives": Icons.archive,
     "Other": Icons.insert_drive_file,
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFolderColor();
+    // Listen to settings changes
+    SettingsService.instance.addListener(_onSettingsChanged);
+  }
+
+  @override
+  void dispose() {
+    SettingsService.instance.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    _loadFolderColor();
+  }
+
+  Future<void> _loadFolderColor() async {
+    final colorPreset = await SettingsService.instance.getColorPreset();
+    final colors = SettingsService.getPresetColors(colorPreset);
+    setState(() {
+      _folderColor = colors.isNotEmpty ? colors.first : const Color(0xffFFB400);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +192,7 @@ class _FileItemWidgetState extends State<FileItemWidget> {
   }
 
   Color _getFileColor() {
-    if (widget.item.isFolder) return const Color(0xffFFB400);
+    if (widget.item.isFolder) return _folderColor;
     return const Color(0xff2563EB);
   }
 
