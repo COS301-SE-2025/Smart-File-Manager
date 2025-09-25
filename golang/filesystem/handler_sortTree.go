@@ -17,7 +17,7 @@ func sortTreeHandler(w http.ResponseWriter, r *http.Request) {
 	if caseParam == "" {
 		caseParam = "CAMEL"
 	}
-	allowedCases := []string{"CAMEL", "SNAKE", "PASCAL", "KEBAB"}
+	allowedCases := []string{"CAMEL", "SNAKE", "PASCAL", "KEBAB", "SPACE"}
 	if !slices.Contains(allowedCases, caseParam) {
 		http.Error(w, "Invalid case type.", http.StatusBadRequest)
 		return
