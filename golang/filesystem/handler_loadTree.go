@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -47,13 +48,69 @@ type Metadata struct {
 	LastModified string `json:"lastModified"`
 }
 
+func loadEnvFile(path string) (map[string]string, error) {
+	vars := make(map[string]string)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		// remove "export " if present
+		line = strings.TrimPrefix(line, "export ")
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			vars[parts[0]] = parts[1]
+		}
+	}
+	return vars, nil
+}
+
+func FindProjectRoot(filename string) (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		candidate := filepath.Join(dir, filename)
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate, nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir { // reached filesystem root
+			break
+		}
+		dir = parent
+	}
+
+	return "", fmt.Errorf("%s not found", filename)
+}
+
 func grpcFunc(c *Folder, requestType string, preferredCase string) error {
+
+	path, err := FindProjectRoot("server.env")
+	if err != nil {
+		log.Fatalf("failed to find project root: %v", err)
+	}
+
+	env, err := loadEnvFile(path)
+	if err != nil {
+		log.Fatalf("failed to read env file: %v", err)
+	}
+
+	port := env["PYTHON_SERVER"]
 
 	if requestType != "METADATA" && requestType != "CLUSTERING" && requestType != "KEYWORDS" {
 		return fmt.Errorf("invalid requestType: %s", requestType)
 	}
 
-	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient("localhost:"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("could not create new grpc go client")
 	}
