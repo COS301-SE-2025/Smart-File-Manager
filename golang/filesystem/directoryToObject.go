@@ -82,6 +82,10 @@ func exploreDown(folder *Folder, path string) error {
 			file.Lock()
 			// fmt.Printf("Auto-locked folder '%s' and contents because it contains hidden folder '%s'\n", folder.Path, sub.Name)
 			break
+		} else if strings.HasPrefix(file.Name, "~") {
+			file.Lock()
+			// fmt.Printf("Auto-locked folder '%s' and contents because it contains hidden folder '%s'\n", folder.Path, sub.Name)
+			break
 		}
 	}
 	return nil
