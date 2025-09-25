@@ -424,12 +424,19 @@ func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleRequests() {
-
-	// path, _ := os.Getwd()
-	// fmt.Println("THE PATH: " + path)
-	// path = filepath.Dir(path)
-	// path = filepath.Join(path, "python/testing")
-	// fmt.Println("THE PATH: " + path)
+	// Find an available port starting from 51000
+	port, err := findAvailablePort(51000)
+	if err != nil {
+		fmt.Printf("Error finding available port: %v\n", err)
+		port = 51000 // Fallback to original port
+	} else {
+		// Save the found port to server.env
+		if err := savePortToEnv(port); err != nil {
+			fmt.Printf("Warning: Could not save port to server.env: %v\n", err)
+		} else {
+			fmt.Printf("Saved port %d to server.env\n", port)
+		}
+	}
 
 	http.HandleFunc("/addDirectory", addCompositeHandler)
 
@@ -468,10 +475,10 @@ func HandleRequests() {
 
 	http.HandleFunc("/setPreferredCase", SetPreferredCase)
 
-	fmt.Println("Server started on port 51000")
-
-	// http.ListenAndServe(":51000", nil)
-	http.ListenAndServe("0.0.0.0:51000", nil)
+	addr := fmt.Sprintf("0.0.0.0:%d", port)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		fmt.Printf("Server failed to start: %v\n", err)
+	}
 
 }
 
