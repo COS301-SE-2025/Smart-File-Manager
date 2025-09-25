@@ -125,7 +125,6 @@ func grpcFunc(c *Folder, requestType string, preferredCase string) error {
 		fmt.Println("secret not found")
 		return errors.New("server secret not found error")
 	}
-	fmt.Println(shh)
 
 	req := &pb.DirectoryRequest{
 		Root:          convertFolderToProto(*c),
