@@ -70,15 +70,15 @@ func grpcFunc(c *Folder, requestType string, preferredCase string) error {
 	}
 	fmt.Println(shh)
 
-
 	req := &pb.DirectoryRequest{
 		Root:          convertFolderToProto(*c),
 		RequestType:   requestType,
 		PreferredCase: preferredCase,
 		ServerSecret:  shh,
-
 	}
-
+	fmt.Println("this is before")
+	printDirectoryWithMetadata(req.Root, 0)
+	fmt.Println("this is after")
 	resp, err := client.SendDirectoryStructure(ctx, req)
 
 	if err != nil {
@@ -378,9 +378,8 @@ func printDirChildren(d *pb.Directory, prefix string) {
 		}
 		fmt.Printf("%s%s%s\n", prefix, branch, fileLabel(f))
 		fmt.Printf("%s%s%s%s\n", prefix, branch, fileLabel(f), "'s keyw:")
-		for _, kw := range f.Keywords {
-			fmt.Printf("%s%s kw is: %s\n", prefix, branch, kw.Keyword)
-		}
+
+		fmt.Printf("%s%s locked is: %s\n", prefix, branch, strconv.FormatBool(f.IsLocked))
 
 	}
 }
