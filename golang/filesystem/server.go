@@ -244,7 +244,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 				RootPath: c.Path,
 				Children: children,
 			}
-			w.WriteHeader(http.StatusOK)
+			// w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "application/json")
 			// Encode the response as JSON
 			if err := json.NewEncoder(w).Encode(root); err != nil {
@@ -283,7 +283,7 @@ func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
 				RootPath: c.Path,
 				Children: children,
 			}
-			w.WriteHeader(http.StatusOK)
+			// w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "application/json")
 			// Encode the response as JSON
 			if err := json.NewEncoder(w).Encode(root); err != nil {
