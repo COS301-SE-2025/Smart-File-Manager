@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -72,6 +73,19 @@ func savePortToEnv(port int) error {
 	}
 
 	return nil
+}
+
+// findAvailablePort finds an available port starting from a base port
+func findAvailablePort(basePort int) (int, error) {
+	for port := basePort; port < basePort+100; port++ {
+		addr := fmt.Sprintf(":%d", port)
+		listener, err := net.Listen("tcp", addr)
+		if err == nil {
+			listener.Close()
+			return port, nil
+		}
+	}
+	return 0, fmt.Errorf("no available port found in range %d-%d", basePort, basePort+99)
 }
 
 func isPathContained(parentPath, childPath string) bool {
