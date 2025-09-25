@@ -2,6 +2,7 @@ package filesystem
 
 import (
 	// "encoding/json"
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,6 +17,62 @@ var (
 	Composites []*Folder
 	mu         sync.Mutex
 )
+
+// savePortToEnv updates or creates the GO_PORT entry in server.env
+func savePortToEnv(port int) error {
+	// Get the current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory: %v", err)
+	}
+
+	// Navigate to project root
+	projectRoot := filepath.Dir(cwd)
+	envFilePath := filepath.Join(projectRoot, "server.env")
+
+	// Try current directory first if the above doesn't work
+	if _, err := os.Stat(envFilePath); os.IsNotExist(err) {
+		envFilePath = filepath.Join(cwd, "server.env")
+	}
+
+	// If still not found, try going up two levels
+	if _, err := os.Stat(envFilePath); os.IsNotExist(err) {
+		projectRoot = filepath.Dir(filepath.Dir(cwd))
+		envFilePath = filepath.Join(projectRoot, "server.env")
+	}
+
+	var lines []string
+	goPortFound := false
+
+	// Read existing file if it exists
+	if file, err := os.Open(envFilePath); err == nil {
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.HasPrefix(line, "GO_PORT=") {
+				lines = append(lines, fmt.Sprintf("GO_PORT=%d", port))
+				goPortFound = true
+			} else {
+				lines = append(lines, line)
+			}
+		}
+	}
+
+	// Add GO_PORT if not found
+	if !goPortFound {
+		lines = append(lines, fmt.Sprintf("GO_PORT=%d", port))
+	}
+
+	// Write back to file
+	content := strings.Join(lines, "\n")
+	err = os.WriteFile(envFilePath, []byte(content), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write to server.env: %v", err)
+	}
+
+	return nil
+}
 
 func isPathContained(parentPath, childPath string) bool {
 	parentPath = filepath.Clean(parentPath)
