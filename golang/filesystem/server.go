@@ -2,8 +2,10 @@ package filesystem
 
 import (
 	// "encoding/json"
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,6 +18,75 @@ var (
 	Composites []*Folder
 	mu         sync.Mutex
 )
+
+// savePortToEnv updates or creates the GO_PORT entry in server.env
+func savePortToEnv(port int) error {
+	// Get the current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory: %v", err)
+	}
+
+	// Navigate to project root
+	projectRoot := filepath.Dir(cwd)
+	envFilePath := filepath.Join(projectRoot, "server.env")
+
+	// Try current directory first if the above doesn't work
+	if _, err := os.Stat(envFilePath); os.IsNotExist(err) {
+		envFilePath = filepath.Join(cwd, "server.env")
+	}
+
+	// If still not found, try going up two levels
+	if _, err := os.Stat(envFilePath); os.IsNotExist(err) {
+		projectRoot = filepath.Dir(filepath.Dir(cwd))
+		envFilePath = filepath.Join(projectRoot, "server.env")
+	}
+
+	var lines []string
+	goPortFound := false
+
+	// Read existing file if it exists
+	if file, err := os.Open(envFilePath); err == nil {
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.HasPrefix(line, "GO_PORT=") {
+				lines = append(lines, fmt.Sprintf("GO_PORT=%d", port))
+				goPortFound = true
+			} else {
+				lines = append(lines, line)
+			}
+		}
+	}
+
+	// Add GO_PORT if not found
+	if !goPortFound {
+		lines = append(lines, fmt.Sprintf("GO_PORT=%d", port))
+	}
+
+	// Write back to file
+	content := strings.Join(lines, "\n")
+	err = os.WriteFile(envFilePath, []byte(content), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write to server.env: %v", err)
+	}
+
+	return nil
+}
+
+// findAvailablePort finds an available port starting from a base port
+func findAvailablePort(basePort int) (int, error) {
+	for port := basePort; port < basePort+100; port++ {
+		addr := fmt.Sprintf(":%d", port)
+		listener, err := net.Listen("tcp", addr)
+		if err == nil {
+			listener.Close()
+			return port, nil
+		}
+	}
+	return 0, fmt.Errorf("no available port found in range %d-%d", basePort, basePort+99)
+}
 
 func isPathContained(parentPath, childPath string) bool {
 	parentPath = filepath.Clean(parentPath)
@@ -353,12 +424,19 @@ func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleRequests() {
-
-	// path, _ := os.Getwd()
-	// fmt.Println("THE PATH: " + path)
-	// path = filepath.Dir(path)
-	// path = filepath.Join(path, "python/testing")
-	// fmt.Println("THE PATH: " + path)
+	// Find an available port starting from 51000
+	port, err := findAvailablePort(51000)
+	if err != nil {
+		fmt.Printf("Error finding available port: %v\n", err)
+		port = 51000 // Fallback to original port
+	} else {
+		// Save the found port to server.env
+		if err := savePortToEnv(port); err != nil {
+			fmt.Printf("Warning: Could not save port to server.env: %v\n", err)
+		} else {
+			fmt.Printf("Saved port %d to server.env\n", port)
+		}
+	}
 
 	http.HandleFunc("/addDirectory", addCompositeHandler)
 
@@ -397,10 +475,10 @@ func HandleRequests() {
 
 	http.HandleFunc("/setPreferredCase", SetPreferredCase)
 
-	fmt.Println("Server started on port 51000")
-
-	// http.ListenAndServe(":51000", nil)
-	http.ListenAndServe("0.0.0.0:51000", nil)
+	addr := fmt.Sprintf("0.0.0.0:%d", port)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		fmt.Printf("Server failed to start: %v\n", err)
+	}
 
 }
 
