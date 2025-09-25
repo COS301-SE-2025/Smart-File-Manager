@@ -92,5 +92,5 @@ python_master_temp:
 python_locked_temp:
 	pytest -v -s --color=yes --tb=short python/testing/test_locked_request.py
 
-python_scalability_test:
-	pytest -v -s --color=yes --tb=short python/non_functional_tests/test_scalability_clustering.py
+python_performance_test:
+	pytest -v -s --color=yes --tb=short python/non_functional_tests/
