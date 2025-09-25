@@ -28,7 +28,7 @@ class FolderNameCreator:
             "created":0.5
         }
 
-        supported_cases = ["CAMEL", "SNAKE", "PASCAL", "KEBAB"]
+        supported_cases = ["CAMEL", "SNAKE", "PASCAL", "KEBAB", "SPACE"]
         cleaned_case_convention = case_convention.strip().upper()
         self.case_convention = (
             cleaned_case_convention if cleaned_case_convention in supported_cases else "CAMEL"
@@ -127,3 +127,5 @@ class FolderNameCreator:
             return "".join(w.capitalize() for w in words)
         if self.case_convention == "KEBAB":
             return "-".join(w.lower() for w in words)
+        if self.case_convention == "SPACE":
+            return " ".join(w.capitalize() for w in words)
