@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -15,11 +17,69 @@ var (
 	mu         sync.Mutex
 )
 
+func isPathContained(parentPath, childPath string) bool {
+	parentPath = filepath.Clean(parentPath)
+	childPath = filepath.Clean(childPath)
+
+	// Convert to absolute paths for accurate comparison
+	parentAbs, err := filepath.Abs(parentPath)
+	if err != nil {
+		return false
+	}
+
+	childAbs, err := filepath.Abs(childPath)
+	if err != nil {
+		return false
+	}
+
+	// Ensure paths end with separator for accurate prefix checking
+	if !strings.HasSuffix(parentAbs, string(filepath.Separator)) {
+		parentAbs += string(filepath.Separator)
+	}
+	if !strings.HasSuffix(childAbs, string(filepath.Separator)) {
+		childAbs += string(filepath.Separator)
+	}
+
+	// Check if child path starts with parent path
+	return strings.HasPrefix(childAbs, parentAbs)
+}
+
+func checkDirectoryConflicts(newPath string) (bool, string, error) {
+	newPathAbs, err := filepath.Abs(newPath)
+	if err != nil {
+		return false, "", err
+	}
+
+	for _, comp := range Composites {
+		existingPathAbs, err := filepath.Abs(comp.Path)
+		if err != nil {
+			continue
+		}
+
+		// Exact match
+		if existingPathAbs == newPathAbs {
+			return true, fmt.Sprintf("Directory is already managed by '%s'", comp.Name), nil
+		}
+
+		// New path is inside existing manager
+		if strings.HasPrefix(newPathAbs+string(os.PathSeparator), existingPathAbs+string(os.PathSeparator)) {
+			return true, fmt.Sprintf("Directory is already contained within existing manager '%s' at path '%s'", comp.Name, comp.Path), nil
+		}
+
+		// Existing manager is inside new path
+		if strings.HasPrefix(existingPathAbs+string(os.PathSeparator), newPathAbs+string(os.PathSeparator)) {
+			return true, fmt.Sprintf("New directory would contain existing manager '%s' at path '%s'", comp.Name, comp.Path), nil
+		}
+	}
+
+	return false, "", nil
+}
+
 func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
-	// fmt.Println("addDirectory called")
 	managerName := r.URL.Query().Get("name")
 	filePath := r.URL.Query().Get("path")
 
+	// Check if manager name already exists
 	for _, comp := range Composites {
 		if comp.Name == managerName {
 			http.Error(w, "A smart file manager with that name already exists", http.StatusBadRequest)
@@ -28,14 +88,26 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mu.Lock()
-	// Composites = append(Composites, composite)
-	//appendng happens in this:
-	err := AddManager(managerName, filePath)
+	defer mu.Unlock()
+
+	// Check for directory conflicts
+	hasConflict, conflictMessage, err := checkDirectoryConflicts(filePath)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error checking directory conflicts: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	if hasConflict {
+		http.Error(w, conflictMessage, http.StatusBadRequest)
+		return
+	}
+
+	// Proceed with adding the manager
+	err = AddManager(managerName, filePath)
 	if err != nil {
 		w.Write([]byte("false"))
 		return
 	}
-	mu.Unlock()
 
 	w.Write([]byte("true"))
 }
@@ -45,6 +117,10 @@ func addTagHandler(w http.ResponseWriter, r *http.Request) {
 	tag := r.URL.Query().Get("tag")
 
 	convertedPath := ConvertToWSLPath(filePath)
+	if filePath == "" || tag == "" {
+		w.Write([]byte("false"))
+		return
+	}
 
 	mu.Lock()
 	defer mu.Unlock()
@@ -168,7 +244,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 				RootPath: c.Path,
 				Children: children,
 			}
-			w.WriteHeader(http.StatusOK)
+			// w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "application/json")
 			// Encode the response as JSON
 			if err := json.NewEncoder(w).Encode(root); err != nil {
@@ -207,7 +283,7 @@ func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
 				RootPath: c.Path,
 				Children: children,
 			}
-			w.WriteHeader(http.StatusOK)
+			// w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "application/json")
 			// Encode the response as JSON
 			if err := json.NewEncoder(w).Encode(root); err != nil {
