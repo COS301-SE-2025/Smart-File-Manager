@@ -498,7 +498,7 @@ class MainNavigationState extends State<MainNavigation> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            'Cannot create Smart Manager "${result.name}": Directory is already contained in another Smart Manager',
+                            'Cannot create Smart Manager "${result.name}": Directory conflicts with an existing manager',
                           ),
                           backgroundColor: Colors.redAccent,
                           duration: Duration(seconds: 3),
