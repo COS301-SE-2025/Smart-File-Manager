@@ -25,4 +25,32 @@ We aim to ensure that both of these endpoints scales at least linearly in execut
 
 ### Experimental Procedure
 
-To properly test these endpoints we conduct an experiment running both the clustering and keyword service for an increasing number of files. We make use of the same file types containing the same content (in this test a textfile). Note that different file types could slightly influence the results. To ensure accurate results we also run each test 3 times and take the average of the results to report on. 
+To properly test these endpoints we conduct an experiment running both the clustering and keyword service for an increasing number of files. We make use of the same file types containing the same content (in this test a textfile). Note that different file types could slightly influence the results. To ensure accurate results we also run each test 3 times and take the average of the results to report on.  
+
+To run these tests make use of the following command:  
+```
+make python_performance_test
+```   
+
+These tests were executed on a machine with the following hardware:  
+* CPU: AMD Ryzen 5 5600H 3.30GHz
+* RAM: 16GB 3200 MT/s
+* DISK: Samsung SSD 980 500GB
+Note that Disk speed in particular is important as the results are endpoints are bottlenecked by the I/O subsystem, owing to the files needing to be opened to extract metadata and keywords.
+
+### Results
+#### Clustering
+
+Plotting the results obtained from our test yields the following results
+
+![Clustering Results](assets/testingAssets/clustering.png)
+
+As can be seen the clustering endpoint scales linearly in time with the number of files.
+
+### Keywords
+
+Plotting the results obtained from our test yields the following results
+
+![Keywords Results](assets/testingAssets/keywords.png)
+
+As can be seen the keyword endpoint scales linearly in time with the number of files.
