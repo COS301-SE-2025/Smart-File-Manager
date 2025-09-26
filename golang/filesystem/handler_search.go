@@ -12,8 +12,8 @@ import (
 )
 
 const limit int = 25
-const maxDist int = 14
-const similarityThreshold = 0.4
+const maxDist int = 8
+const similarityThreshold = 0.5
 
 func LevenshteinDist(searchText string, fileName string) int {
 	if len(searchText) == 0 {
@@ -268,6 +268,8 @@ func getMatches(text string, composite *Folder) *safeResults {
 func exploreFolder(f *Folder, text string, c chan<- rankedFile, wg *sync.WaitGroup) {
 	defer wg.Done()
 
+	lowSearch := strings.ToLower(text)
+
 	for _, folder := range f.Subfolders {
 		wg.Add(1)
 		go exploreFolder(folder, text, c, wg)
@@ -275,18 +277,44 @@ func exploreFolder(f *Folder, text string, c chan<- rankedFile, wg *sync.WaitGro
 
 	for _, file := range f.Files {
 		dist := LevenshteinDist(text, file.Name)
+
+		if strings.Contains(strings.ToLower(file.Name), lowSearch) {
+			dist = 0
+		}
 		maxLen := len(text)
 		if len(file.Name) > maxLen {
 			maxLen = len(file.Name)
 		}
-		// avoid division by zero
 		if maxLen == 0 {
 			continue
 		}
 		similarity := 1.0 - float64(dist)/float64(maxLen)
 
-		if dist <= maxDist && similarity >= similarityThreshold {
+		// dynamic minimum similarity depending on search length
+		minSim := similarityThreshold
+		switch {
+		case len(text) == 0:
+			continue
+		case len(text) <= 2:
+			//initial must match
+			if !strings.HasPrefix(strings.ToLower(file.Name), lowSearch) {
+				continue
+			}
+			minSim = 0.90
+
+		case len(text) <= 5:
+			minSim = 0.75
+
+		case len(text) <= 8:
+			minSim = 0.60
+
+		default:
+			minSim = similarityThreshold
+		}
+
+		if dist <= maxDist && similarity >= minSim {
 			c <- rankedFile{file: *file, distance: dist}
 		}
 	}
+
 }
