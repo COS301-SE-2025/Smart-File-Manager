@@ -1,6 +1,7 @@
 import 'package:app/models/file_model.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
 import 'models/file_tree_node.dart';
 import 'models/startup_response.dart';
 import 'models/duplicate_model.dart';
@@ -9,11 +10,19 @@ import 'models/stats_model.dart';
 const uri = "http://localhost:51000";
 
 class Api {
+  static String get _goApiSecret =>
+      Platform.environment['SFM_API_SECRET'] ?? '';
+
+  static Map<String, String> get _headers => {
+    'Content-Type': 'application/json',
+    'apiSecret': _goApiSecret,
+  };
   //Call to load tree data
   static Future<FileTreeNode> loadTreeData(String name) async {
     try {
       final response = await http.get(
         Uri.parse("$uri/loadTreeData?name=$name"),
+        headers: _headers,
       );
 
       if (response.statusCode == 200) {
@@ -33,7 +42,10 @@ class Api {
   //Call to initialize app and get existing smart managers
   static Future<StartupResponse> startUp() async {
     try {
-      final response = await http.get(Uri.parse("$uri/startUp"));
+      final response = await http.get(
+        Uri.parse("$uri/startUp"),
+        headers: _headers,
+      );
 
       if (response.statusCode == 200) {
         return StartupResponse.fromJson(
@@ -50,9 +62,17 @@ class Api {
   }
 
   //Call To Sort Tree structure
-  static Future<FileTreeNode> sortManager(String name) async {
+  static Future<FileTreeNode> sortManager(
+    String name, {
+    String? caseType,
+  }) async {
     try {
-      final response = await http.get(Uri.parse("$uri/sortTree?name=$name"));
+      String url = "$uri/sortTree?name=$name";
+      if (caseType != null && caseType.isNotEmpty) {
+        url += "&case=$caseType";
+      }
+
+      final response = await http.get(Uri.parse(url), headers: _headers);
 
       if (response.statusCode == 200) {
         return FileTreeNode.fromJson(
@@ -73,9 +93,11 @@ class Api {
     try {
       final response = await http.post(
         Uri.parse("$uri/addDirectory?name=$name&path=$path"),
+        headers: _headers,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
+        final body = response.body.trim();
+        return body == "true";
       } else {
         throw Exception(
           'Failed to add SmartManager: HTTP ${response.statusCode}',
@@ -93,10 +115,10 @@ class Api {
     try {
       final response = await http.post(
         Uri.parse("$uri/deleteManager?name=$name"),
+        headers: _headers,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print(response.body);
         return true;
       } else {
         throw Exception(
@@ -115,6 +137,7 @@ class Api {
     try {
       final response = await http.post(
         Uri.parse("$uri/addTag?name=$name&path=$path&tag=$tag"),
+        headers: _headers,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -138,6 +161,7 @@ class Api {
     try {
       final response = await http.post(
         Uri.parse("$uri/removeTag?name=$name&path=$path&tag=$tag"),
+        headers: _headers,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -157,6 +181,7 @@ class Api {
     try {
       final response = await http.post(
         Uri.parse("$uri/lock?name=$managerName&path=$path"),
+        headers: _headers,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
@@ -176,6 +201,7 @@ class Api {
     try {
       final response = await http.post(
         Uri.parse("$uri/unlock?name=$managerName&path=$path"),
+        headers: _headers,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
@@ -196,6 +222,7 @@ class Api {
     try {
       final response = await http.get(
         Uri.parse("$uri/findDuplicateFiles?name=$name"),
+        headers: _headers,
       );
 
       if (response.statusCode == 200) {
@@ -222,11 +249,10 @@ class Api {
     try {
       final response = await http.get(
         Uri.parse("$uri/search?compositeName=$name&searchText=$searchString"),
+        headers: _headers,
       );
 
       if (response.statusCode == 200) {
-        print("Normal Search Used");
-
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
@@ -250,10 +276,10 @@ class Api {
         Uri.parse(
           "$uri/keywordSearch?compositeName=$name&searchText=$searchString",
         ),
+        headers: _headers,
       );
 
       if (response.statusCode == 200) {
-        print("Advanced Search Used");
         return FileTreeNode.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>,
         );
@@ -272,6 +298,7 @@ class Api {
     try {
       final response = await http.get(
         Uri.parse("$uri/isKeywordSearchReady?compositeName=$name"),
+        headers: _headers,
       );
       if (response.statusCode == 200) {
         final body = response.body.trim().toLowerCase();
@@ -293,6 +320,7 @@ class Api {
     try {
       final response = await http.post(
         Uri.parse("$uri/deleteFile?name=$managerName&path=$path"),
+        headers: _headers,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return FileTreeNode.fromJson(
@@ -315,7 +343,7 @@ class Api {
     try {
       final response = await http.post(
         Uri.parse("$uri/bulkDeleteFiles?name=$managerName"),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers,
         body: jsonPaths,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -340,7 +368,7 @@ class Api {
     try {
       final response = await http.post(
         Uri.parse("$uri/bulkAddTag?name=$managerName"),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers,
         body: jsonPaths,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -365,7 +393,7 @@ class Api {
     try {
       final response = await http.post(
         Uri.parse("$uri/bulkRemoveTag?name=$managerName"),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers,
         body: jsonPaths,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -390,6 +418,7 @@ class Api {
     try {
       final response = await http.get(
         Uri.parse("$uri/returnType?name=$name&type=$type&umbrella=$umbrella"),
+        headers: _headers,
       );
 
       if (response.statusCode == 200) {
@@ -413,7 +442,6 @@ class Api {
               .map((item) => FileModel.fromJson(item as Map<String, dynamic>))
               .toList();
         } catch (e) {
-          print('Error parsing JSON: $e');
           return <FileModel>[];
         }
       } else {
@@ -431,11 +459,12 @@ class Api {
   //loadStats
   static Future<ManagersStatsResponse> loadStatsData() async {
     try {
-      final response = await http.get(Uri.parse("$uri/returnStats"));
+      final response = await http.get(
+        Uri.parse("$uri/returnStats"),
+        headers: _headers,
+      );
 
       if (response.statusCode == 200) {
-        print(jsonDecode(response.body) as List<dynamic>);
-
         return ManagersStatsResponse.fromJson(
           jsonDecode(response.body) as List<dynamic>,
         );
@@ -454,9 +483,9 @@ class Api {
     try {
       final response = await http.post(
         Uri.parse("$uri/moveDirectory?name=$managerName"),
+        headers: _headers,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print(response.body);
         if (response.body == "true") {
           return true;
         } else {

@@ -2,10 +2,14 @@ package filesystem
 
 import (
 	// "encoding/json"
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -15,11 +19,138 @@ var (
 	mu         sync.Mutex
 )
 
+// savePortToEnv updates or creates the GO_PORT entry in server.env
+func savePortToEnv(port int) error {
+	// Get the current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory: %v", err)
+	}
+
+	// Navigate to project root
+	projectRoot := filepath.Dir(cwd)
+	envFilePath := filepath.Join(projectRoot, "server.env")
+
+	// Try current directory first if the above doesn't work
+	if _, err := os.Stat(envFilePath); os.IsNotExist(err) {
+		envFilePath = filepath.Join(cwd, "server.env")
+	}
+
+	// If still not found, try going up two levels
+	if _, err := os.Stat(envFilePath); os.IsNotExist(err) {
+		projectRoot = filepath.Dir(filepath.Dir(cwd))
+		envFilePath = filepath.Join(projectRoot, "server.env")
+	}
+
+	var lines []string
+	goPortFound := false
+
+	// Read existing file if it exists
+	if file, err := os.Open(envFilePath); err == nil {
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.HasPrefix(line, "GO_PORT=") {
+				lines = append(lines, fmt.Sprintf("GO_PORT=%d", port))
+				goPortFound = true
+			} else {
+				lines = append(lines, line)
+			}
+		}
+	}
+
+	// Add GO_PORT if not found
+	if !goPortFound {
+		lines = append(lines, fmt.Sprintf("GO_PORT=%d", port))
+	}
+
+	// Write back to file
+	content := strings.Join(lines, "\n")
+	err = os.WriteFile(envFilePath, []byte(content), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write to server.env: %v", err)
+	}
+
+	return nil
+}
+
+// findAvailablePort finds an available port starting from a base port
+func findAvailablePort(basePort int) (int, error) {
+	for port := basePort; port < basePort+100; port++ {
+		addr := fmt.Sprintf(":%d", port)
+		listener, err := net.Listen("tcp", addr)
+		if err == nil {
+			listener.Close()
+			return port, nil
+		}
+	}
+	return 0, fmt.Errorf("no available port found in range %d-%d", basePort, basePort+99)
+}
+
+func isPathContained(parentPath, childPath string) bool {
+	parentPath = filepath.Clean(parentPath)
+	childPath = filepath.Clean(childPath)
+
+	// Convert to absolute paths for accurate comparison
+	parentAbs, err := filepath.Abs(parentPath)
+	if err != nil {
+		return false
+	}
+
+	childAbs, err := filepath.Abs(childPath)
+	if err != nil {
+		return false
+	}
+
+	// Ensure paths end with separator for accurate prefix checking
+	if !strings.HasSuffix(parentAbs, string(filepath.Separator)) {
+		parentAbs += string(filepath.Separator)
+	}
+	if !strings.HasSuffix(childAbs, string(filepath.Separator)) {
+		childAbs += string(filepath.Separator)
+	}
+
+	// Check if child path starts with parent path
+	return strings.HasPrefix(childAbs, parentAbs)
+}
+
+func checkDirectoryConflicts(newPath string) (bool, string, error) {
+	newPathAbs, err := filepath.Abs(newPath)
+	if err != nil {
+		return false, "", err
+	}
+
+	for _, comp := range Composites {
+		existingPathAbs, err := filepath.Abs(comp.Path)
+		if err != nil {
+			continue
+		}
+
+		// Exact match
+		if existingPathAbs == newPathAbs {
+			return true, fmt.Sprintf("Directory is already managed by '%s'", comp.Name), nil
+		}
+
+		// New path is inside existing manager
+		if strings.HasPrefix(newPathAbs+string(os.PathSeparator), existingPathAbs+string(os.PathSeparator)) {
+			return true, fmt.Sprintf("Directory is already contained within existing manager '%s' at path '%s'", comp.Name, comp.Path), nil
+		}
+
+		// Existing manager is inside new path
+		if strings.HasPrefix(existingPathAbs+string(os.PathSeparator), newPathAbs+string(os.PathSeparator)) {
+			return true, fmt.Sprintf("New directory would contain existing manager '%s' at path '%s'", comp.Name, comp.Path), nil
+		}
+	}
+
+	return false, "", nil
+}
+
 func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
-	// fmt.Println("addDirectory called")
 	managerName := r.URL.Query().Get("name")
 	filePath := r.URL.Query().Get("path")
 
+	// Check if manager name already exists
 	for _, comp := range Composites {
 		if comp.Name == managerName {
 			http.Error(w, "A smart file manager with that name already exists", http.StatusBadRequest)
@@ -28,14 +159,26 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mu.Lock()
-	// Composites = append(Composites, composite)
-	//appendng happens in this:
-	err := AddManager(managerName, filePath)
+	defer mu.Unlock()
+
+	// Check for directory conflicts
+	hasConflict, conflictMessage, err := checkDirectoryConflicts(filePath)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error checking directory conflicts: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	if hasConflict {
+		http.Error(w, conflictMessage, http.StatusBadRequest)
+		return
+	}
+
+	// Proceed with adding the manager
+	err = AddManager(managerName, filePath)
 	if err != nil {
 		w.Write([]byte("false"))
 		return
 	}
-	mu.Unlock()
 
 	w.Write([]byte("true"))
 }
@@ -45,6 +188,10 @@ func addTagHandler(w http.ResponseWriter, r *http.Request) {
 	tag := r.URL.Query().Get("tag")
 
 	convertedPath := ConvertToWSLPath(filePath)
+	if filePath == "" || tag == "" {
+		w.Write([]byte("false"))
+		return
+	}
 
 	mu.Lock()
 	defer mu.Unlock()
@@ -168,7 +315,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 				RootPath: c.Path,
 				Children: children,
 			}
-			w.WriteHeader(http.StatusOK)
+			// w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "application/json")
 			// Encode the response as JSON
 			if err := json.NewEncoder(w).Encode(root); err != nil {
@@ -207,7 +354,7 @@ func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
 				RootPath: c.Path,
 				Children: children,
 			}
-			w.WriteHeader(http.StatusOK)
+			// w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "application/json")
 			// Encode the response as JSON
 			if err := json.NewEncoder(w).Encode(root); err != nil {
@@ -276,52 +423,80 @@ func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Manager not found"))
 }
 
+func secretMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		secret := r.Header.Get("apiSecret")
+		apiSecret, found := os.LookupEnv("SFM_API_SECRET")
+		if !found {
+			fmt.Println("api secret not found")
+			http.Error(w, "Server secret not configured", http.StatusInternalServerError)
+			return
+		}
+
+		if secret != apiSecret {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func HandleRequests() {
+	// Find an available port starting from 51000
+	port, err := findAvailablePort(51000)
+	if err != nil {
+		fmt.Printf("Error finding available port: %v\n", err)
+		port = 51000 // Fallback to original port
+	} else {
+		// Save the found port to server.env
+		if err := savePortToEnv(port); err != nil {
+			fmt.Printf("Warning: Could not save port to server.env: %v\n", err)
+		} else {
+			fmt.Printf("Saved port %d to server.env\n", port)
+		}
+	}
 
-	// path, _ := os.Getwd()
-	// fmt.Println("THE PATH: " + path)
-	// path = filepath.Dir(path)
-	// path = filepath.Join(path, "python/testing")
-	// fmt.Println("THE PATH: " + path)
+	http.Handle("/addDirectory", secretMiddleware(http.HandlerFunc(addCompositeHandler)))
 
-	http.HandleFunc("/addDirectory", addCompositeHandler)
+	http.Handle("/addTag", secretMiddleware(http.HandlerFunc(addTagHandler)))
+	http.Handle("/removeTag", secretMiddleware(http.HandlerFunc(removeTagHandler)))
 
-	http.HandleFunc("/addTag", addTagHandler)
-	http.HandleFunc("/removeTag", removeTagHandler)
+	http.Handle("/loadTreeData", secretMiddleware(http.HandlerFunc(loadTreeDataHandlerGoOnly)))
 
-	http.HandleFunc("/loadTreeData", loadTreeDataHandlerGoOnly)
+	http.Handle("/sortTree", secretMiddleware(http.HandlerFunc(sortTreeHandler)))
+	http.Handle("/startUp", secretMiddleware(http.HandlerFunc(startUpHandler)))
 
-	http.HandleFunc("/sortTree", sortTreeHandler)
-	http.HandleFunc("/startUp", startUpHandler)
+	http.Handle("/lock", secretMiddleware(http.HandlerFunc(lockHandler)))
+	http.Handle("/unlock", secretMiddleware(http.HandlerFunc(unlockHandler)))
 
-	http.HandleFunc("/lock", lockHandler)
-	http.HandleFunc("/unlock", unlockHandler)
+	http.Handle("/search", secretMiddleware(http.HandlerFunc(SearchHandler)))
 
-	http.HandleFunc("/search", SearchHandler)
+	http.Handle("/keywordSearch", secretMiddleware(http.HandlerFunc(KeywordSearchHadler)))
+	http.Handle("/isKeywordSearchReady", secretMiddleware(http.HandlerFunc(IsKeywordSearchReadyHander)))
 
-	http.HandleFunc("/keywordSearch", KeywordSearchHadler)
-	http.HandleFunc("/isKeywordSearchReady", IsKeywordSearchReadyHander)
+	http.Handle("/moveDirectory", secretMiddleware(http.HandlerFunc(moveDirectoryHandler)))
 
-	http.HandleFunc("/moveDirectory", moveDirectoryHandler)
+	http.Handle("/findDuplicateFiles", secretMiddleware(http.HandlerFunc(findDuplicateFilesHandler)))
 
-	http.HandleFunc("/findDuplicateFiles", findDuplicateFilesHandler)
+	http.Handle("/bulkAddTag", secretMiddleware(http.HandlerFunc(BulkAddTagHandler)))
+	http.Handle("/bulkRemoveTag", secretMiddleware(http.HandlerFunc(BulkRemoveTagHandler)))
 
-	http.HandleFunc("/bulkAddTag", BulkAddTagHandler)
-	http.HandleFunc("/bulkRemoveTag", BulkRemoveTagHandler)
+	http.Handle("/deleteFile", secretMiddleware(http.HandlerFunc(deleteFileHandler)))
+	http.Handle("/deleteFolder", secretMiddleware(http.HandlerFunc(deleteFolderHandler)))
+	http.Handle("/bulkDeleteFolders", secretMiddleware(http.HandlerFunc(BulkDeleteFolderHandler)))
+	http.Handle("/bulkDeleteFiles", secretMiddleware(http.HandlerFunc(BulkDeleteFileHandler)))
+	http.Handle("/deleteManager", secretMiddleware(http.HandlerFunc(deleteManagerHandler)))
 
-	http.HandleFunc("/deleteFile", deleteFileHandler)
-	http.HandleFunc("/deleteFolder", deleteFolderHandler)
-	http.HandleFunc("/bulkDeleteFolders", BulkDeleteFolderHandler)
-	http.HandleFunc("/bulkDeleteFiles", BulkDeleteFileHandler)
-	http.HandleFunc("/deleteManager", deleteManagerHandler)
+	http.Handle("/returnType", secretMiddleware(http.HandlerFunc(ReturnTypeHandler)))
 
-	http.HandleFunc("/returnType", ReturnTypeHandler)
-	http.HandleFunc("/returnStats", StatHandler)
+	http.Handle("/returnStats", secretMiddleware(http.HandlerFunc(StatHandler)))
 
-	fmt.Println("Server started on port 51000")
+	http.Handle("/setPreferredCase", secretMiddleware(http.HandlerFunc(SetPreferredCase)))
 
-	// http.ListenAndServe(":51000", nil)
-	http.ListenAndServe("0.0.0.0:51000", nil)
+	addr := fmt.Sprintf("0.0.0.0:%d", port)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		fmt.Printf("Server failed to start: %v\n", err)
+	}
 
 }
 

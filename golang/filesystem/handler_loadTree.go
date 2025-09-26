@@ -3,10 +3,12 @@ package filesystem
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -46,13 +48,69 @@ type Metadata struct {
 	LastModified string `json:"lastModified"`
 }
 
-func grpcFunc(c *Folder, requestType string) error {
+func loadEnvFile(path string) (map[string]string, error) {
+	vars := make(map[string]string)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		// remove "export " if present
+		line = strings.TrimPrefix(line, "export ")
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			vars[parts[0]] = parts[1]
+		}
+	}
+	return vars, nil
+}
+
+func FindProjectRoot(filename string) (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		candidate := filepath.Join(dir, filename)
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate, nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir { // reached filesystem root
+			break
+		}
+		dir = parent
+	}
+
+	return "", fmt.Errorf("%s not found", filename)
+}
+
+func grpcFunc(c *Folder, requestType string, preferredCase string) error {
+
+	path, err := FindProjectRoot("server.env")
+	if err != nil {
+		log.Fatalf("failed to find project root: %v", err)
+	}
+
+	env, err := loadEnvFile(path)
+	if err != nil {
+		log.Fatalf("failed to read env file: %v", err)
+	}
+
+	port := env["PYTHON_SERVER"]
 
 	if requestType != "METADATA" && requestType != "CLUSTERING" && requestType != "KEYWORDS" {
 		return fmt.Errorf("invalid requestType: %s", requestType)
 	}
 
-	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient("localhost:"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("could not create new grpc go client")
 	}
@@ -62,12 +120,21 @@ func grpcFunc(c *Folder, requestType string) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 	defer cancel()
-
-	req := &pb.DirectoryRequest{
-		Root:        convertFolderToProto(*c),
-		RequestType: requestType,
+	shh, found := os.LookupEnv("SFM_SERVER_SECRET")
+	if !found {
+		fmt.Println("secret not found")
+		return errors.New("server secret not found error")
 	}
 
+	req := &pb.DirectoryRequest{
+		Root:          convertFolderToProto(*c),
+		RequestType:   requestType,
+		PreferredCase: preferredCase,
+		ServerSecret:  shh,
+	}
+	fmt.Println("this is before")
+	printDirectoryWithMetadata(req.Root, 0)
+	fmt.Println("this is after")
 	resp, err := client.SendDirectoryStructure(ctx, req)
 
 	if err != nil {
@@ -367,9 +434,8 @@ func printDirChildren(d *pb.Directory, prefix string) {
 		}
 		fmt.Printf("%s%s%s\n", prefix, branch, fileLabel(f))
 		fmt.Printf("%s%s%s%s\n", prefix, branch, fileLabel(f), "'s keyw:")
-		for _, kw := range f.Keywords {
-			fmt.Printf("%s%s kw is: %s\n", prefix, branch, kw.Keyword)
-		}
+
+		fmt.Printf("%s%s locked is: %s\n", prefix, branch, strconv.FormatBool(f.IsLocked))
 
 	}
 }
