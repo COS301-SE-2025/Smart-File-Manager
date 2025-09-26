@@ -146,7 +146,7 @@ func populateKeywordsFromStoredJsonFile(comp *Folder) {
 func mergeDirectoryTreeToComposite(comp *Folder, directory *DirectoryTreeJson) {
 	for _, node := range directory.Children {
 		if !node.IsFolder {
-			fmt.Println(node.Name)
+			// fmt.Println(node.Name)
 			path := node.Path
 
 			compositeFile := comp.GetFile(path)
@@ -164,7 +164,7 @@ func mergeDirectoryTreeToComposite(comp *Folder, directory *DirectoryTreeJson) {
 			helperMergeDirectoryTreeToComposite(comp, &node)
 		}
 	}
-	fmt.Println("======END OFmergeDirectoryTreeToComposite========")
+	// fmt.Println("======END OFmergeDirectoryTreeToComposite========")
 
 	// PrettyPrintFolder(comp, "")
 

@@ -410,8 +410,6 @@ func ExtractKeywordsRAKE(filePath string, topN int, maxSize int64) ([]*pb.Keywor
 	return ExtractKeywordsFromText(string(data), topN), nil
 }
 
-// Appends unique keywords from src into dst (by exact Keyword string match),
-// and caps the result at maxKeywords (30). Does not alter order of existing dst.
 func AppendUniqueKeywords(dst, src []*pb.Keyword) []*pb.Keyword {
 	const maxKeywords = 30
 
