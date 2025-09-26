@@ -286,6 +286,8 @@ class _SettingsPageState extends State<SettingsPage> {
         return "Pascal Case (MyFolderName)";
       case "KEBAB":
         return "Kebab Case (my-folder-name)";
+      case "SPACE":
+        return "Space Case (My Folder Name)";
       default:
         return convention;
     }
