@@ -22,6 +22,7 @@ def test_lemmatize_deduplicates(creator):
     assert result == [['run', 'case'], ['run', 'case'], ['run']]
     assert len(result) == 3
 
+
 def test_generate_folder_name_basic(creator):
     files = [
         {"filename": "MeetingNotes.txt", "absolute_path": "/docs/work", "keywords": [("meeting", 0.9)]},

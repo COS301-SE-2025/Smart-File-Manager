@@ -111,5 +111,6 @@ class SettingsService extends ChangeNotifier {
     "SNAKE",
     "PASCAL",
     "KEBAB",
+    "SPACE",
   ];
 }

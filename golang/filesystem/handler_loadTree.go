@@ -133,7 +133,6 @@ func grpcFunc(c *Folder, requestType string, preferredCase string) error {
 		ServerSecret:  shh,
 	}
 	fmt.Println("this is before")
-	printDirectoryWithMetadata(req.Root, 0)
 	fmt.Println("this is after")
 	resp, err := client.SendDirectoryStructure(ctx, req)
 
