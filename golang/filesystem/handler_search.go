@@ -12,6 +12,7 @@ import (
 
 const limit int = 25
 const maxDist int = 10
+const similarityThreshold = 0.5
 
 func LevenshteinDist(searchText string, fileName string) int {
 	if len(searchText) == 0 {
@@ -266,8 +267,17 @@ func exploreFolder(f *Folder, text string, c chan<- rankedFile, wg *sync.WaitGro
 
 	for _, file := range f.Files {
 		dist := LevenshteinDist(text, file.Name)
-		if dist <= maxDist {
+		maxLen := len(text)
+		if len(file.Name) > maxLen {
+			maxLen = len(file.Name)
+		}
+		// avoid division by zero
+		if maxLen == 0 {
+			continue
+		}
+		similarity := 1.0 - float64(dist)/float64(maxLen)
 
+		if dist <= maxDist && similarity >= similarityThreshold {
 			c <- rankedFile{file: *file, distance: dist}
 		}
 	}
