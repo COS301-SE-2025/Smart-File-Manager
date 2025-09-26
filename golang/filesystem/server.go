@@ -162,14 +162,14 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	defer mu.Unlock()
 
 	// Check for directory conflicts
-	hasConflict, conflictMessage, err := checkDirectoryConflicts(filePath)
+	hasConflict, _, err := checkDirectoryConflicts(filePath)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error checking directory conflicts: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	if hasConflict {
-		http.Error(w, conflictMessage, http.StatusBadRequest)
+		w.Write([]byte("false"))
 		return
 	}
 
