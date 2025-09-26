@@ -6,13 +6,14 @@ import (
 	"math"
 	"net/http"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 )
 
 const limit int = 25
-const maxDist int = 10
-const similarityThreshold = 0.5
+const maxDist int = 14
+const similarityThreshold = 0.4
 
 func LevenshteinDist(searchText string, fileName string) int {
 	if len(searchText) == 0 {
@@ -253,6 +254,13 @@ func getMatches(text string, composite *Folder) *safeResults {
 		unique = append(unique, rf)
 	}
 	res.rankedFiles = unique
+
+	sort.SliceStable(res.rankedFiles, func(i, j int) bool {
+		if res.rankedFiles[i].distance != res.rankedFiles[j].distance {
+			return res.rankedFiles[i].distance < res.rankedFiles[j].distance
+		}
+		return strings.ToLower(res.rankedFiles[i].file.Name) < strings.ToLower(res.rankedFiles[j].file.Name)
+	})
 
 	return res
 }

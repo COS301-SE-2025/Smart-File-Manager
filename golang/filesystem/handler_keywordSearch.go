@@ -16,8 +16,8 @@ import (
 	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
 )
 
-const limitKeywordSearch int = 20
-const maxDistKeywordSearch int = 3
+const limitKeywordSearch int = 15
+const maxDistKeywordSearch int = 5
 
 //flow idea:
 // app starts
@@ -166,7 +166,21 @@ func getMatchesByKeywords(searchTerms []string, composite *Folder) *safeResults 
 	}
 	res.rankedFiles = unique
 
+	sort.SliceStable(res.rankedFiles, func(i, j int) bool {
+		if res.rankedFiles[i].distance != res.rankedFiles[j].distance {
+			return res.rankedFiles[i].distance < res.rankedFiles[j].distance
+		}
+		ni := strings.ToLower(res.rankedFiles[i].file.Name)
+		nj := strings.ToLower(res.rankedFiles[j].file.Name)
+		if ni != nj {
+			return ni < nj
+		}
+
+		return filepath.Clean(res.rankedFiles[i].file.Path) < filepath.Clean(res.rankedFiles[j].file.Path)
+	})
+
 	return res
+
 }
 
 func exploreFolderForKeywords(f *Folder, searchTerms []string, c chan<- rankedFile, wg *sync.WaitGroup) {
