@@ -89,8 +89,9 @@ func findAvailablePort(basePort int) (int, error) {
 }
 
 func isPathContained(parentPath, childPath string) bool {
-	parentPath = filepath.Clean(parentPath)
-	childPath = filepath.Clean(childPath)
+	parentPath = ConvertToWSLPath(filepath.Clean(parentPath))
+    childPath = ConvertToWSLPath(filepath.Clean(childPath))
+
 
 	// Convert to absolute paths for accurate comparison
 	parentAbs, err := filepath.Abs(parentPath)
@@ -116,29 +117,26 @@ func isPathContained(parentPath, childPath string) bool {
 }
 
 func checkDirectoryConflicts(newPath string) (bool, string, error) {
-	newPathAbs, err := filepath.Abs(newPath)
-	if err != nil {
-		return false, "", err
-	}
+	fmt.Println(" Manager directory conflicts started");
+	newPath = ConvertToWSLPath(filepath.Clean(newPath))
 
 	for _, comp := range Composites {
-		existingPathAbs, err := filepath.Abs(comp.Path)
-		if err != nil {
-			continue
-		}
+		existingPathAbs := comp.Path
 
+		fmt.Println("New Path: "+ newPath);
+		fmt.Println("Old Path: "+ existingPathAbs);
 		// Exact match
-		if existingPathAbs == newPathAbs {
+		if existingPathAbs == newPath {
 			return true, fmt.Sprintf("Directory is already managed by '%s'", comp.Name), nil
 		}
 
 		// New path is inside existing manager
-		if strings.HasPrefix(newPathAbs+string(os.PathSeparator), existingPathAbs+string(os.PathSeparator)) {
+		if strings.HasPrefix(newPath+string(os.PathSeparator), existingPathAbs+string(os.PathSeparator)) {
 			return true, fmt.Sprintf("Directory is already contained within existing manager '%s' at path '%s'", comp.Name, comp.Path), nil
 		}
 
 		// Existing manager is inside new path
-		if strings.HasPrefix(existingPathAbs+string(os.PathSeparator), newPathAbs+string(os.PathSeparator)) {
+		if strings.HasPrefix(existingPathAbs+string(os.PathSeparator), newPath+string(os.PathSeparator)) {
 			return true, fmt.Sprintf("New directory would contain existing manager '%s' at path '%s'", comp.Name, comp.Path), nil
 		}
 	}
@@ -147,6 +145,7 @@ func checkDirectoryConflicts(newPath string) (bool, string, error) {
 }
 
 func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(" Manager creation started");
 	managerName := r.URL.Query().Get("name")
 	filePath := r.URL.Query().Get("path")
 
@@ -162,11 +161,14 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	defer mu.Unlock()
 
 	// Check for directory conflicts
+		fmt.Println(" Manager directory conflicts called");
+
 	hasConflict, _, err := checkDirectoryConflicts(filePath)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error checking directory conflicts: %v", err), http.StatusInternalServerError)
 		return
 	}
+			fmt.Println(" Manager directory conflicts ended");
 
 	if hasConflict {
 		w.Write([]byte("false"))
