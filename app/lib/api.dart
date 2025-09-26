@@ -7,11 +7,44 @@ import 'models/startup_response.dart';
 import 'models/duplicate_model.dart';
 import 'models/stats_model.dart';
 
-const uri = "http://localhost:51000";
-
 class Api {
   static String get _goApiSecret =>
       Platform.environment['SFM_API_SECRET'] ?? '';
+
+  static String get _baseUri {
+    try {
+      final executableDir = File(Platform.resolvedExecutable).parent;
+      final envFile = File('${executableDir.path}/server.env');
+
+      if (envFile.existsSync()) {
+        final contents = envFile.readAsStringSync();
+        final lines = contents.split('\n');
+        for (final line in lines) {
+          if (line.trim().startsWith('GO_PORT=')) {
+            final port = line.split('=')[1].trim();
+            return "http://localhost:$port";
+          }
+        }
+      }
+
+      final currentDir = Directory.current;
+      final parentEnvFile = File('${currentDir.parent.path}/server.env');
+
+      if (parentEnvFile.existsSync()) {
+        final contents = parentEnvFile.readAsStringSync();
+        final lines = contents.split('\n');
+        for (final line in lines) {
+          if (line.trim().startsWith('GO_PORT=')) {
+            final port = line.split('=')[1].trim();
+            return "http://localhost:$port";
+          }
+        }
+      }
+    } catch (e) {
+      print('Error reading server.env: $e');
+    }
+    return "http://localhost:51000";
+  }
 
   static Map<String, String> get _headers => {
     'Content-Type': 'application/json',
@@ -21,7 +54,7 @@ class Api {
   static Future<FileTreeNode> loadTreeData(String name) async {
     try {
       final response = await http.get(
-        Uri.parse("$uri/loadTreeData?name=$name"),
+        Uri.parse("$_baseUri/loadTreeData?name=$name"),
         headers: _headers,
       );
 
@@ -43,7 +76,7 @@ class Api {
   static Future<StartupResponse> startUp() async {
     try {
       final response = await http.get(
-        Uri.parse("$uri/startUp"),
+        Uri.parse("$_baseUri/startUp"),
         headers: _headers,
       );
 
@@ -67,7 +100,7 @@ class Api {
     String? caseType,
   }) async {
     try {
-      String url = "$uri/sortTree?name=$name";
+      String url = "$_baseUri/sortTree?name=$name";
       if (caseType != null && caseType.isNotEmpty) {
         url += "&case=$caseType";
       }
@@ -92,11 +125,13 @@ class Api {
   static Future<bool> addSmartManager(String name, String path) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/addDirectory?name=$name&path=$path"),
+        Uri.parse("$_baseUri/addDirectory?name=$name&path=$path"),
         headers: _headers,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
+        print(response.body);
         final body = response.body.trim();
+        print(body);
         return body == "true";
       } else {
         throw Exception(
@@ -114,7 +149,7 @@ class Api {
   static Future<bool> deleteSmartManager(String name) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/deleteManager?name=$name"),
+        Uri.parse("$_baseUri/deleteManager?name=$name"),
         headers: _headers,
       );
 
@@ -136,7 +171,7 @@ class Api {
   static Future<bool> addTagToFile(String name, String path, String tag) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/addTag?name=$name&path=$path&tag=$tag"),
+        Uri.parse("$_baseUri/addTag?name=$name&path=$path&tag=$tag"),
         headers: _headers,
       );
 
@@ -160,7 +195,7 @@ class Api {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/removeTag?name=$name&path=$path&tag=$tag"),
+        Uri.parse("$_baseUri/removeTag?name=$name&path=$path&tag=$tag"),
         headers: _headers,
       );
 
@@ -180,7 +215,7 @@ class Api {
   static Future<bool> locking(String managerName, String path) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/lock?name=$managerName&path=$path"),
+        Uri.parse("$_baseUri/lock?name=$managerName&path=$path"),
         headers: _headers,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -200,7 +235,7 @@ class Api {
   static Future<bool> unlocking(String managerName, String path) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/unlock?name=$managerName&path=$path"),
+        Uri.parse("$_baseUri/unlock?name=$managerName&path=$path"),
         headers: _headers,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -221,7 +256,7 @@ class Api {
   static Future<List<DuplicateModel>> loadDuplicates(String name) async {
     try {
       final response = await http.get(
-        Uri.parse("$uri/findDuplicateFiles?name=$name"),
+        Uri.parse("$_baseUri/findDuplicateFiles?name=$name"),
         headers: _headers,
       );
 
@@ -248,7 +283,9 @@ class Api {
   static Future<FileTreeNode> searchGo(String name, String searchString) async {
     try {
       final response = await http.get(
-        Uri.parse("$uri/search?compositeName=$name&searchText=$searchString"),
+        Uri.parse(
+          "$_baseUri/search?compositeName=$name&searchText=$searchString",
+        ),
         headers: _headers,
       );
 
@@ -274,7 +311,7 @@ class Api {
     try {
       final response = await http.get(
         Uri.parse(
-          "$uri/keywordSearch?compositeName=$name&searchText=$searchString",
+          "$_baseUri/keywordSearch?compositeName=$name&searchText=$searchString",
         ),
         headers: _headers,
       );
@@ -297,7 +334,7 @@ class Api {
   static Future<bool> searchAdvancedReady(String name) async {
     try {
       final response = await http.get(
-        Uri.parse("$uri/isKeywordSearchReady?compositeName=$name"),
+        Uri.parse("$_baseUri/isKeywordSearchReady?compositeName=$name"),
         headers: _headers,
       );
       if (response.statusCode == 200) {
@@ -319,7 +356,7 @@ class Api {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/deleteFile?name=$managerName&path=$path"),
+        Uri.parse("$_baseUri/deleteFile?name=$managerName&path=$path"),
         headers: _headers,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -342,7 +379,7 @@ class Api {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/bulkDeleteFiles?name=$managerName"),
+        Uri.parse("$_baseUri/bulkDeleteFiles?name=$managerName"),
         headers: _headers,
         body: jsonPaths,
       );
@@ -367,7 +404,7 @@ class Api {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/bulkAddTag?name=$managerName"),
+        Uri.parse("$_baseUri/bulkAddTag?name=$managerName"),
         headers: _headers,
         body: jsonPaths,
       );
@@ -392,7 +429,7 @@ class Api {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/bulkRemoveTag?name=$managerName"),
+        Uri.parse("$_baseUri/bulkRemoveTag?name=$managerName"),
         headers: _headers,
         body: jsonPaths,
       );
@@ -417,7 +454,9 @@ class Api {
   ) async {
     try {
       final response = await http.get(
-        Uri.parse("$uri/returnType?name=$name&type=$type&umbrella=$umbrella"),
+        Uri.parse(
+          "$_baseUri/returnType?name=$name&type=$type&umbrella=$umbrella",
+        ),
         headers: _headers,
       );
 
@@ -460,7 +499,7 @@ class Api {
   static Future<ManagersStatsResponse> loadStatsData() async {
     try {
       final response = await http.get(
-        Uri.parse("$uri/returnStats"),
+        Uri.parse("$_baseUri/returnStats"),
         headers: _headers,
       );
 
@@ -482,7 +521,7 @@ class Api {
   static Future<bool> moveDirectory(String managerName) async {
     try {
       final response = await http.post(
-        Uri.parse("$uri/moveDirectory?name=$managerName"),
+        Uri.parse("$_baseUri/moveDirectory?name=$managerName"),
         headers: _headers,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
