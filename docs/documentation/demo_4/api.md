@@ -1,5 +1,5 @@
 # Smart File Manager – Flutter API Client Documentation
-**Version:** 3.0.0.0  
+**Version:** 4.0.0.0  
 **Prepared By:** Spark Industries  
 **Prepared For:** Southern Cross Solutions & Personal Development team use  
 
