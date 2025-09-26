@@ -11,7 +11,7 @@ import (
 )
 
 const limit int = 25
-const maxDist int = 25
+const maxDist int = 10
 
 func LevenshteinDist(searchText string, fileName string) int {
 	if len(searchText) == 0 {
@@ -48,7 +48,7 @@ func LevenshteinDist(searchText string, fileName string) int {
 	//  BOOST exact substrings
 	var boost float32 = 1 //lower boost is better as it makes the distance smaller
 	if strings.Contains(fileName, searchText) {
-		boost = 0.2
+		boost = 0.1
 	}
 
 	// now fall back on full Levenshtein
@@ -206,7 +206,7 @@ func getMatches(text string, composite *Folder) *safeResults {
 			//if current is better
 			if iteratedRankedFile.distance > currentRankedFile.distance {
 
-				if len(res.rankedFiles) < limit {
+				if len(res.rankedFiles) < limit && (currentRankedFile.distance < maxDist) {
 					//insert by shifting over to make the array sorted
 					res.rankedFiles = append(
 						append(res.rankedFiles[:i], currentRankedFile),
@@ -230,7 +230,7 @@ func getMatches(text string, composite *Folder) *safeResults {
 		}
 		// if limit is not reached and not inserted then we insert at the end
 		if len(res.rankedFiles) < limit {
-			if !inserted {
+			if !inserted && (currentRankedFile.distance < maxDist) {
 				res.rankedFiles = append(res.rankedFiles, currentRankedFile)
 			}
 		}
