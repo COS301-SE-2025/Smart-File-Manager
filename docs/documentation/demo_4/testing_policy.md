@@ -13,7 +13,8 @@
 ## Content
 * [Introduction](#introduction)
 * [Policy Overview](#policy-overview)
-* [Testing Files Location](#testing-files-location)
+* [Finding and Running the Tests](#finding-and-running-tests)
+* [Testing Coverage](#testing-coverage)
 
 
 ## Introduction
@@ -27,7 +28,7 @@ We believe that extensive testing is foundational for producing a high quality a
 * End To End (E2E) Testing: Tests if the entire workflows for a specific feature works from start to finish.
 * Non Functional Testing: Ensure that the quality requirements are satisfied by our implementation - see [here](non_functional_tests.md)
 
-## Testing files location
+## Finding and Running Tests
 The location of the testing files may be found in the following locations from the project root
 
 ### Python Tests
@@ -67,3 +68,13 @@ They may be ran using
 cd app
 flutter test --reporter=expanded
 ```
+
+## Testing Coverage
+The testing coverage for the various codebases are as follows
+
+### Python
+
+![Python](assets/testingAssets/python_coverage.png)
+
+
+### Go
