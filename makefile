@@ -92,5 +92,6 @@ python_master_temp:
 python_locked_temp:
 	pytest -v -s --color=yes --tb=short python/testing/test_locked_request.py
 
-python_performance_test:
+python_non_functional:
 	pytest -v -s --color=yes --tb=short python/non_functional_tests/
+
