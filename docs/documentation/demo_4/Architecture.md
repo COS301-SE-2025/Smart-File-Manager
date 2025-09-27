@@ -109,7 +109,7 @@ The following quality requirements are prioritized from highest to lowest priori
 
 ### Architectural Diagram
 
-![Application Architecture](assets/applicationArchitectureV3.png)
+![Application Architecture](assets/applicationArchitectureV4.png)
 
 SFM makes use of various architectural patterns selected to support our quality requirements. Our choices and justifications for them follows.
 
