@@ -11,6 +11,7 @@
 ## Content
 * [Introduction](#introduction)
 * [Performance Test](#performance-testing)
+* [Reliability Test](#reliability-test)
 
 ## Introduction 
 The following document outlines some of the non functional testing we performed to ensure the quality requirements as outlined in our documentation.
@@ -54,3 +55,14 @@ Plotting the results obtained from our test yields the following results
 ![Keywords Results](assets/testingAssets/keywords.png)
 
 As can be seen the keyword endpoint scales linearly in time with the number of files.
+
+## Reliability Test
+
+### Expected Results
+To ensure the reliability of our application we test that file integrity is preserved by our file operations. When performing a sorting operation (which will both traverse the directory and extract keywords) we must ensure that no file changes or is somehow modified during the operation.
+
+### Experimental Procedure
+
+We conduct an experiment where we calculate the hashes for a subset of files. We then perform a sorting operation (which also extracts keywords) and afterwards we recalculate the file hashes. We compare these results to ensure that no file is modified by the operation.
+
+### Results
