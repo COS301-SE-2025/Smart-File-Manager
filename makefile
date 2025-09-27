@@ -38,16 +38,15 @@ go_grpc_client:
 	go run grpc/client/grpcClient.go
 
 go_test:
-	@echo "Running filesystem tests..."
-	cd golang/filesystem && go test -tags=test -v
-	@echo "Running filesystem/tests..."
-	cd golang/filesystem/tests && go test -tags=test -v
+	@echo "Running all filesystem tests..."
+	cd golang && go test -tags=test ./filesystem/...
 
 go_coverage:
-	cd golang/filesystem && go test -coverprofile=coverage.out -covermode=atomic
+	cd golang && go test -tags=test -coverpkg=./filesystem/... -coverprofile=coverage.out -covermode=atomic ./filesystem/...
 	@echo "Coverage summary:"
-	cd golang/filesystem && go tool cover -html=coverage.out
-	@echo "To view HTML report, run: go tool cover -html=golang/filesystem/coverage.out"
+	cd golang && go tool cover -html=coverage.out
+	@echo "To view HTML report, run: go tool cover -html=golang/coverage.out"
+
 
 go_api:
 	cd golang && \
