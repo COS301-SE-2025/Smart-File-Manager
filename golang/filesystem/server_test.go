@@ -2,8 +2,10 @@
 package filesystem
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -717,4 +719,120 @@ func TestMergeProtoToFolderHelper_InPlace(t *testing.T) {
 	}
 }
 
+func captureOutput(fn func()) string {
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
 
+	outC := make(chan string)
+	go func() {
+		var buf bytes.Buffer
+		_, _ = io.Copy(&buf, r)
+		outC <- buf.String()
+	}()
+
+	fn()
+	_ = w.Close()
+	os.Stdout = old
+	return <-outC
+}
+
+func TestDirLabel_UnnamedAndLocked(t *testing.T) {
+	d := &pb.Directory{
+		Name:        "   ",
+		Path:        "/some/path",
+		Directories: []*pb.Directory{},
+		Files:       []*pb.File{},
+		IsLocked:    true,
+	}
+	s := dirLabel(d)
+	if !strings.Contains(s, "<unnamed>") {
+		t.Fatalf("expected <unnamed> in label, got: %s", s)
+	}
+	if !strings.Contains(s, "[locked]") {
+		t.Fatalf("expected [locked] in label, got: %s", s)
+	}
+	if !strings.Contains(s, "files=0") || !strings.Contains(s, "dirs=0") {
+		t.Fatalf("expected counts in label, got: %s", s)
+	}
+}
+
+func TestConvertFolderToProto_And_MetadataConverter(t *testing.T) {
+	f := Folder{
+		Name: "root",
+		Path: "/root",
+		Files: []*File{
+			{
+				Name:    "a.txt",
+				Path:    "/root/a.txt",
+				Tags:    []string{"one", "two"},
+				Locked:  true,
+				NewPath: "/new/a.txt",
+			},
+		},
+		Subfolders: []*Folder{
+			{Name: "sub", Path: "/root/sub"},
+		},
+	}
+
+	proto := convertFolderToProto(f)
+	if proto.Name != "root" || proto.Path != "/root" {
+		t.Fatalf("proto folder header incorrect: %#v", proto)
+	}
+	if len(proto.Files) != 1 || proto.Files[0].Name != "a.txt" {
+		t.Fatalf("file mapping failed: %#v", proto.Files)
+	}
+	// metadataConverter: simple round-trip
+	metaIn := []*pb.MetadataEntry{{Key: "size", Value: "123"}}
+	metaOut := metadataConverter(metaIn)
+	if len(metaOut) != 1 || metaOut[0].Key != "size" || metaOut[0].Value != "123" {
+		t.Fatalf("metadataConverter failed: %#v", metaOut)
+	}
+}
+
+func TestPrintDirectoryWithMetadata_And_PrintDirChildren(t *testing.T) {
+	dir := &pb.Directory{
+		Name: "root",
+		Path: "/root",
+		Directories: []*pb.Directory{
+			{
+				Name:  "subdir",
+				Path:  "/root/subdir",
+				Files: []*pb.File{},
+			},
+		},
+		Files: []*pb.File{
+			{
+				Name:         "file1.txt",
+				OriginalPath: "/root/file1.txt",
+				Tags:         []*pb.Tag{{Name: "t1"}},
+				IsLocked:     false,
+			},
+		},
+		IsLocked: false,
+	}
+
+	out := captureOutput(func() {
+		printDirectoryWithMetadata(dir, 0)
+	})
+
+	// basic assertions that important pieces are printed
+	if !strings.Contains(out, "[DIR] root") {
+		t.Fatalf("expected root label printed, got: %s", out)
+	}
+	if !strings.Contains(out, "subdir") {
+		t.Fatalf("expected subdir printed, got: %s", out)
+	}
+	if !strings.Contains(out, "file1.txt") {
+		t.Fatalf("expected file1.txt printed, got: %s", out)
+	}
+
+	// test empty directory prints "(empty)"
+	empty := &pb.Directory{Name: "empty", Path: "/empty"}
+	out2 := captureOutput(func() {
+		printDirChildren(empty, "")
+	})
+	if !strings.Contains(out2, "(empty)") {
+		t.Fatalf("expected (empty) printed for empty dir, got: %s", out2)
+	}
+}
