@@ -39,7 +39,7 @@ go_grpc_client:
 
 go_test:
 	@echo "Running all filesystem tests..."
-	cd golang && go test -tags=test ./filesystem/...
+	cd golang && go test -tags=test ./filesystem/... -v
 
 go_coverage:
 	@cd golang && \
@@ -51,6 +51,12 @@ go_coverage:
 	else \
 	  echo "coverage.out not generated"; \
 	fi
+
+go_coverage_funcs:
+	cd golang && \
+	go test -tags=test -coverpkg=./filesystem/... -coverprofile=coverage.out -covermode=atomic ./filesystem/... && \
+	echo "Coverage per function:" && \
+	go tool cover -func=coverage.out
 
 
 
