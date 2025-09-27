@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
 )
 
 // Test addCompositeHandler with directory conflict checking
@@ -534,3 +536,185 @@ func TestAPI_DeleteFolderHandler_Success(t *testing.T) {
 		t.Errorf("Expected subdir to be deleted")
 	}
 }
+
+func TestTagsConversionRoundTrip(t *testing.T) {
+	in := []*pb.Tag{
+		{Name: "one"},
+		{Name: "Two"},
+		{Name: "three"},
+	}
+	strs := tagsToStrings(in)
+	if len(strs) != len(in) {
+		t.Fatalf("expected %d tags, got %d", len(in), len(strs))
+	}
+	out := stringsToTags(strs)
+	if len(out) != len(in) {
+		t.Fatalf("expected %d pb.Tags, got %d", len(in), len(out))
+	}
+	for i := range in {
+		if in[i].Name != out[i].Name {
+			t.Fatalf("expected tag %q at index %d, got %q", in[i].Name, i, out[i].Name)
+		}
+	}
+}
+
+// Ensure nil guards don't panic
+func TestMergeProtoNilGuards(t *testing.T) {
+	// both nil
+	mergeProtoToFolder(nil, nil)
+
+	// dir nil, existing non-nil
+	existing := &Folder{Name: "exists", Path: "/tmp"}
+	mergeProtoToFolder(nil, existing)
+
+	// dir non-nil, existing nil
+	dir := &pb.Directory{Name: "dir", Path: "/tmp/dir"}
+	mergeProtoToFolder(dir, nil)
+
+	// helper nil guard
+	mergeProtoToFolderHelper(nil, nil)
+	mergeProtoToFolderHelper(nil, &Folder{})
+	mergeProtoToFolderHelper(&pb.Directory{}, nil)
+}
+
+// Test mapping of files and nested directories via mergeProtoToFolder and helper
+func TestMergeProtoToFolder_Mapping(t *testing.T) {
+	// Build a proto tree:
+	// root
+	//  - fileA (with one tag)
+	//  - subdir (contains fileB with keyword)
+	root := &pb.Directory{
+		Name: "root",
+		Path: "/root",
+		Files: []*pb.File{
+			{
+				Name:         "fileA.txt",
+				OriginalPath: "/root/fileA.txt",
+				Tags:         []*pb.Tag{{Name: "alpha"}, {Name: "beta"}},
+				IsLocked:     true,
+				NewPath:      "/newroot/fileA.txt",
+				// Metadata left nil (metadataConverter should handle nil)
+			},
+		},
+		Directories: []*pb.Directory{
+			{
+				Name: "subdir",
+				Path: "/root/subdir",
+				Files: []*pb.File{
+					{
+						Name:         "fileB.md",
+						OriginalPath: "/root/subdir/fileB.md",
+						Tags:         []*pb.Tag{{Name: "gamma"}},
+						IsLocked:     false,
+						NewPath:      "/newroot/subdir/fileB.md",
+						Keywords:     []*pb.Keyword{{Keyword: "kw1", Score: 2.0}},
+					},
+				},
+			},
+		},
+	}
+
+	// existing folder with pre-populated content that should be cleared
+	existing := &Folder{
+		Name:       "old",
+		Path:       "/old",
+		Files:      []*File{{Name: "oldfile"}},
+		Subfolders: []*Folder{{Name: "oldsub"}},
+	}
+
+	mergeProtoToFolder(root, existing)
+
+	// after merge, existing should reflect proto
+	if existing.Name != "old" {
+		// mergeProtoToFolder doesn't change existing.Name at top-level, only subfolders via helper.
+		// we only assert Files and Subfolders contents here.
+	}
+
+	// Files length and mapping
+	if len(existing.Files) != 1 {
+		t.Fatalf("expected 1 file in existing.Files, got %d", len(existing.Files))
+	}
+	f := existing.Files[0]
+	if f.Name != "fileA.txt" {
+		t.Fatalf("expected file name fileA.txt, got %q", f.Name)
+	}
+	if f.Path != "/root/fileA.txt" {
+		t.Fatalf("expected path /root/fileA.txt, got %q", f.Path)
+	}
+	if f.Locked != true {
+		t.Fatalf("expected Locked true, got %v", f.Locked)
+	}
+	// tagsToStrings should have converted tags
+	if len(f.Tags) != 2 || f.Tags[0] != "alpha" || f.Tags[1] != "beta" {
+		t.Fatalf("tags not converted correctly: %#v", f.Tags)
+	}
+
+	// Subfolders length and mapping
+	if len(existing.Subfolders) != 1 {
+		t.Fatalf("expected 1 subfolder, got %d", len(existing.Subfolders))
+	}
+	sub := existing.Subfolders[0]
+	if sub.Name != "subdir" {
+		t.Fatalf("expected subfolder name subdir, got %q", sub.Name)
+	}
+	if sub.Path != "/root/subdir" {
+		t.Fatalf("expected subfolder path /root/subdir, got %q", sub.Path)
+	}
+	// child files mapping via helper
+	if len(sub.Files) != 1 {
+		t.Fatalf("expected 1 file in sub.Files, got %d", len(sub.Files))
+	}
+	fb := sub.Files[0]
+	if fb.Name != "fileB.md" {
+		t.Fatalf("expected sub file name fileB.md, got %q", fb.Name)
+	}
+	// Keywords should be preserved by helper
+	if len(fb.Keywords) != 1 || fb.Keywords[0].Keyword != "kw1" {
+		t.Fatalf("expected keyword kw1 in child file, got %#v", fb.Keywords)
+	}
+}
+
+// A small test to ensure helper updates an existing folder in-place
+func TestMergeProtoToFolderHelper_InPlace(t *testing.T) {
+	dir := &pb.Directory{
+		Name: "X",
+		Path: filepath.Join("/base", "X"),
+		Files: []*pb.File{
+			{
+				Name:         "a.txt",
+				OriginalPath: "/base/X/a.txt",
+				Tags:         []*pb.Tag{{Name: "t1"}},
+			},
+		},
+		Directories: []*pb.Directory{
+			{
+				Name: "C",
+				Path: "/base/X/C",
+			},
+		},
+	}
+
+	existing := &Folder{
+		Name:       "oldName",
+		Path:       "/oldpath",
+		Files:      []*File{{Name: "should be removed"}},
+		Subfolders: []*Folder{{Name: "should be removed"}},
+	}
+
+	mergeProtoToFolderHelper(dir, existing)
+
+	if existing.Name != "X" {
+		t.Fatalf("expected Name X, got %q", existing.Name)
+	}
+	if existing.Path != "/base/X" {
+		t.Fatalf("expected Path /base/X, got %q", existing.Path)
+	}
+	if len(existing.Files) != 1 || existing.Files[0].Name != "a.txt" {
+		t.Fatalf("file mapping failed, got %#v", existing.Files)
+	}
+	if len(existing.Subfolders) != 1 || existing.Subfolders[0].Name != "C" {
+		t.Fatalf("subfolder mapping failed, got %#v", existing.Subfolders)
+	}
+}
+
+
