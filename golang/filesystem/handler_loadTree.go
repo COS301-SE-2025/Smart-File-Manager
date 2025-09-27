@@ -132,15 +132,14 @@ func grpcFunc(c *Folder, requestType string, preferredCase string) error {
 		PreferredCase: preferredCase,
 		ServerSecret:  shh,
 	}
-	fmt.Println("this is before")
-	fmt.Println("this is after")
+	
 	resp, err := client.SendDirectoryStructure(ctx, req)
 
 	if err != nil {
 		log.Fatalf("SendDirectoryStructure RPC failed: %v", err)
 	}
 
-	fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
+	// fmt.Printf("Server returned root directory: name=%q, path=%q/n", resp.Root.GetName(), resp.Root.GetPath())
 
 	switch requestType {
 	case "KEYWORDS":

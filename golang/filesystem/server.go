@@ -117,7 +117,7 @@ func isPathContained(parentPath, childPath string) bool {
 }
 
 func checkDirectoryConflicts(newPath string) (bool, string, error) {
-	fmt.Println(" Manager directory conflicts started");
+	// fmt.Println(" Manager directory conflicts started");
 	newPath = ConvertToWSLPath(filepath.Clean(newPath))
 
 	for _, comp := range Composites {
@@ -417,7 +417,7 @@ func deleteManagerHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			//remove storage file
 			deleteCompositeDetailsFile(c.Name)
-			fmt.Println("Deleted manager")
+			// fmt.Println("Deleted manager")
 			w.Write([]byte("true"))
 			return
 		}

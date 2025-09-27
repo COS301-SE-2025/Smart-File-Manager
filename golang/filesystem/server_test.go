@@ -90,6 +90,63 @@ func TestAPI_PathContainmentHelpers(t *testing.T) {
 	}
 }
 
+func TestSecretMiddleware_NoEnv(t *testing.T) {
+	// unset the env var
+	os.Unsetenv("SFM_API_SECRET")
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("apiSecret", "anything")
+	rr := httptest.NewRecorder()
+
+	handler := secretMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("next handler should not be called")
+	}))
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusInternalServerError {
+		t.Errorf("expected 500, got %d", rr.Code)
+	}
+}
+
+func TestSecretMiddleware_WrongSecret(t *testing.T) {
+	os.Setenv("SFM_API_SECRET", "correctSecret")
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("apiSecret", "wrongSecret")
+	rr := httptest.NewRecorder()
+
+	handler := secretMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("next handler should not be called")
+	}))
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401, got %d", rr.Code)
+	}
+}
+
+func TestSecretMiddleware_CorrectSecret(t *testing.T) {
+	os.Setenv("SFM_API_SECRET", "correctSecret")
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("apiSecret", "correctSecret")
+	rr := httptest.NewRecorder()
+
+	called := false
+	handler := secretMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
+	}))
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rr.Code)
+	}
+	if !called {
+		t.Errorf("next handler was not called")
+	}
+}
+
 // Test checkDirectoryConflicts function
 func TestAPI_CheckDirectoryConflicts(t *testing.T) {
 	tmp := t.TempDir()
