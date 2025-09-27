@@ -42,10 +42,16 @@ go_test:
 	cd golang && go test -tags=test ./filesystem/...
 
 go_coverage:
-	cd golang && go test -tags=test -coverpkg=./filesystem/... -coverprofile=coverage.out -covermode=atomic ./filesystem/...
-	@echo "Coverage summary:"
-	cd golang && go tool cover -html=coverage.out
-	@echo "To view HTML report, run: go tool cover -html=golang/coverage.out"
+	@cd golang && \
+	go test -tags=test -coverpkg=./filesystem/... -coverprofile=coverage.out -covermode=atomic ./filesystem/... || true; \
+	if [ -f coverage.out ]; then \
+	  echo "Coverage details:"; \
+	  go tool cover -func=coverage.out | sed -n '$p'; \
+	  echo -n "TOTAL COVERAGE: " ; go tool cover -func=coverage.out | awk '/^total:/ {print $$3}'; \
+	else \
+	  echo "coverage.out not generated"; \
+	fi
+
 
 
 go_api:
