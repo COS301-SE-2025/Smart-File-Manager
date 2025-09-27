@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -834,5 +835,263 @@ func TestPrintDirectoryWithMetadata_And_PrintDirChildren(t *testing.T) {
 	})
 	if !strings.Contains(out2, "(empty)") {
 		t.Fatalf("expected (empty) printed for empty dir, got: %s", out2)
+	}
+}
+
+func TestLoadEnvFile_ParsesFileCorrectly(t *testing.T) {
+	tmp := t.TempDir()
+	fpath := filepath.Join(tmp, "test.env")
+	content := `# comment line
+export FOO=bar
+BAZ=qux
+EMPTY=
+# trailing comment
+WITH_EQ=part1=part2
+`
+	if err := os.WriteFile(fpath, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	vars, err := loadEnvFile(fpath)
+	if err != nil {
+		t.Fatalf("loadEnvFile error: %v", err)
+	}
+
+	if vars["FOO"] != "bar" {
+		t.Fatalf("expected FOO=bar got %q", vars["FOO"])
+	}
+	if vars["BAZ"] != "qux" {
+		t.Fatalf("expected BAZ=qux got %q", vars["BAZ"])
+	}
+	// EMPTY present as empty string
+	if val, ok := vars["EMPTY"]; !ok || val != "" {
+		t.Fatalf("expected EMPTY present as empty string, got %#v, ok=%v", val, ok)
+	}
+	// WITH_EQ should preserve everything after first =
+	if vars["WITH_EQ"] != "part1=part2" {
+		t.Fatalf("expected WITH_EQ=part1=part2 got %q", vars["WITH_EQ"])
+	}
+}
+
+func TestFindProjectRoot_FoundAndNotFound(t *testing.T) {
+	tmp := t.TempDir()
+	targetName := "marker.txt"
+	targetPath := filepath.Join(tmp, targetName)
+	if err := os.WriteFile(targetPath, []byte("x"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// create nested cwd
+	nested := filepath.Join(tmp, "a", "b")
+	if err := os.MkdirAll(nested, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	origWD, _ := os.Getwd()
+	defer os.Chdir(origWD)
+
+	if err := os.Chdir(nested); err != nil {
+		t.Fatal(err)
+	}
+
+	found, err := FindProjectRoot(targetName)
+	if err != nil {
+		t.Fatalf("expected to find %s, got error: %v", targetName, err)
+	}
+	if filepath.Clean(found) != filepath.Clean(targetPath) {
+		t.Fatalf("expected %q, got %q", targetPath, found)
+	}
+
+	// Not found case
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+	_, err = FindProjectRoot("definitely_not_present_12345")
+	if err == nil {
+		t.Fatalf("expected error when file not found")
+	}
+}
+
+func TestLoadTreeDataHandlerGoOnly_NoManager(t *testing.T) {
+	// ensure Composites is empty for this test
+	orig := Composites
+	defer func() { Composites = orig }()
+	Composites = []*Folder{}
+
+	req := httptest.NewRequest("GET", "/loadTreeData?name=nonexistent", nil)
+	rr := httptest.NewRecorder()
+
+	loadTreeDataHandlerGoOnly(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for missing manager, got %d", rr.Code)
+	}
+	if !strings.Contains(rr.Body.String(), "No smart manager") {
+		t.Fatalf("unexpected body: %s", rr.Body.String())
+	}
+}
+
+func TestPrettyPrintFolder_OutputContainsExpected(t *testing.T) {
+	// build sample folder
+	root := &Folder{
+		Name: "root",
+		Path: "/root",
+		Files: []*File{
+			{Name: "a.txt", Path: "/root/a.txt", Tags: []string{"t1", "t2"}},
+		},
+		Subfolders: []*Folder{
+			{Name: "sub", Path: "/root/sub", Files: []*File{{Name: "inner.txt"}}},
+		},
+	}
+
+	out := captureOutput(func() {
+		PrettyPrintFolder(root, "")
+	})
+
+	if !strings.Contains(out, "📁 root") {
+		t.Fatalf("expected root folder printed, got: %s", out)
+	}
+	if !strings.Contains(out, "📄 a.txt") {
+		t.Fatalf("expected file a.txt printed, got: %s", out)
+	}
+	if !strings.Contains(out, "TAG: t1") {
+		t.Fatalf("expected tag printed, got: %s", out)
+	}
+	if !strings.Contains(out, "sub") {
+		t.Fatalf("expected subfolder printed, got: %s", out)
+	}
+}
+
+func TestRemoveFileOrderPreserving_BasicAndRecursive(t *testing.T) {
+	// top-level removal
+	root := &Folder{
+		Name: "root",
+		Files: []*File{
+			{Name: "one", Path: "/one"},
+			{Name: "two", Path: "/two"},
+			{Name: "three", Path: "/three"},
+		},
+		Subfolders: []*Folder{
+			{
+				Name: "child",
+				Files: []*File{
+					{Name: "c1", Path: "/child/c1"},
+				},
+			},
+		},
+	}
+
+	if err := root.RemoveFileOrderPreserving("/two"); err != nil {
+		t.Fatalf("unexpected error removing /two: %v", err)
+	}
+	if len(root.Files) != 2 {
+		t.Fatalf("expected 2 files after removal, got %d", len(root.Files))
+	}
+	if root.Files[0].Path != "/one" || root.Files[1].Path != "/three" {
+		t.Fatalf("order incorrect after removal: %#v", root.Files)
+	}
+
+	// recursive removal from subfolder
+	if err := root.RemoveFileOrderPreserving("/child/c1"); err != nil {
+		t.Fatalf("unexpected error removing child file: %v", err)
+	}
+	// ensure file removed from subfolder
+	if len(root.Subfolders[0].Files) != 0 {
+		t.Fatalf("expected subfolder files empty after removal, got %#v", root.Subfolders[0].Files)
+	}
+
+	// attempt to remove non-existent file
+	if err := root.RemoveFileOrderPreserving("/nope"); err == nil {
+		t.Fatalf("expected error when removing non-existent file")
+	}
+}
+
+func TestPrintFileNodeChildren_SortsAndPrints(t *testing.T) {
+	// create some file nodes: folders and files
+	nodes := []FileNode{
+		{
+			Name:     "ZFolder",
+			IsFolder: true,
+			Children: []FileNode{{Name: "afile", IsFolder: false}},
+		},
+		{
+			Name:     "afolder",
+			IsFolder: true,
+			Children: []FileNode{},
+		},
+		{
+			Name:     "bfile.txt",
+			IsFolder: false,
+		},
+		{
+			Name:     "Afile.txt",
+			IsFolder: false,
+		},
+	}
+
+	// shuffle to ensure sorting matters
+	sort.Slice(nodes, func(i, j int) bool { return i < j })
+
+	out := captureOutput(func() {
+		printFileNodeChildren(nodes, "")
+	})
+
+	// expect directories printed (afolder, ZFolder) and files (Afile.txt, bfile.txt) in case-insensitive order
+	if !strings.Contains(out, "afolder") {
+		t.Fatalf("expected afolder printed, got: %s", out)
+	}
+	if !strings.Contains(out, "ZFolder") {
+		t.Fatalf("expected ZFolder printed, got: %s", out)
+	}
+	if !strings.Contains(out, "Afile.txt") || !strings.Contains(out, "bfile.txt") {
+		t.Fatalf("expected files printed, got: %s", out)
+	}
+}
+
+func TestSafeName(t *testing.T) {
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{"hello", "hello"},
+		{"  spaced  ", "spaced"},
+		{"", "<unnamed>"},
+		{"   ", "<unnamed>"},
+	}
+	for _, tt := range tests {
+		got := safeName(tt.in)
+		if got != tt.want {
+			t.Errorf("safeName(%q) = %q, want %q", tt.in, got, tt.want)
+		}
+	}
+}
+
+func TestJoinNonEmpty(t *testing.T) {
+	got := joinNonEmpty([]string{"a", " ", "", "b"})
+	if got != "a, b" {
+		t.Errorf("joinNonEmpty = %q, want %q", got, "a, b")
+	}
+
+	got = joinNonEmpty([]string{"   ", ""})
+	if got != "" {
+		t.Errorf("joinNonEmpty with blanks = %q, want empty string", got)
+	}
+}
+
+func TestNodeLabel(t *testing.T) {
+	tests := []struct {
+		node FileNode
+		want string
+	}{
+		{FileNode{Name: "file.txt"}, "[FILE] file.txt"},
+		{FileNode{Name: "folder", IsFolder: true}, "[DIR] folder"},
+		{FileNode{Name: "f", Tags: []string{"tag1", " ", "tag2"}}, "[FILE] f [tags: tag1, tag2]"},
+		{FileNode{Name: "locked", Locked: true}, "[FILE] locked [locked]"},
+	}
+	for _, tt := range tests {
+		got := nodeLabel(tt.node)
+		if got != tt.want {
+			t.Errorf("nodeLabel(%+v) = %q, want %q", tt.node, got, tt.want)
+		}
 	}
 }
