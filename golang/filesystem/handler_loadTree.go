@@ -330,26 +330,26 @@ func metadataConverter(metaDataArr []*pb.MetadataEntry) []*MetadataEntry {
 }
 
 // convert filesystem metadataEntry[] to Metadata struct for json response
-func extractMetadata(metaDataArr []*MetadataEntry) *Metadata {
-	// fmt.Println("extractMetadata called. metaDataArr len: " + strconv.Itoa(len(metaDataArr)))
+// func extractMetadata(metaDataArr []*MetadataEntry) *Metadata {
+// 	// fmt.Println("extractMetadata called. metaDataArr len: " + strconv.Itoa(len(metaDataArr)))
 
-	md := &Metadata{}
+// 	md := &Metadata{}
 
-	fieldMap := map[string]*string{
-		"size_bytes": &md.Size,
-		"created":    &md.DateCreated,
-		"mime_type":  &md.MimeType,
-		"modified":   &md.LastModified,
-	}
+// 	fieldMap := map[string]*string{
+// 		"size_bytes": &md.Size,
+// 		"created":    &md.DateCreated,
+// 		"mime_type":  &md.MimeType,
+// 		"modified":   &md.LastModified,
+// 	}
 
-	for _, entry := range metaDataArr {
-		// fmt.Println(entry)
-		if ptr, ok := fieldMap[entry.Key]; ok {
-			*ptr = entry.Value
-		}
-	}
-	return md
-}
+// 	for _, entry := range metaDataArr {
+// 		// fmt.Println(entry)
+// 		if ptr, ok := fieldMap[entry.Key]; ok {
+// 			*ptr = entry.Value
+// 		}
+// 	}
+// 	return md
+// }
 
 // func printDirectoryWithMetadata(dir *pb.Directory, num int) {
 
