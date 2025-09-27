@@ -132,7 +132,8 @@ func grpcFunc(c *Folder, requestType string, preferredCase string) error {
 		PreferredCase: preferredCase,
 		ServerSecret:  shh,
 	}
-	
+	// printDirectoryWithMetadata(req.Root, 0)
+
 	resp, err := client.SendDirectoryStructure(ctx, req)
 
 	if err != nil {
