@@ -201,15 +201,6 @@ func deleteCompositeDetailsFile(compName string) error {
 	return nil
 }
 
-func printDirTreeKwTagsLock(root *DirectoryTreeJson, leftPad int) {
-	if root == nil {
-		fmt.Println("(nil tree)")
-		return
-	}
-	prefix := strings.Repeat(" ", leftPad)
-	fmt.Printf("%s[ROOT] %s\n", prefix, safeName(root.Name))
-	printFileNodeChildren(root.Children, prefix)
-}
 
 func printFileNodeChildren(nodes []FileNode, prefix string) {
 	if len(nodes) == 0 {
