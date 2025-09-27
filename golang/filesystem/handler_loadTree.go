@@ -478,7 +478,7 @@ func fileLabel(f *pb.File) string {
 
 // endpoint called using no grpc:
 func loadTreeDataHandlerGoOnly(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("GOVERSION OF loadTree called")
+	// fmt.Println("GOVERSION OF loadTree called")
 	w.Header().Set("Content-Type", "application/json")
 
 	name := r.URL.Query().Get("name")
