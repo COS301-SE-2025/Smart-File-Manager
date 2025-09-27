@@ -30,7 +30,7 @@ To properly test these endpoints we conduct an experiment running both the clust
 
 To run these tests make use of the following command:  
 ```
-make python_performance_test
+make python_non_functional
 ```   
 
 These tests were executed on a machine with the following hardware:  
@@ -59,10 +59,20 @@ As can be seen the keyword endpoint scales linearly in time with the number of f
 ## Reliability Test
 
 ### Expected Results
-To ensure the reliability of our application we test that file integrity is preserved by our file operations. When performing a sorting operation (which will both traverse the directory and extract keywords) we must ensure that no file changes or is somehow modified during the operation.
+To ensure the reliability of our application we test that file integrity is preserved by our file operations. When performing a sorting operation (which will both traverse the directory and extract keywords) we must ensure that no file changes, or is somehow modified during the operation.
 
 ### Experimental Procedure
 
 We conduct an experiment where we calculate the hashes for a subset of files. We then perform a sorting operation (which also extracts keywords) and afterwards we recalculate the file hashes. We compare these results to ensure that no file is modified by the operation.
 
 ### Results
+
+
+To run this test make use of the following command:  
+```
+make python_non_functional
+```   
+
+Having run this test we can see from the output that no file's integrity has been compromised by any of the operations as the file's SHA256 hash remained unchanged.
+
+![Reliability Test](assets/testingAssets/reliability.png)
