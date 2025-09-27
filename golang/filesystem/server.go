@@ -90,8 +90,7 @@ func findAvailablePort(basePort int) (int, error) {
 
 func isPathContained(parentPath, childPath string) bool {
 	parentPath = ConvertToWSLPath(filepath.Clean(parentPath))
-    childPath = ConvertToWSLPath(filepath.Clean(childPath))
-
+	childPath = ConvertToWSLPath(filepath.Clean(childPath))
 
 	// Convert to absolute paths for accurate comparison
 	parentAbs, err := filepath.Abs(parentPath)
@@ -123,8 +122,8 @@ func checkDirectoryConflicts(newPath string) (bool, string, error) {
 	for _, comp := range Composites {
 		existingPathAbs := comp.Path
 
-		fmt.Println("New Path: "+ newPath);
-		fmt.Println("Old Path: "+ existingPathAbs);
+		fmt.Println("New Path: " + newPath)
+		fmt.Println("Old Path: " + existingPathAbs)
 		// Exact match
 		if existingPathAbs == newPath {
 			return true, fmt.Sprintf("Directory is already managed by '%s'", comp.Name), nil
@@ -145,7 +144,7 @@ func checkDirectoryConflicts(newPath string) (bool, string, error) {
 }
 
 func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(" Manager creation started");
+	fmt.Println(" Manager creation started")
 	managerName := r.URL.Query().Get("name")
 	filePath := r.URL.Query().Get("path")
 
@@ -161,14 +160,14 @@ func addCompositeHandler(w http.ResponseWriter, r *http.Request) {
 	defer mu.Unlock()
 
 	// Check for directory conflicts
-		fmt.Println(" Manager directory conflicts called");
+	fmt.Println(" Manager directory conflicts called")
 
 	hasConflict, _, err := checkDirectoryConflicts(filePath)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error checking directory conflicts: %v", err), http.StatusInternalServerError)
 		return
 	}
-			fmt.Println(" Manager directory conflicts ended");
+	fmt.Println(" Manager directory conflicts ended")
 
 	if hasConflict {
 		w.Write([]byte("false"))
@@ -492,8 +491,6 @@ func HandleRequests() {
 	http.Handle("/returnType", secretMiddleware(http.HandlerFunc(ReturnTypeHandler)))
 
 	http.Handle("/returnStats", secretMiddleware(http.HandlerFunc(StatHandler)))
-
-	http.Handle("/setPreferredCase", secretMiddleware(http.HandlerFunc(SetPreferredCase)))
 
 	addr := fmt.Sprintf("0.0.0.0:%d", port)
 	if err := http.ListenAndServe(addr, nil); err != nil {
