@@ -14,6 +14,7 @@
 * [Introduction](#introduction)
 * [Policy Overview](#policy-overview)
 * [Finding and Running the Tests](#finding-and-running-tests)
+* [Test Execution](#testing-coverage)
 * [Testing Coverage](#testing-coverage)
 
 
@@ -48,7 +49,7 @@ make python_test
 
 They may be ran using
 ```
-make python_performance_test
+make python_non_functional 
 ```
 
 ### Go Tests
@@ -69,12 +70,28 @@ cd app
 flutter test --reporter=expanded
 ```
 
+## Testing Execution
+Proof that all tests executed are provided in the following screenshots for convenience, should you not wish to run them.
+
+### Python
+![Python Tests Passing](assets/testingAssets/python_test.png)
+
+### Go
+![Go Tests Passing](assets/testingAssets/go_tests.png)
+
+
+
 ## Testing Coverage
 The testing coverage for the various codebases are as follows
 
 ### Python
 
-![Python](assets/testingAssets/python_coverage.png)
+![Python Coverage](assets/testingAssets/python_coverage.png)
+
+Total Coverage: 86%
 
 
 ### Go
+![Go Coverage](assets/testingAssets/go_coverage.png)
+
+Total Coverage: 70.5%
