@@ -6,12 +6,14 @@ import (
 	"math"
 	"net/http"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 )
 
 const limit int = 25
-const maxDist int = 25
+const maxDist int = 8
+const similarityThreshold = 0.5
 
 func LevenshteinDist(searchText string, fileName string) int {
 	if len(searchText) == 0 {
@@ -48,7 +50,7 @@ func LevenshteinDist(searchText string, fileName string) int {
 	//  BOOST exact substrings
 	var boost float32 = 1 //lower boost is better as it makes the distance smaller
 	if strings.Contains(fileName, searchText) {
-		boost = 0.2
+		boost = 0.1
 	}
 
 	// now fall back on full Levenshtein
@@ -120,9 +122,6 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	compositeName := r.URL.Query().Get("compositeName")
 	searchText := r.URL.Query().Get("searchText")
-	w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins, or specify your frontend origin
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	for _, comp := range Composites {
 		if comp.Name == compositeName {
@@ -209,7 +208,7 @@ func getMatches(text string, composite *Folder) *safeResults {
 			//if current is better
 			if iteratedRankedFile.distance > currentRankedFile.distance {
 
-				if len(res.rankedFiles) < limit {
+				if len(res.rankedFiles) < limit && (currentRankedFile.distance < maxDist) {
 					//insert by shifting over to make the array sorted
 					res.rankedFiles = append(
 						append(res.rankedFiles[:i], currentRankedFile),
@@ -233,7 +232,7 @@ func getMatches(text string, composite *Folder) *safeResults {
 		}
 		// if limit is not reached and not inserted then we insert at the end
 		if len(res.rankedFiles) < limit {
-			if !inserted {
+			if !inserted && (currentRankedFile.distance < maxDist) {
 				res.rankedFiles = append(res.rankedFiles, currentRankedFile)
 			}
 		}
@@ -256,11 +255,20 @@ func getMatches(text string, composite *Folder) *safeResults {
 	}
 	res.rankedFiles = unique
 
+	sort.SliceStable(res.rankedFiles, func(i, j int) bool {
+		if res.rankedFiles[i].distance != res.rankedFiles[j].distance {
+			return res.rankedFiles[i].distance < res.rankedFiles[j].distance
+		}
+		return strings.ToLower(res.rankedFiles[i].file.Name) < strings.ToLower(res.rankedFiles[j].file.Name)
+	})
+
 	return res
 }
 
 func exploreFolder(f *Folder, text string, c chan<- rankedFile, wg *sync.WaitGroup) {
 	defer wg.Done()
+
+	lowSearch := strings.ToLower(text)
 
 	for _, folder := range f.Subfolders {
 		wg.Add(1)
@@ -269,9 +277,44 @@ func exploreFolder(f *Folder, text string, c chan<- rankedFile, wg *sync.WaitGro
 
 	for _, file := range f.Files {
 		dist := LevenshteinDist(text, file.Name)
-		if dist <= maxDist {
 
+		if strings.Contains(strings.ToLower(file.Name), lowSearch) {
+			dist = 0
+		}
+		maxLen := len(text)
+		if len(file.Name) > maxLen {
+			maxLen = len(file.Name)
+		}
+		if maxLen == 0 {
+			continue
+		}
+		similarity := 1.0 - float64(dist)/float64(maxLen)
+
+		// dynamic minimum similarity depending on search length
+		minSim := similarityThreshold
+		switch {
+		case len(text) == 0:
+			continue
+		case len(text) <= 2:
+			//initial must match
+			if !strings.HasPrefix(strings.ToLower(file.Name), lowSearch) {
+				continue
+			}
+			minSim = 0.90
+
+		case len(text) <= 5:
+			minSim = 0.75
+
+		case len(text) <= 8:
+			minSim = 0.60
+
+		default:
+			minSim = similarityThreshold
+		}
+
+		if dist <= maxDist && similarity >= minSim {
 			c <- rankedFile{file: *file, distance: dist}
 		}
 	}
+
 }

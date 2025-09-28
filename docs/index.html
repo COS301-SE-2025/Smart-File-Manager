@@ -5,378 +5,513 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart File Manager - Your AI-Powered Digital Housekeeper</title>
     <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
   </head>
   <body>
     <!-- Navigation -->
     <nav>
       <div class="nav-container">
-        <div class="nav-name">
-          <img src="images/logo.png" alt="Logo" style="width: 50px" />
+        <div class="nav-brand">
+          <img src="images/logo.png" alt="Logo" class="nav-logo" />
           <div class="logo">Smart File Manager</div>
         </div>
         <ul class="nav-links">
-          <li><a href="#" onclick="showLanding()">Home</a></li>
-          <li><a href="#" onclick="showHelp()">Help</a></li>
+          <li><a href="#hero">Home</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#demo">Demo</a></li>
+          <li><a href="#faq">FAQ</a></li>
         </ul>
+        <div class="nav-cta">
+          <a href="#download" class="btn btn-primary btn-small">
+            <i class="fas fa-download"></i>
+            Download Free
+          </a>
+        </div>
+        <div class="nav-toggle" onclick="toggleMobileMenu()">
+          <i class="fas fa-bars"></i>
+        </div>
       </div>
     </nav>
 
-    <!-- Landing Page -->
-    <div class="landing-page" id="landing-page">
-      <!-- Hero Section -->
-      <section class="hero">
-        <div class="hero-content">
-          <h1>Meet Your New Digital Housekeeper</h1>
-          <p>
-            Say goodbye to cluttered desktops and folder mazes. Smart File
-            Manager uses Clustering Algorithms to automatically organize your
-            files by semantic meaning, making file management effortless and
-            intuitive.
-          </p>
-          <div class="cta-buttons">
-            <a href="#download" class="btn btn-primary">Download Now</a>
-          </div>
-        </div>
-      </section>
+    <!-- Hero Section -->
+    <section id="hero" class="hero">
+      <div class="hero-content">
+        <h1 class="hero-title">
+          Stop Wrestling with
+          <span class="gradient-text">Messy Files</span>
+        </h1>
+        <p class="hero-subtitle">
+          Your new digital housekeeper organizes thousands of files using
+          advanced clustering algorithms. No more folder mazes, no more desktop
+          chaos.
+        </p>
+      </div>
 
-      <!-- Features Section -->
-      <section class="features" id="features">
-        <div class="features-container">
-          <h2>Powerful Features</h2>
-          <div class="features-grid">
-            <div class="feature-card">
-              <div class="feature-icon">
-                <img
-                  src="images/code.png"
-                  alt="Code Icon"
-                  style="width: 50px"
-                />
+      <div class="hero-visual">
+        <div class="hero-demo">
+          <div class="demo-before">
+            <h4>BEFORE</h4>
+            <div class="file-mess">
+              <div class="file-item">📄 document_final_v2.docx</div>
+              <div class="file-item">📊 budget.xlsx</div>
+              <div class="file-item">🖼️ IMG_4521.jpg</div>
+              <div class="file-item">📄 presentation.pptx</div>
+              <div class="file-item">📄 notes_meeting.txt</div>
+              <div class="file-item">🖼️ screenshot.png</div>
+              <div class="file-item">📊 data_export.csv</div>
+              <div class="file-item">📄 contract_draft.pdf</div>
+            </div>
+          </div>
+
+          <div class="demo-arrow">
+            <i class="fas fa-arrow-right"></i>
+            <span>Clustering Magic</span>
+          </div>
+
+          <div class="demo-after">
+            <h4>AFTER</h4>
+            <div class="file-organized">
+              <div class="folder-group">
+                <div class="folder-header">
+                  <span>📊 Financial Documents</span>
+                </div>
+                <div class="folder-files">
+                  <div class="file-item">budget.xlsx</div>
+                  <div class="file-item">data_export.csv</div>
+                </div>
               </div>
-              <h3>Clustering Organization</h3>
-              <p>
-                Advanced clustering algorithms automatically sort your files by
-                semantic meaning, not just file types.
-              </p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">
-                <img
-                  src="images/graph.png"
-                  alt="Graph Icon"
-                  style="width: 50px"
-                />
+              <div class="folder-group">
+                <div class="folder-header">
+                  <span>📄 Work Documents</span>
+                </div>
+                <div class="folder-files">
+                  <div class="file-item">document_final_v2_FINAL.docx</div>
+                  <div class="file-item">presentation.pptx</div>
+                  <div class="file-item">contract_draft.pdf</div>
+                </div>
               </div>
-              <h3>Interactive Graph View</h3>
-              <p>
-                Visualize your file structure with an interactive graph view,
-                easier than ever before.
-              </p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">
-                <img
-                  src="images/search.png"
-                  alt="Search Icon"
-                  style="width: 50px"
-                />
-              </div>
-              <h3>Smart Search</h3>
-              <p>
-                Find files using natural language, tags, metadata, or contextual
-                relationships.
-              </p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">
-                <img
-                  src="images/sort.png"
-                  alt="Sort Icon"
-                  style="width: 50px"
-                />
-              </div>
-              <h3>Auto-Sorting</h3>
-              <p>
-                Set schedules for automatic organization or trigger manual sorts
-                whenever you need.
-              </p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">
-                <img src="images/tag.png" alt="Tag Icon" style="width: 50px" />
-              </div>
-              <h3>Custom Tagging</h3>
-              <p>
-                Add your own tags to files and folders to influence how the
-                Algorithm organizes your content.
-              </p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">
-                <img
-                  src="images/lock.png"
-                  alt="Lock Icon"
-                  style="width: 50px"
-                />
-              </div>
-              <h3>File Locking</h3>
-              <p>
-                Protect important files and folders from being moved during
-                organization.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Download Section -->
-      <section class="download" id="download">
-        <div class="download-container">
-          <h2>Download Smart File Manager</h2>
-          <p>
-            Available for Windows, macOS, and Linux. Get started with your
-            digital housekeeper today!
-          </p>
-          <div class="platform-buttons">
-            <a href="#" class="platform-btn" onclick="showPopup('Windows')">
-              <span
-                ><img
-                  src="images/windows.png"
-                  alt="Windows Icon"
-                  style="width: 20px"
-              /></span>
-              <span>Windows</span>
-            </a>
-            <a href="#" class="platform-btn" onclick="showPopup('macOS')">
-              <span
-                ><img
-                  src="images/apple.png"
-                  alt="Apple Icon"
-                  style="width: 20px"
-              /></span>
-              <span>macOS</span>
-            </a>
-            <a href="#" class="platform-btn" onclick="showPopup('Linux')">
-              <span
-                ><img
-                  src="images/linux.png"
-                  alt="Linux Icon"
-                  style="width: 30px"
-              /></span>
-              <span>Linux</span>
-            </a>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- Help Page -->
-    <div class="help-page" id="help-page">
-      <div class="help-container">
-        <div class="help-header">
-          <h1>Help Center</h1>
-          <p>Everything you need to know about Smart File Manager</p>
-        </div>
-
-        <div class="help-nav">
-          <button
-            class="help-nav-btn active"
-            onclick="showHelpSection('getting-started')"
-          >
-            Getting Started
-          </button>
-          <button class="help-nav-btn" onclick="showHelpSection('tutorials')">
-            Tutorials
-          </button>
-          <button class="help-nav-btn" onclick="showHelpSection('faq')">
-            FAQ
-          </button>
-          <button class="help-nav-btn" onclick="showHelpSection('contact')">
-            Contact
-          </button>
-        </div>
-
-        <!-- Getting Started Section -->
-        <div class="help-section active" id="getting-started">
-          <h2>Getting Started</h2>
-          <div class="tutorial-grid">
-            <div class="tutorial-card">
-              <h3>1. Download & Install</h3>
-              <p>
-                Download the appropriate version for your operating system and
-                follow the installation wizard.
-              </p>
-            </div>
-            <div class="tutorial-card">
-              <h3>2. Create Account (Optional)</h3>
-              <p>
-                Register for an account on the app to sync preferences across
-                devices.
-              </p>
-            </div>
-            <div class="tutorial-card">
-              <h3>3. Create Smart Manager</h3>
-              <p>
-                Choose a folder to manage and let the AI analyze and organize
-                your files automatically.
-              </p>
-            </div>
-            <div class="tutorial-card">
-              <h3>4. Configure Preferences</h3>
-              <p>
-                Set sorting schedules, tagging rules, and organizational
-                preferences to match your workflow.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tutorials Section -->
-        <div class="help-section" id="tutorials">
-          <h2>Video Tutorials</h2>
-          <div class="tutorial-grid">
-            <div class="tutorial-card">
-              <h3>Creating Your First Smart Manager</h3>
-              <p>
-                Learn how to set up and configure a Smart Manager for automatic
-                file organization.
-              </p>
-              <a
-                href="https://drive.google.com/file/d/1yzEvcbH10DbX6s6w6hdjOafmPodSzGe6/view?usp=sharing"
-                class="btn btn-primary"
-                style="margin-top: 1rem"
-                >Watch Tutorial</a
-              >
-            </div>
-            <div class="tutorial-card">
-              <h3>Using Graph View</h3>
-              <p>
-                Discover how to navigate and interact with the mind-map
-                visualization of your files.
-              </p>
-              <a
-                href="https://drive.google.com/file/d/18LlzuI6bwrkZrqAdW9c-BR8i_vmEuY2w/view?usp=drive_link"
-                class="btn btn-primary"
-                style="margin-top: 1rem"
-                >Watch Tutorial</a
-              >
-            </div>
-            <div class="tutorial-card">
-              <h3>Advanced Search Techniques</h3>
-              <p>
-                Master the art of finding files using semantic search and
-                metadata filters.
-              </p>
-              <a
-                onclick="showTutorial('Advanced Search Techniques')"
-                class="btn btn-primary"
-                style="margin-top: 1rem"
-                >Watch Tutorial</a
-              >
-            </div>
-            <div class="tutorial-card">
-              <h3>Customizing Sort Behavior</h3>
-              <p>
-                Learn how to fine-tune the AI sorting algorithm to match your
-                specific needs.
-              </p>
-              <a
-                onclick="showTutorial('Customizing Sort Behavior')"
-                class="btn btn-primary"
-                style="margin-top: 1rem"
-                >Watch Tutorial</a
-              >
-            </div>
-          </div>
-        </div>
-
-        <!-- FAQ Section -->
-        <div class="help-section" id="faq">
-          <h2>Frequently Asked Questions</h2>
-
-          <div class="faq-item">
-            <div class="faq-question" onclick="toggleFAQ(this)">
-              How does the AI file organization work?
-              <span>+</span>
-            </div>
-            <div class="faq-answer">
-              Smart File Manager uses advanced clustering algorithms and natural
-              language processing to analyze file content, metadata, and
-              relationships. It groups files by semantic meaning rather than
-              just file types, creating logical organizational structures.
-            </div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question" onclick="toggleFAQ(this)">
-              Is my data safe and private?
-              <span>+</span>
-            </div>
-            <div class="faq-answer">
-              Yes! All file processing happens locally on your machine. We never
-              store or transmit your file contents. The system only accesses
-              files you explicitly choose to manage.
-            </div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question" onclick="toggleFAQ(this)">
-              Can I undo organization changes?
-              <span>+</span>
-            </div>
-            <div class="faq-answer">
-              Absolutely! Every Smart Manager includes a rollback feature that
-              lets you restore your files to their previous locations with a
-              single click.
-            </div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question" onclick="toggleFAQ(this)">
-              What file types are supported?
-              <span>+</span>
-            </div>
-            <div class="faq-answer">
-              Smart File Manager works with all common file types including
-              documents, images, videos, audio files, code files, and more. The
-              AI adapts its organization strategy based on the file types in
-              your directories.
-            </div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question" onclick="toggleFAQ(this)">
-              How do I prevent certain files from being moved?
-              <span>+</span>
-            </div>
-            <div class="faq-answer">
-              Use the file locking feature to protect specific files or folders
-              from being reorganized. Locked items will be excluded from all
-              future sorting operations.
-            </div>
-          </div>
-        </div>
-
-        <!-- Contact Section -->
-        <div class="help-section" id="contact">
-          <div class="contact-info">
-            <h3>Need More Help?</h3>
-            <p>
-              Our support team is here to help you get the most out of Smart
-              File Manager.
-            </p>
-            <div style="margin-top: 2rem">
-              <p><strong>Email:</strong> sparkindustries301@gmail.com</p>
-            </div>
-            <div style="margin-top: 2rem">
-              <a href="sparkindustries301@gmail.com" class="btn btn-primary"
-                >Send Email</a
-              >
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- Solution Section -->
+    <section class="solution">
+      <div class="container">
+        <div class="solution-content">
+          <div class="solution-visual">
+            <div class="feature-showcase">
+              <div class="showcase-header">
+                <div class="window-controls">
+                  <div class="control red"></div>
+                  <div class="control yellow"></div>
+                  <div class="control green"></div>
+                </div>
+                <span>Smart File Manager</span>
+              </div>
+              <div class="showcase-content">
+                <div class="search-demo">
+                  <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input
+                      type="text"
+                      placeholder="Find research about machine learning..."
+                      readonly
+                    />
+                  </div>
+                  <div class="search-results">
+                    <div class="result-item">
+                      <i class="fas fa-file-pdf"></i>
+                      <span>Deep Learning Research.pdf</span>
+                      <span class="relevance">98% match</span>
+                    </div>
+                    <div class="result-item">
+                      <i class="fas fa-file-word"></i>
+                      <span>ML_Notes_lecture.docx</span>
+                      <span class="relevance">94% match</span>
+                    </div>
+                    <div class="result-item">
+                      <i class="fas fa-file-powerpoint"></i>
+                      <span>AI_Presentation.pptx</span>
+                      <span class="relevance">91% match</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="solution-text">
+            <div class="benefits-list">
+              <div class="benefit-item">
+                <i class="fas fa-brain"></i>
+                <div>
+                  <strong>Semantic Understanding</strong>
+                  <p>
+                    Analyzes file content, not just names. Research papers go
+                    with research papers, receipts with receipts.
+                  </p>
+                </div>
+              </div>
+              <div class="benefit-item">
+                <i class="fas fa-bolt-lightning"></i>
+                <div>
+                  <strong>Lightning Fast</strong>
+                  <p>
+                    Organize 1000+ files in record time. Find any file in under
+                    2 seconds with smart search.
+                  </p>
+                </div>
+              </div>
+              <div class="benefit-item">
+                <i class="fas fa-shield-alt"></i>
+                <div>
+                  <strong>100% Private</strong>
+                  <p>
+                    Everything happens on your computer. No cloud uploads, no
+                    data collection, no privacy concerns.
+                  </p>
+                </div>
+              </div>
+              <div class="benefit-item">
+                <i class="fas fa-undo"></i>
+                <div>
+                  <strong>Mistake-Proof</strong>
+                  <p>
+                    Preview changes before applying. Don't like the result? Undo
+                    with one click.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+      <div class="container">
+        <div class="section-header">
+          <h2>Powerful Features That Save You Hours</h2>
+          <p>Everything you need to take control of your digital files</p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-magic"></i>
+            </div>
+            <h3>Smart Sorting</h3>
+            <p>
+              Advanced clustering algorithms automatically organize files by
+              meaning, not just type. Customize your folder naming with
+              camel-case, cebab-case and many more!
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-project-diagram"></i>
+            </div>
+            <h3>Mind-Map File View</h3>
+            <p>
+              See your files as an interactive graph showing how everything
+              connects. Navigate naturally through your content.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-search-plus"></i>
+            </div>
+            <h3>Smart Search</h3>
+            <p>
+              Find files by describing what you remember. No more searching for
+              hours.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-tags"></i>
+            </div>
+            <h3>Smart Tagging</h3>
+            <p>
+              Add custom tags that the Algorithm uses for sorting. Tag a few
+              files as "dogs" and it will stick together with sorting.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-copy"></i>
+            </div>
+            <h3>Duplicate Hunter</h3>
+            <p>
+              Find and remove duplicate files instantly. Say goodbye to that
+              mess.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-file-shield"></i>
+            </div>
+            <h3>File Protection</h3>
+            <p>
+              Lock important files and folders. Automatically protects system
+              files and project folders from accidental moves.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo-section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Need help getting started?</h2>
+          <p>
+            Check out our demo videos below, become a expert in Smart File
+            Manager.
+          </p>
+        </div>
+
+        <div class="demo-grid">
+          <div class="demo-card">
+            <div class="demo-thumbnail">
+              <i class="fas fa-play-circle"></i>
+            </div>
+            <h3>Your First Smart Manager</h3>
+            <p>
+              See how easy it is to create a Smart Manager with some usefull
+              tips.
+            </p>
+            <a
+              href="https://drive.google.com/file/d/1yzEvcbH10DbX6s6w6hdjOafmPodSzGe6/view"
+              target="_blank"
+              class="demo-link"
+            >
+              <i class="fas fa-external-link-alt"></i>
+              Watch Demo
+            </a>
+          </div>
+
+          <div class="demo-card">
+            <div class="demo-thumbnail">
+              <i class="fas fa-play-circle"></i>
+            </div>
+            <h3>Navigate your Smart Manager</h3>
+            <p>
+              Explore your files through our revolutionary graph-view interface
+              or the stick with old school navigation.
+            </p>
+            <a
+              href="https://drive.google.com/file/d/18LlzuI6bwrkZrqAdW9c-BR8i_vmEuY2w/view"
+              target="_blank"
+              class="demo-link"
+            >
+              <i class="fas fa-external-link-alt"></i>
+              Watch Demo
+            </a>
+          </div>
+
+          <div class="demo-card">
+            <div class="demo-thumbnail">
+              <i class="fas fa-play-circle"></i>
+            </div>
+            <h3>Tags and Locking</h3>
+            <p>
+              Want more control over the smart sorting? See the importance of
+              adding tags and locking folders/files.
+            </p>
+            <a
+              href="https://drive.google.com/file/d/1yzEvcbH10DbX6s6w6hdjOafmPodSzGe6/view"
+              target="_blank"
+              class="demo-link"
+            >
+              <i class="fas fa-external-link-alt"></i>
+              Watch Demo
+            </a>
+          </div>
+
+          <div class="demo-card">
+            <div class="demo-thumbnail">
+              <i class="fas fa-play-circle"></i>
+            </div>
+            <h3>Sort your Manager</h3>
+            <p>
+              The most exciting feature of them all! Get a full overview of how
+              you can clean up your file mess.
+            </p>
+            <a
+              href="https://drive.google.com/file/d/1yzEvcbH10DbX6s6w6hdjOafmPodSzGe6/view"
+              target="_blank"
+              class="demo-link"
+            >
+              <i class="fas fa-external-link-alt"></i>
+              Watch Demo
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="download" class="download-section">
+      <div class="container">
+        <div class="download-header">
+          <h2>Ready to Transform Your Digital Life?</h2>
+          <p>
+            Download Smart File Manager now and start organizing smarter, not
+            harder
+          </p>
+        </div>
+
+        <div class="download-platforms">
+          <div class="platform-card primary">
+            <div class="platform-header">
+              <i class="fab fa-windows"></i>
+              <h3>Windows</h3>
+              <div class="platform-badge">Available Now</div>
+            </div>
+            <div class="platform-details">
+              <p>Windows 10 & 11 Compatible</p>
+              <div class="specs">
+                <span>• 4GB RAM minimum (8GB recommended)</span>
+                <span>• 500MB storage space required</span>
+                <span>• 64-bit architecture required</span>
+                <span>• Works completely offline</span>
+              </div>
+            </div>
+            <a href="#" class="btn btn-primary btn-large" onclick="">
+              <i class="fas fa-download"></i>
+              Download for Windows
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="faq-section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Questions? We've Got Answers</h2>
+        </div>
+
+        <div class="faq-grid">
+          <div class="faq-item">
+            <div class="faq-question">
+              Is it really free?
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              Yes! Smart File Manager is completely free with no hidden costs,
+              premium versions, or subscription fees. Built by University of
+              Pretoria students as a project to help everyone organize their
+              digital lives better.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              Is my data safe?
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              Absolutely! Everything happens locally on your computer. We never
+              upload, store, or access your files. The app works completely
+              offline and doesn't even require an internet connection.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              What if I don't like how it organizes my files?
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              No problem! You always see a preview before any changes are made.
+              You can also lock important files to prevent them from being
+              moved.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              How accurate is the clustering organization?
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              Our testing shows over 90% accuracy for most file types. The
+              clustering is particularly good with text-based files (documents,
+              spreadsheets) and gets smarter as you add custom tags and locks.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              Will it work with my existing folder structure?
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              Yes! You choose which folders to manage with Smart File Manager.
+              It won't touch anything you don't explicitly tell it to organize,
+              so your existing important folders stay exactly as they are.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              What file types does it support?
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              Smart File Manager works with all common file types: documents,
+              images, videos, audio files, spreadsheets, presentations, PDFs,
+              and more. It's especially effective with text-based files that it
+              can analyze for content.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-brand">
+            <img src="images/logo.png" alt="Logo" class="footer-logo" />
+            <div class="logo">Smart File Manager</div>
+          </div>
+          <div class="footer-links">
+            <a href="mailto:sparkindustries301@gmail.com">Contact Support</a>
+            <a href="#" onclick="showPrivacyInfo()">Privacy</a>
+            <a href="#demo">Video Demos</a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>
+            &copy; 2025 Spark Industries • Built by University of Pretoria
+            students for Southern Cross Solutions
+          </p>
+        </div>
+      </div>
+    </footer>
+    <script src="script.js"></script>
   </body>
-  <script src="script.js"></script>
 </html>

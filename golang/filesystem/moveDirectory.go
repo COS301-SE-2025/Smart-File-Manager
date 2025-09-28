@@ -19,9 +19,9 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 	defer mu.Unlock()
 
 	for i, item := range Composites {
-		fmt.Printf("Checking manager: %s\n", item.Name)
+		// fmt.Printf("Checking manager: %s\n", item.Name)
 		if item.Name == compositeName {
-			fmt.Printf("found manager: %s\n", item.Name)
+			// fmt.Printf("found manager: %s\n", item.Name)
 			CreateDirectoryStructure(item)
 			moveContent(item)
 
@@ -68,6 +68,7 @@ func moveDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Printf("Error updating stored paths from composite: %v", err)
 			}
+			fmt.Println("responding with true")
 
 			w.Write([]byte("true"))
 			return
@@ -94,7 +95,7 @@ func moveContent(item *Folder) {
 		os.RemoveAll(originalPath)
 	}
 
-	managersFilePath := filepath.Join(getPath(), "golang", managersFilePath)
+	managersFilePath := filepath.Join(getPath(), managersFilePath)
 
 	data, err := os.ReadFile(managersFilePath)
 	var recs []ManagerRecord
@@ -308,18 +309,7 @@ func getPath() string {
 	if err != nil {
 		panic(err)
 	}
-
-	for {
-		if filepath.Base(dir) == "Smart-File-Manager" {
-			return dir
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			break
-		}
-		dir = parent
-	}
-	panic("could not find Smart-File-Manager root")
+	return dir
 }
 
 func cleanManagerPrefix(path, managerName string) string {

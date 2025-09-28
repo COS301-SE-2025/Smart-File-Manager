@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-
-	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
 )
 
 // uses load tree struct directoryTreeJson
@@ -146,7 +144,7 @@ func populateKeywordsFromStoredJsonFile(comp *Folder) {
 func mergeDirectoryTreeToComposite(comp *Folder, directory *DirectoryTreeJson) {
 	for _, node := range directory.Children {
 		if !node.IsFolder {
-			fmt.Println(node.Name)
+			// fmt.Println(node.Name)
 			path := node.Path
 
 			compositeFile := comp.GetFile(path)
@@ -164,7 +162,7 @@ func mergeDirectoryTreeToComposite(comp *Folder, directory *DirectoryTreeJson) {
 			helperMergeDirectoryTreeToComposite(comp, &node)
 		}
 	}
-	fmt.Println("======END OFmergeDirectoryTreeToComposite========")
+	// fmt.Println("======END OFmergeDirectoryTreeToComposite========")
 
 	// PrettyPrintFolder(comp, "")
 
@@ -199,16 +197,6 @@ func deleteCompositeDetailsFile(compName string) error {
 		return err
 	}
 	return nil
-}
-
-func printDirTreeKwTagsLock(root *DirectoryTreeJson, leftPad int) {
-	if root == nil {
-		fmt.Println("(nil tree)")
-		return
-	}
-	prefix := strings.Repeat(" ", leftPad)
-	fmt.Printf("%s[ROOT] %s\n", prefix, safeName(root.Name))
-	printFileNodeChildren(root.Children, prefix)
 }
 
 func printFileNodeChildren(nodes []FileNode, prefix string) {
@@ -281,12 +269,6 @@ func nodeLabel(n FileNode) string {
 		}
 	}
 
-	// if kws := keywordNames(n.Keywords); kws != "" {
-	// 	b.WriteString(" [kw: ")
-	// 	b.WriteString(kws)
-	// 	b.WriteString("]")
-	// }
-
 	if n.Locked {
 		b.WriteString(" [locked]")
 	}
@@ -308,23 +290,6 @@ func joinNonEmpty(ss []string) string {
 		s = strings.TrimSpace(s)
 		if s != "" {
 			out = append(out, s)
-		}
-	}
-	return strings.Join(out, ", ")
-}
-
-func keywordNames(kws []*pb.Keyword) string {
-	if len(kws) == 0 {
-		return ""
-	}
-	out := make([]string, 0, len(kws))
-	for _, k := range kws {
-		if k == nil {
-			continue
-		}
-		w := strings.TrimSpace(k.Keyword)
-		if w != "" {
-			out = append(out, w)
 		}
 	}
 	return strings.Join(out, ", ")

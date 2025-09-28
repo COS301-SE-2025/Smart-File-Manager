@@ -5,13 +5,24 @@ from typing import List, Dict, Optional
 
 
 class FullVector:
-    def __init__(self, transformer):
+    def __init__(self, transformer, weights=None):
         self.scaler_size = MinMaxScaler()
         self.scaler_created = MinMaxScaler()
         self.model = transformer
+        if weights == None:
+            self.weights = {
+                    "size_bytes": 1,
+                    "keywords":2,
+                    "created":1,
+                    "tags":4,
+                    "filename":5
+
+                    }
+        else:
+            self.weights = weights
 
     def create_full_vector(self, files: List[Dict]) -> None:
-        features = ["size_bytes", "keywords", "created", "tags"]
+        features = ["size_bytes", "keywords", "created", "tags", "filename"]
         feature_data = self._gather_feature_data(files, features)
 
         # Normalize numerical features
@@ -53,6 +64,10 @@ class FullVector:
                 idx += 1
 
             kw_vectors_per_file.append(np.mean(vectors, axis=0))
+        #Filename vectors
+        all_filenames = feature_data["filename"]
+
+        filename_vectors = self.model.encode(all_filenames, show_progress_bar=False, batch_size=64)
 
         # Construct final vectors
         embedding_dim = self.model.get_sentence_embedding_dimension()
@@ -63,11 +78,16 @@ class FullVector:
                 else [0.0] * embedding_dim
             )
 
-            weighted_tags = np.array(tag_vectors[i]) * 3
+            weighted_kw_vec = (np.array(kw_vec) * self.weights["keywords"]).tolist()
+            fn_vec = (np.array(filename_vectors[i]) * self.weights["filename"]).tolist()
+            weighted_created = (normalized_created[i]) * self.weights["created"]
+            weighted_sizes = (normalized_sizes[i]) * self.weights["size_bytes"]
+            weighted_tags = np.array(tag_vectors[i]) * self.weights["tags"]
             full_vector = (
-                kw_vec +
-                [normalized_created[i]] +
-                [normalized_sizes[i]] +
+                weighted_kw_vec +
+                fn_vec +
+                [weighted_created] +
+                [weighted_sizes] +
                 weighted_tags.tolist()
             )
 

@@ -16,8 +16,8 @@ import (
 	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
 )
 
-const limitKeywordSearch int = 20
-const maxDistKeywordSearch int = 3
+const limitKeywordSearch int = 15
+const maxDistKeywordSearch int = 5
 
 //flow idea:
 // app starts
@@ -166,7 +166,21 @@ func getMatchesByKeywords(searchTerms []string, composite *Folder) *safeResults 
 	}
 	res.rankedFiles = unique
 
+	sort.SliceStable(res.rankedFiles, func(i, j int) bool {
+		if res.rankedFiles[i].distance != res.rankedFiles[j].distance {
+			return res.rankedFiles[i].distance < res.rankedFiles[j].distance
+		}
+		ni := strings.ToLower(res.rankedFiles[i].file.Name)
+		nj := strings.ToLower(res.rankedFiles[j].file.Name)
+		if ni != nj {
+			return ni < nj
+		}
+
+		return filepath.Clean(res.rankedFiles[i].file.Path) < filepath.Clean(res.rankedFiles[j].file.Path)
+	})
+
 	return res
+
 }
 
 func exploreFolderForKeywords(f *Folder, searchTerms []string, c chan<- rankedFile, wg *sync.WaitGroup) {
@@ -257,7 +271,7 @@ func LevenshteinDistForKeywords(searchText string, fileKeyword string) int {
 }
 
 func pythonExtractKeywords(c *Folder) {
-	err := grpcFunc(c, "KEYWORDS")
+	err := grpcFunc(c, "KEYWORDS", "CAMEL")
 	if err != nil {
 		log.Fatalf("grpcFunc failed: %v", err)
 	}
@@ -396,8 +410,6 @@ func ExtractKeywordsRAKE(filePath string, topN int, maxSize int64) ([]*pb.Keywor
 	return ExtractKeywordsFromText(string(data), topN), nil
 }
 
-// Appends unique keywords from src into dst (by exact Keyword string match),
-// and caps the result at maxKeywords (30). Does not alter order of existing dst.
 func AppendUniqueKeywords(dst, src []*pb.Keyword) []*pb.Keyword {
 	const maxKeywords = 30
 

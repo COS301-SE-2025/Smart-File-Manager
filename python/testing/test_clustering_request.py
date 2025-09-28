@@ -66,7 +66,28 @@ def createDirectoryRequest():
         File(name="Week 4_Tutorial_with answers", original_path=get_path("Week 4_Tutorial_with answers.pdf"), tags=[]),
         File(name="Week 5_Tutorial_2024_with answers", original_path=get_path("Week 5_Tutorial_2024_with answers.pdf"), tags=[]),
         File(name="Form", original_path=get_path("Main.form"), tags=[]),
-        File(name="Main", original_path=get_path("Main.java"), tags=[])
+        File(name="Main", original_path=get_path("Main.java"), tags=[]),
+        File(name="astro_1", original_path=get_path("astro_1.pdf"), tags=[]),
+        File(name="astro_2", original_path=get_path("astro_2.pdf"), tags=[]),
+        File(name="astro_3", original_path=get_path("astro_3.pdf"), tags=[]),
+        File(name="astro_4", original_path=get_path("astro_4.pdf"), tags=[]),
+        File(name="astro_5", original_path=get_path("astro_5.pdf"), tags=[]),
+        File(name="astro_6", original_path=get_path("astro_6.pdf"), tags=[]),
+        File(name="econ_1", original_path=get_path("econ_1.pdf"), tags=[]),
+        File(name="econ_2", original_path=get_path("econ_2.pdf"), tags=[]),
+        File(name="econ_3", original_path=get_path("econ_3.pdf"), tags=[]),
+        File(name="econ_4", original_path=get_path("econ_4.pdf"), tags=[]),
+        File(name="econ_5", original_path=get_path("econ_5.pdf"), tags=[]),
+        File(name="ee_1", original_path=get_path("ee_1.pdf"), tags=[]),
+        File(name="ee_2", original_path=get_path("ee_2.pdf"), tags=[]),
+        File(name="ee_3", original_path=get_path("ee_3.pdf"), tags=[]),
+        File(name="ee_4", original_path=get_path("ee_4.pdf"), tags=[]),
+        File(name="ee_5", original_path=get_path("ee_5.pdf"), tags=[]),
+        File(name="math_1", original_path=get_path("math_1.pdf"), tags=[]),
+        File(name="math_2", original_path=get_path("math_2.pdf"), tags=[]),
+        File(name="math_3", original_path=get_path("math_3.pdf"), tags=[]),
+        File(name="math_4", original_path=get_path("math_4.pdf"), tags=[]),
+        File(name="math_5", original_path=get_path("math_5.pdf"), tags=[])
     ]
 
     # Some tags for the files
@@ -81,7 +102,7 @@ def createDirectoryRequest():
         files = files1
     )    
 
-    req = DirectoryRequest(root=root_dir, requestType="CLUSTERING", serverSecret=os.environ["SFM_SERVER_SECRET"], prefferedCase = "CAMEL")
+    req = DirectoryRequest(root=root_dir, requestType="CLUSTERING", serverSecret=os.environ["SFM_SERVER_SECRET"], preferredCase = "SPACE")
     yield req
 
 
@@ -113,7 +134,7 @@ def test_send_real_dir(grpc_test_server, createDirectoryRequest):
     # print("Second took: " + str(end_second - start_second))
 
     # Check if response contains all files
-    assert responseSizeChecker(response.root) == 45
+    assert responseSizeChecker(response.root) == 66
 
     # Check if response is well formed
     assert response.response_code == 200
