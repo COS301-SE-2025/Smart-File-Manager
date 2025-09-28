@@ -12,6 +12,7 @@
 * [Introduction](#introduction)
 * [Performance Test](#performance-testing)
 * [Reliability Test](#reliability-test)
+* [User Test](#user-test)
 
 ## Introduction 
 The following document outlines some of the non functional testing we performed to ensure the quality requirements as outlined in our documentation.
@@ -76,3 +77,38 @@ make python_non_functional
 Having run this test we can see from the output that no file's integrity has been compromised by any of the operations as the file's SHA256 hash remained unchanged.
 
 ![Reliability Test](assets/testingAssets/reliability.png)
+
+# User tests
+
+### Introduction
+Users were given an installed version of the app and were asked to perform some tasks like changing some settings and performing an advanced search etc. After this users were then given a fully anonymous google form to fill out on their experience with the application
+
+#### Ease of use
+the general user consensus was very positive around ease of use. 86% of respondents scored the ease of use 5/5 with only 14% selecting 4/5
+
+![Ease of use](assets/userTests/ease_of_use.png)
+
+This displays the the overall UI is one that is user friendly and provides great user experiences
+
+#### Loading times
+Our app relies on an in memory version of your file system, meaning that loading the file system structure into the app can sometimes take long. this being said the responses around loading times were as expected. mostly positive but some users described the loading times as only "manageable"
+
+![Load times](assets/userTests/Load_times.png)
+
+
+#### Settings change
+Users were tasked with changing how the application changes folder names after sorting. for this task 29% of users selected 4/5 for ease of use. While the rest of the users chose 5/5. an almost 30% having some trouble for a task this simple(one button in the setting page) should be looked into for future ui changes.
+![settings task](assets/userTests/settings_change.png)
+
+#### Key word search
+This task was performed easily by all members, as displayed by the graph below. No improvements were necessary here.
+![kw search](assets/userTests/search.png)
+
+# Folder view preference
+This is just out of interest, we wanted to see wether users preferred the new and improved way of viewing all their files and folders. The respondents preferred the Graph view with a 71% majority.
+![folder view](assets/userTests/preference.png)
+
+# Open ended feedback
+The following were the responses from the optional open ended question. 2 users suggested the feature of being able to create files/folders in the app while one user wanted faster loading times.
+
+![open ended](assets/userTests/open_ended.png)
