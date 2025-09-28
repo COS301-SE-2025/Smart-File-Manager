@@ -15,6 +15,9 @@ on:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    env:
+      SFM_API_SECRET: ${{ secrets.SFM_API_SECRET }}
+      SFM_SERVER_SECRET: ${{ secrets.SFM_SERVER_SECRET }}
 
     steps:
       - name: Checkout repository

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -78,24 +79,62 @@ func exploreDown(folder *Folder, path string) error {
 		}
 	}
 	for _, file := range folder.Files {
-		if strings.HasPrefix(file.Name, ".") {
+		if strings.HasPrefix(file.Name, ".") || strings.HasPrefix(file.Name, "~") {
 			file.Lock()
-			// fmt.Printf("Auto-locked folder '%s' and contents because it contains hidden folder '%s'\n", folder.Path, sub.Name)
-			break
 		}
 	}
+
 	return nil
 }
+func ConvertToWSLPath(p string) string {
+	p = strings.TrimSpace(p)
+	if p == "" {
+		return p
+	}
+	p = strings.ReplaceAll(p, "\\", "/")
 
-func ConvertToWSLPath(winPath string) string {
-	winPath = strings.TrimSpace(winPath)
-	winPath = strings.ReplaceAll(winPath, "\\", "/")
-
-	if len(winPath) > 2 && winPath[1] == ':' {
-		drive := strings.ToLower(string(winPath[0]))
-		rest := winPath[2:]
-		return "/mnt/" + drive + rest
+	if runtime.GOOS == "windows" {
+		return filepath.Clean(filepath.FromSlash(p))
 	}
 
-	return winPath
+	if runtime.GOOS == "linux" && isWSL() {
+		if strings.HasPrefix(p, "/") {
+			return filepath.Clean(p)
+		}
+
+		if len(p) >= 2 && p[1] == ':' {
+			drive := strings.ToLower(string(p[0]))
+			rest := p[2:]
+			if rest == "" || rest[0] != '/' {
+				rest = "/" + rest
+			}
+			return filepath.Clean("/mnt/" + drive + rest)
+		}
+
+		return filepath.Clean(p)
+	}
+
+	return filepath.Clean(p)
+}
+
+func isWSL() bool {
+	if _, ok := os.LookupEnv("WSL_DISTRO_NAME"); ok {
+		return true
+	}
+	if _, ok := os.LookupEnv("WSL_INTEROP"); ok {
+		return true
+	}
+
+	if data, err := os.ReadFile("/proc/version"); err == nil {
+		if strings.Contains(strings.ToLower(string(data)), "microsoft") {
+			return true
+		}
+	}
+	if data, err := os.ReadFile("/proc/sys/kernel/osrelease"); err == nil {
+		if strings.Contains(strings.ToLower(string(data)), "microsoft") {
+			return true
+		}
+	}
+
+	return false
 }

@@ -38,6 +38,8 @@ Smart File Manager (SFM) is a digital housekeeper that uses metadata, natural la
 
 - [Demo 3 Video](https://drive.google.com/file/d/1k8QrDCzxmoQ0MvWkq4EAaTX5V6fvfJ1O/view?usp=sharing)
 
+- [Demo 4 Video]()
+
 ## 📑 Documentation
 
 <details>
@@ -75,6 +77,22 @@ Smart File Manager (SFM) is a digital housekeeper that uses metadata, natural la
 🔗 [Coding Standards](docs/documentation/demo_3/coding_standards.md) <br>
 🔗 [Technical Installation Manual](docs/documentation/demo_3/technical_installation.md) <br>
 🔗 [User Manual](docs/documentation/demo_3/user_manual.md) <br>
+
+</details>
+
+<details>
+<summary><strong>📋 Demo 4 Documentation</strong></summary>
+
+🔗 [Functional Requirements Document (SRS)](docs/documentation/demo_4/srs.md) <br>
+🔗 [Architectural Specifications](docs/documentation/demo_4/Architecture.md) <br>
+🔗 [Wireframe Documentation](docs/documentation/demo_4/wireframe.md) <br>
+🔗 [Research Document](docs/documentation/demo_4/researchDoc.md) <br>
+🔗 [User Manual](docs/documentation/demo_4/user_manual.md) <br>
+🔗 [Coding Standards](docs/documentation/demo_4/coding_standards.md) <br>
+🔗 [Technical Installation Manual](docs/documentation/demo_4/technical_installation.md) <br>
+🔗 [User Manual](docs/documentation/demo_4/user_manual.md) <br>
+🔗 [Testing Policy](docs/documentation/demo_4/testing_policy.md) <br>
+🔗 [Non Functional Testing Report](docs/documentation/demo_4/non_functional_tests.md) <br>
 
 </details>
 

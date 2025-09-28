@@ -8,6 +8,7 @@ from full_vector import FullVector
 import os
 from k_means import KMeansCluster 
 
+import config
 import time
 
 # Master class
@@ -15,11 +16,11 @@ import time
 # Takes submitted gRPC requests and assigns them to a slave for processing before returning the response
 class Master():
 
-    def __init__(self, maxSlaves, transformer):
+    def __init__(self, maxSlaves, transformer, weights: dict):
         self.slaves = ThreadPoolExecutor(maxSlaves)
         self.scraper = MetaDataScraper()
         self.kw_extractor = KWExtractor()
-        self.full_vec = FullVector(transformer)  
+        self.full_vec = FullVector(transformer,None)  
 
     # Takes gRPC request's root and sends it to be processed by a slave
     def submit_task(self, request : DirectoryRequest):
@@ -29,6 +30,14 @@ class Master():
 
     # Handles request appropriately 
     def process(self, request : DirectoryRequest) -> DirectoryResponse:
+
+        # Validate server secret
+        request_secret = request.serverSecret
+        if(request_secret != config.SERVER_SECRET):
+            response = DirectoryResponse()
+            response.response_code = 401
+            response.response_msg = "Unauthorized: Incorrect server secret"
+            return response
 
         # Map request type to method and call
         requestHandler = {
@@ -44,10 +53,10 @@ class Master():
         if not handler == None:
             return handler(request)
         else:
-            reponse =  DirectoryResponse()
-            reponse.response_code = 400
-            reponse.response_msg = "Unknown Request type: Must be in  [CLUSTERING, METADATA, KEYWORDS]"
-            return reponse
+            response =  DirectoryResponse()
+            response.response_code = 400
+            response.response_msg = "Unknown Request type: Must be in  [CLUSTERING, METADATA, KEYWORDS]"
+            return response
 
     
     def handle_clustering_request(self, request : DirectoryRequest) -> DirectoryResponse:
@@ -73,7 +82,7 @@ class Master():
             print("Full vectors appended: " + str(self.full_vector_time_2 - self.start_time)) 
 
             # Recursively cluster and return a directory
-            kmeans = KMeansCluster(int(len(full_vecs) / 3 ), 10, self.full_vec.model, request.root.name)
+            kmeans = KMeansCluster(int(len(full_vecs) / 3 ), 10, self.full_vec.model, request.root.name, request.preferredCase)
             response_directory = kmeans.dirCluster(full_vecs,files)
             self.clustering_time = time.time()
             print("Clustering complete: " + str(self.clustering_time - self.start_time))

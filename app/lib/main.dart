@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:app/navigation/shell.dart';
+import 'package:app/pages/auth_wrapper.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'constants.dart';
@@ -89,7 +89,7 @@ class _MyAppState extends State<MyApp> with WindowListener, TrayListener {
         primaryColor: kprimaryColor,
         scaffoldBackgroundColor: kScaffoldColor,
       ),
-      home: const Shell(),
+      home: const AuthWrapper(),
     );
   }
 }
