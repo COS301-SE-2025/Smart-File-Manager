@@ -19,7 +19,10 @@ Smart File Manager (SFM) is a digital housekeeper that uses metadata, natural la
 
 ## 📄 Table of Contents
 
+- [📄 Table of Contents](#-table-of-contents)
+- [📩 Get our installer here](#-get-our-installer-here)
 - [🎥 Demo Videos](#-demo-videos)
+- [Our website](#our-website)
 - [📑 Documentation](#-documentation)
 - [📊 Project Board](#-project-board)
 - [🤝 Team Profiles](#-team-profiles)
@@ -39,6 +42,9 @@ Smart File Manager (SFM) is a digital housekeeper that uses metadata, natural la
 - [Demo 3 Video](https://drive.google.com/file/d/1k8QrDCzxmoQ0MvWkq4EAaTX5V6fvfJ1O/view?usp=sharing)
 
 - [Demo 4 Video]()
+
+## Our website
+Our website can be found at https://cos301-se-2025.github.io/Smart-File-Manager/
 
 ## 📑 Documentation
 
