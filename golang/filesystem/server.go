@@ -493,8 +493,6 @@ func HandleRequests() {
 
 	http.Handle("/returnStats", secretMiddleware(http.HandlerFunc(StatHandler)))
 
-	http.Handle("/setPreferredCase", secretMiddleware(http.HandlerFunc(SetPreferredCase)))
-
 	addr := fmt.Sprintf("0.0.0.0:%d", port)
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		fmt.Printf("Server failed to start: %v\n", err)

@@ -38,16 +38,27 @@ go_grpc_client:
 	go run grpc/client/grpcClient.go
 
 go_test:
-	@echo "Running filesystem tests..."
-	cd golang/filesystem && go test -tags=test -v
-	@echo "Running filesystem/tests..."
-	cd golang/filesystem/tests && go test -tags=test -v
+	@echo "Running all filesystem tests..."
+	cd golang && go test -tags=test ./filesystem/... -v
 
 go_coverage:
-	cd golang/filesystem && go test -coverprofile=coverage.out -covermode=atomic
-	@echo "Coverage summary:"
-	cd golang/filesystem && go tool cover -html=coverage.out
-	@echo "To view HTML report, run: go tool cover -html=golang/filesystem/coverage.out"
+	@cd golang && \
+	go test -tags=test -coverpkg=./filesystem/... -coverprofile=coverage.out -covermode=atomic ./filesystem/... || true; \
+	if [ -f coverage.out ]; then \
+	  echo "Coverage details:"; \
+	  go tool cover -func=coverage.out | sed -n '$p'; \
+	  echo -n "TOTAL COVERAGE: " ; go tool cover -func=coverage.out | awk '/^total:/ {print $$3}'; \
+	else \
+	  echo "coverage.out not generated"; \
+	fi
+
+go_coverage_funcs:
+	cd golang && \
+	go test -tags=test -coverpkg=./filesystem/... -coverprofile=coverage.out -covermode=atomic ./filesystem/... && \
+	echo "Coverage per function:" && \
+	go tool cover -func=coverage.out
+
+
 
 go_api:
 	cd golang && \

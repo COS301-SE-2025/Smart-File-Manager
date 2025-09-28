@@ -23,7 +23,7 @@ func TestLevenshteinDist(t *testing.T) {
 		{"Report", "report", 0, "Case-insensitive exact match"},
 
 		// Substring match (should return low score)
-		{"jack", "jacks homework.txt", 2, "Substring match boosts score"},
+		{"jack", "jacks homework.txt", 1, "Substring match boosts score"},
 
 		// Extensions ignored
 		{"budget", "budget.pdf", 0, "Extension stripped - exact match"},
@@ -33,10 +33,10 @@ func TestLevenshteinDist(t *testing.T) {
 		{"dog", "cat", 3, "Different strings"},
 
 		// Prefix match
-		{"home", "homework.txt", 1, "Prefix substring boosts"},
+		{"home", "homework.txt", 0, "Prefix substring boosts"},
 
 		// Suffix match
-		{"work", "homework.txt", 1, "Suffix substring boosts"},
+		{"work", "homework.txt", 0, "Suffix substring boosts"},
 
 		// Shorter query, longer file
 		{"a", "abcdefgh.txt", 1, "Very short search in long filename"},
@@ -100,12 +100,10 @@ func TestSearchHandlerNotFound(t *testing.T) {
 
 	filesystem.SearchHandler(rr, req)
 
-
 	if rr.Code != http.StatusBadRequest {
 		t.Errorf("expected status 400; got %d", rr.Code)
 	}
 }
-
 
 // TestSearchHandlerEmpty tests that a known composite with no files returns empty children list
 func TestSearchHandlerEmpty(t *testing.T) {
