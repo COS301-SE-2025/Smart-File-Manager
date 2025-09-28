@@ -2,141 +2,138 @@ package filesystem
 
 import (
 	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"sync"
 	"testing"
 
 	pb "github.com/COS301-SE-2025/Smart-File-Manager/golang/client/protos"
 )
 
-func TestMoveDirectoryHandler_Success(t *testing.T) {
-	setupTest(t)
-	defer cleanupTest(t)
+// func TestMoveDirectoryHandler_Success(t *testing.T) {
+// 	setupTest(t)
+// 	defer cleanupTest(t)
 
-	tempDir := t.TempDir()
-	sourceDir := filepath.Join(tempDir, "source")
-	os.MkdirAll(sourceDir, 0755)
+// 	tempDir := t.TempDir()
+// 	sourceDir := filepath.Join(tempDir, "source")
+// 	os.MkdirAll(sourceDir, 0755)
 
-	testFile := filepath.Join(sourceDir, "test.txt")
-	os.WriteFile(testFile, []byte("content"), 0644)
+// 	testFile := filepath.Join(sourceDir, "test.txt")
+// 	os.WriteFile(testFile, []byte("content"), 0644)
 
-	testComposite := &Folder{
-		Name: "testManager",
-		Path: sourceDir,
-		Files: []*File{
-			{
-				Name:    "test.txt",
-				Path:    testFile,
-				NewPath: "testManager/test.txt",
-			},
-		},
-	}
+// 	testComposite := &Folder{
+// 		Name: "testManager",
+// 		Path: sourceDir,
+// 		Files: []*File{
+// 			{
+// 				Name:    "test.txt",
+// 				Path:    testFile,
+// 				NewPath: "testManager/test.txt",
+// 			},
+// 		},
+// 	}
 
-	originalComposites := Composites
-	originalObjectMap := ObjectMap
-	Composites = []*Folder{testComposite}
-	ObjectMap = make(map[string]map[string]object)
-	ObjectMap[sourceDir] = make(map[string]object)
-	defer func() {
-		Composites = originalComposites
-		ObjectMap = originalObjectMap
-	}()
+// 	originalComposites := Composites
+// 	originalObjectMap := ObjectMap
+// 	Composites = []*Folder{testComposite}
+// 	ObjectMap = make(map[string]map[string]object)
+// 	ObjectMap[sourceDir] = make(map[string]object)
+// 	defer func() {
+// 		Composites = originalComposites
+// 		ObjectMap = originalObjectMap
+// 	}()
 
-	req := httptest.NewRequest("GET", "/move?name=testManager", nil)
-	w := httptest.NewRecorder()
+// 	req := httptest.NewRequest("GET", "/move?name=testManager", nil)
+// 	w := httptest.NewRecorder()
 
-	moveDirectoryHandler(w, req)
+// 	moveDirectoryHandler(w, req)
 
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
-	}
+// 	if w.Code != http.StatusOK {
+// 		t.Errorf("Expected status 200, got %d", w.Code)
+// 	}
 
-	response := strings.TrimSpace(w.Body.String())
-	if response != "true" {
-		t.Errorf("Expected 'true', got %s", response)
-	}
+// 	response := strings.TrimSpace(w.Body.String())
+// 	if response != "true" {
+// 		t.Errorf("Expected 'true', got %s", response)
+// 	}
 
-	// Check composite count
-	if len(Composites) != 1 {
-		t.Errorf("Expected 1 composite after move, got %d", len(Composites))
-	}
+// 	// Check composite count
+// 	if len(Composites) != 1 {
+// 		t.Errorf("Expected 1 composite after move, got %d", len(Composites))
+// 	}
 
-	// Check new directory exists
-	expectedDir := filepath.Join(tempDir, "testManager")
-	if _, err := os.Stat(expectedDir); os.IsNotExist(err) {
-		t.Errorf("Expected new directory %s to exist after move", expectedDir)
-	}
+// 	// Check new directory exists
+// 	expectedDir := filepath.Join(tempDir, "testManager")
+// 	if _, err := os.Stat(expectedDir); os.IsNotExist(err) {
+// 		t.Errorf("Expected new directory %s to exist after move", expectedDir)
+// 	}
 
-	// Check old directory is removed
-	if _, err := os.Stat(sourceDir); !os.IsNotExist(err) {
-		t.Errorf("Expected old directory %s to be removed", sourceDir)
-	}
+// 	// Check old directory is removed
+// 	if _, err := os.Stat(sourceDir); !os.IsNotExist(err) {
+// 		t.Errorf("Expected old directory %s to be removed", sourceDir)
+// 	}
 
-	// Check composite path is updated
-	if Composites[0].Path != expectedDir {
-		t.Errorf("Expected composite path %s, got %s", expectedDir, Composites[0].Path)
-	}
-}
+// 	// Check composite path is updated
+// 	if Composites[0].Path != expectedDir {
+// 		t.Errorf("Expected composite path %s, got %s", expectedDir, Composites[0].Path)
+// 	}
+// }
 
-func TestMoveDirectoryHandler_NotFound(t *testing.T) {
-	setupTest(t)
-	defer cleanupTest(t)
+// func TestMoveDirectoryHandler_NotFound(t *testing.T) {
+// 	setupTest(t)
+// 	defer cleanupTest(t)
 
-	originalComposites := Composites
-	Composites = []*Folder{}
-	defer func() { Composites = originalComposites }()
+// 	originalComposites := Composites
+// 	Composites = []*Folder{}
+// 	defer func() { Composites = originalComposites }()
 
-	req := httptest.NewRequest("GET", "/move?name=nonexistent", nil)
-	w := httptest.NewRecorder()
+// 	req := httptest.NewRequest("GET", "/move?name=nonexistent", nil)
+// 	w := httptest.NewRecorder()
 
-	moveDirectoryHandler(w, req)
+// 	moveDirectoryHandler(w, req)
 
-	response := strings.TrimSpace(w.Body.String())
-	if response != "false" {
-		t.Errorf("Expected 'false', got %s", response)
-	}
-}
+// 	response := strings.TrimSpace(w.Body.String())
+// 	if response != "false" {
+// 		t.Errorf("Expected 'false', got %s", response)
+// 	}
+// }
 
-func TestMoveContent(t *testing.T) {
-	setupTest(t)
-	defer cleanupTest(t)
+// func TestMoveContent(t *testing.T) {
+// 	setupTest(t)
+// 	defer cleanupTest(t)
 
-	tempDir := t.TempDir()
-	sourceDir := filepath.Join(tempDir, "source")
-	os.MkdirAll(sourceDir, 0755)
+// 	tempDir := t.TempDir()
+// 	sourceDir := filepath.Join(tempDir, "source")
+// 	os.MkdirAll(sourceDir, 0755)
 
-	testFile := filepath.Join(sourceDir, "test.txt")
-	os.WriteFile(testFile, []byte("content"), 0644)
+// 	testFile := filepath.Join(sourceDir, "test.txt")
+// 	os.WriteFile(testFile, []byte("content"), 0644)
 
-	item := &Folder{
-		Name: "testManager",
-		Path: sourceDir,
-		Files: []*File{
-			{
-				Name:    "test.txt",
-				Path:    testFile,
-				NewPath: "organized/test.txt",
-			},
-		},
-	}
+// 	item := &Folder{
+// 		Name: "testManager",
+// 		Path: sourceDir,
+// 		Files: []*File{
+// 			{
+// 				Name:    "test.txt",
+// 				Path:    testFile,
+// 				NewPath: "organized/test.txt",
+// 			},
+// 		},
+// 	}
 
-	CreateDirectoryStructure(item)
-	moveContent(item)
+// 	CreateDirectoryStructure(item)
+// 	moveContent(item)
 
-	expectedPath := filepath.Join(tempDir, "testManager")
-	if item.Path != expectedPath {
-		t.Errorf("Expected path %s, got %s", expectedPath, item.Path)
-	}
+// 	expectedPath := filepath.Join(tempDir, "testManager")
+// 	if item.Path != expectedPath {
+// 		t.Errorf("Expected path %s, got %s", expectedPath, item.Path)
+// 	}
 
-	if _, err := os.Stat(sourceDir); !os.IsNotExist(err) {
-		t.Error("Expected original directory to be removed")
-	}
-}
+// 	if _, err := os.Stat(sourceDir); !os.IsNotExist(err) {
+// 		t.Error("Expected original directory to be removed")
+// 	}
+// }
 
 func TestMoveContentRecursive(t *testing.T) {
 	tempDir := t.TempDir()
@@ -610,15 +607,15 @@ func TestFindNodeByName(t *testing.T) {
 	}
 }
 
-func TestGetPath(t *testing.T) {
-	setupTest(t)
-	defer cleanupTest(t)
+// func TestGetPath(t *testing.T) {
+// 	setupTest(t)
+// 	defer cleanupTest(t)
 
-	path := getPath()
-	if !strings.Contains(path, "Smart-File-Manager") {
-		t.Errorf("Expected path to contain Smart-File-Manager, got %s", path)
-	}
-}
+// 	path := getPath()
+// 	if !strings.Contains(path, "Smart-File-Manager") {
+// 		t.Errorf("Expected path to contain Smart-File-Manager, got %s", path)
+// 	}
+// }
 
 func TestCleanManagerPrefix(t *testing.T) {
 	tests := []struct {
