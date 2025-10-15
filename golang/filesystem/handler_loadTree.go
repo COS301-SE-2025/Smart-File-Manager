@@ -147,7 +147,11 @@ func grpcFunc(c *Folder, requestType string, preferredCase string) error {
 		mergeKeywordsInPlaceFromProto(resp.Root, c)
 	default: // "METADATA", "CLUSTERING"
 		mergeProtoToFolder(resp.Root, c)
+		GoExtractKeywords(c)
 	}
+	c.HasKeywords = false
+
+	// PrettyPrintFolder(c, "")
 
 	return nil
 }
