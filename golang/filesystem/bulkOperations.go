@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -412,6 +413,9 @@ func ReturnTypeHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			// w.WriteHeader(http.StatusOK)
+			sort.Slice(returnList, func(i, j int) bool {
+				return strings.ToLower(returnList[i].FileName) < strings.ToLower(returnList[j].FileName)
+			})
 			json.NewEncoder(w).Encode(returnList)
 			return
 		}
