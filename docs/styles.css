@@ -207,6 +207,7 @@ nav {
   align-items: center;
   position: relative;
   z-index: 1;
+  text-align: center;
 }
 
 
@@ -907,7 +908,36 @@ nav {
 
 @media (max-width: 768px) {
   .nav-links {
-    display: none;
+    position: fixed;
+    top: 70px;
+    left: 0;
+    right: 0;
+    background: rgba(46, 46, 46, 0.98);
+    backdrop-filter: blur(20px);
+    flex-direction: column;
+    padding: 2rem;
+    gap: 1.5rem;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    border-bottom: 1px solid rgba(61, 61, 61, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    list-style: none;
+  }
+
+  .nav-links.show {
+    transform: translateX(0);
+    display: flex;
+  }
+
+  .nav-links li {
+    width: 100%;
+  }
+
+  .nav-links a {
+    font-size: 1.1rem;
+    padding: 0.5rem 0;
+    display: block;
   }
 
   .nav-cta {
@@ -916,6 +946,16 @@ nav {
 
   .nav-toggle {
     display: block;
+    z-index: 1000;
+  }
+
+  /* Hide hero demo on mobile */
+  .hero-visual {
+    display: none;
+  }
+
+  .hero {
+    padding: 6rem 2rem 3rem;
   }
 
   .hero-title {
@@ -938,6 +978,26 @@ nav {
     font-size: 2rem;
   }
 
+  .solution,
+  .features,
+  .demo-section,
+  .download-section,
+  .faq-section {
+    padding: 3rem 0;
+  }
+
+  .benefit-item {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .benefit-item i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    margin-top: 0;
+  }
+
   .features-grid {
     grid-template-columns: 1fr;
   }
@@ -952,6 +1012,15 @@ nav {
 
   .download-platforms {
     grid-template-columns: 1fr;
+  }
+
+  .feature-showcase {
+    display: none;
+  }
+
+  .solution-content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
   }
 
   .urgency-indicators {
@@ -974,6 +1043,10 @@ nav {
     flex-wrap: wrap;
     justify-content: center;
   }
+
+  .footer {
+    padding: 2rem 0 1rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -982,11 +1055,17 @@ nav {
   }
 
   .hero {
-    padding: 6rem 1rem 2rem;
+    padding: 5rem 1rem 2rem;
+    min-height: auto;
   }
 
   .hero-title {
     font-size: 2rem;
+    line-height: 1.2;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
   }
 
   .hero-stats {
@@ -999,4 +1078,40 @@ nav {
     justify-content: center;
   }
 
+  h2 {
+    font-size: 1.75rem;
+  }
+
+  .section-header {
+    margin-bottom: 2rem;
+  }
+
+  .section-header h2 {
+    font-size: 1.75rem;
+  }
+
+  .feature-card,
+  .platform-card {
+    padding: 1.5rem;
+  }
+
+  .demo-grid {
+    gap: 2rem;
+  }
+
+  .solution,
+  .features,
+  .demo-section,
+  .download-section,
+  .faq-section {
+    padding: 2.5rem 0;
+  }
+
+  .benefit-item {
+    gap: 0.5rem;
+  }
+
+  .benefit-item i {
+    font-size: 2rem;
+  }
 }
