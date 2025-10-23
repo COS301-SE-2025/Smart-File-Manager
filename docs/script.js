@@ -1,4 +1,3 @@
-// Modern JavaScript for Smart File Manager Landing Page
 document.addEventListener("DOMContentLoaded", function () {
   initializeAnimations();
   initializeFAQ();
@@ -7,7 +6,6 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeScrollEffects();
 });
 
-// Smooth scrolling navigation
 function initializeNavigation() {
   const navLinks = document.querySelectorAll('nav a[href^="#"]');
 
@@ -23,19 +21,28 @@ function initializeNavigation() {
           behavior: "smooth",
           block: "start",
         });
+
+        const navLinksContainer = document.querySelector(".nav-links");
+        if (navLinksContainer && navLinksContainer.classList.contains("show")) {
+          navLinksContainer.classList.remove("show");
+        }
       }
     });
   });
 
-  // Mobile menu toggle
-  const navToggle = document.querySelector(".nav-toggle");
-  const navLinks2 = document.querySelector(".nav-links");
-
-  if (navToggle && navLinks2) {
-    navToggle.addEventListener("click", function () {
-      navLinks2.classList.toggle("show");
-    });
-  }
+  document.addEventListener("click", function (e) {
+    const navLinksContainer = document.querySelector(".nav-links");
+    const navToggle = document.querySelector(".nav-toggle");
+    
+    if (
+      navLinksContainer &&
+      navLinksContainer.classList.contains("show") &&
+      !navLinksContainer.contains(e.target) &&
+      !navToggle.contains(e.target)
+    ) {
+      navLinksContainer.classList.remove("show");
+    }
+  });
 }
 
 // FAQ functionality
@@ -47,21 +54,18 @@ function initializeFAQ() {
 
     if (question) {
       question.addEventListener("click", function () {
-        // Close other FAQ items
         faqItems.forEach((otherItem) => {
           if (otherItem !== item) {
             otherItem.classList.remove("active");
           }
         });
 
-        // Toggle current item
         item.classList.toggle("active");
       });
     }
   });
 }
 
-// FAQ toggle function (called from HTML)
 function toggleFAQ(element) {
   const faqItem = element.closest(".faq-item");
   const faqItems = document.querySelectorAll(".faq-item");
@@ -92,7 +96,6 @@ function initializeScrollEffects() {
     }
   });
 
-  // Intersection Observer for animations
   if ("IntersectionObserver" in window) {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -109,7 +112,6 @@ function initializeScrollEffects() {
       }
     );
 
-    // Animate elements on scroll
     const animateElements = document.querySelectorAll(
       ".feature-card, .demo-card, .platform-card, .pain-item, .benefit-item"
     );
@@ -122,13 +124,10 @@ function initializeScrollEffects() {
   }
 }
 
-// Initialize animations
 function initializeAnimations() {
-  // Typing animation for search demo
   animateSearchDemo();
 }
 
-// Typing animation for search demo
 function animateSearchDemo() {
   const searchInput = document.querySelector(".search-bar input");
   if (!searchInput) return;
@@ -158,7 +157,6 @@ function animateSearchDemo() {
     let typeSpeed = isDeleting ? 50 : 100;
 
     if (!isDeleting && charIndex === currentPhrase.length) {
-      // Pause before deleting
       typeSpeed = 2000;
       isDeleting = true;
     } else if (isDeleting && charIndex === 0) {
@@ -170,11 +168,9 @@ function animateSearchDemo() {
     setTimeout(typeWriter, typeSpeed);
   }
 
-  // Start the animation after a delay
   setTimeout(typeWriter, 2000);
 }
 
-// Utility functions for backwards compatibility
 function showSection(sectionId) {
   const section = document.getElementById(sectionId);
   if (section) {
@@ -191,7 +187,6 @@ function showPrivacyInfo() {
   );
 }
 
-// Mobile menu toggle
 function toggleMobileMenu() {
   const navLinks = document.querySelector(".nav-links");
   if (navLinks) {
@@ -199,10 +194,8 @@ function toggleMobileMenu() {
   }
 }
 
-// Performance optimizations
 if ("requestIdleCallback" in window) {
   requestIdleCallback(() => {
-    // Load non-critical resources
     initializeNonCriticalFeatures();
   });
 } else {
@@ -225,11 +218,9 @@ function initializeNonCriticalFeatures() {
   });
 }
 
-// Error handling
 window.addEventListener("error", function (e) {
   console.error("JavaScript error:", e.error);
 
-  // Optional: Send error to analytics
   if (typeof gtag !== "undefined") {
     gtag("event", "exception", {
       description: e.error.message,
@@ -238,7 +229,6 @@ window.addEventListener("error", function (e) {
   }
 });
 
-// Add smooth scrolling for all anchor links
 document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
   anchor.addEventListener("click", function (e) {
     e.preventDefault();
@@ -251,12 +241,3 @@ document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
   });
 });
 
-// Service Worker registration for offline capabilities (optional)
-if ("serviceWorker" in navigator && "caches" in window) {
-  window.addEventListener("load", () => {
-    // Uncomment if you want to add service worker
-    // navigator.serviceWorker.register('/sw.js')
-    //     .then(registration => console.log('SW registered'))
-    //     .catch(error => console.log('SW registration failed'));
-  });
-}
